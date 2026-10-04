@@ -246,6 +246,8 @@ export default {
     this.startCountdown()
   },
   onShow() {
+    const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
+    if (Array.isArray(savedWishlist)) state.items = savedWishlist
     this.startCountdown()
   },
   onHide() {
