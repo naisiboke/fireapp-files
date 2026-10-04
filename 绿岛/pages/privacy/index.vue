@@ -38,7 +38,12 @@
 export default {
   methods: {
     back() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({ delta: 1, fail: () => uni.switchTab({ url: '/pages/profile/index' }) })
+      } else {
+        uni.switchTab({ url: '/pages/profile/index' })
+      }
     },
   },
   onBackPress() {
