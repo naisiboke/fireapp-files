@@ -44,10 +44,11 @@ export default {
         this._navigating = false
         return
       }
-      uni.switchTab({
+      // 使用 reLaunch 管理自定义 Tab，避免系统 custom tabBar 没有宿主组件导致“我的”页空白。
+      uni.reLaunch({
         url: path,
         success: () => { setTimeout(() => { this._navigating = false }, 400) },
-        fail: (err) => { this._navigating = false; console.warn('[BottomTabs] switchTab cancelled', err) },
+        fail: (err) => { this._navigating = false; console.warn('[BottomTabs] navigation failed', err) },
       })
     },
     iconUri(key, active) {
