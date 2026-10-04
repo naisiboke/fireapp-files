@@ -5,9 +5,9 @@
     <view class="mode-tabs" role="tablist"><view class="mode-tab" :class="{active:mode==='email'}" role="tab" :aria-selected="mode==='email'" @tap="mode='email'">邮箱登录</view><view class="mode-tab" :class="{active:mode==='phone'}" role="tab" :aria-selected="mode==='phone'" @tap="mode='phone'">手机号登录</view></view>
     <view class="form" aria-live="polite"><view class="field"><text class="field-icon">⌁</text><input v-if="mode==='email'" v-model="email" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/><input v-else v-model="phone" class="input" type="number" maxlength="11" aria-label="手机号" placeholder="请输入手机号" placeholder-class="placeholder"/></view>
       <view class="field"><text class="field-icon">◇</text><input v-model="password" class="input" :password="!showPassword" maxlength="64" aria-label="密码" placeholder="请输入密码" placeholder-class="placeholder"/><view class="password-toggle" role="button" aria-label="显示或隐藏密码" @tap="showPassword=!showPassword">{{showPassword?'隐藏':'显示'}}</view></view>
-      <view class="form-meta"><text class="forgot" @tap="toast('忘记密码功能即将开放')">忘记密码</text></view><button class="login-button" :disabled="loading" @tap="login">{{loading?'登录中…':'登录'}}</button>
+      <view class="form-meta"><text class="forgot" @tap="toast('忘记密码功能即将开放')">忘记密码</text></view><button class="login-button fire-button-primary fire-button-lg" :disabled="loading" @tap="login">{{loading?'登录中…':'登录'}}</button>
     </view>
-    <view class="other"><view class="divider"><view></view><text>其他方式登录</text><view></view></view><view class="social-row"><button class="social wechat" @tap="toast('微信登录暂未接入')">◉ 微信登录</button><button class="social qq" @tap="toast('QQ 登录暂未接入')">◆ QQ 登录</button></view></view>
+    <view class="other"><view class="divider"><view></view><text>其他方式登录</text><view></view></view><view class="social-row"><button class="social wechat fire-button-outline" @tap="toast('微信登录暂未接入')">◉ 微信登录</button><button class="social qq fire-button-outline" @tap="toast('QQ 登录暂未接入')">◆ QQ 登录</button></view></view>
     <view class="register-entry"><text>还没有账号？</text><text class="register-link" @tap="register">立即注册</text></view>
     <view class="guest-entry" @tap="skipLogin">跳过登录，直接进入</view><text class="sr-status" aria-live="polite">{{notice}}</text>
   </view></view>
