@@ -41,7 +41,7 @@
           <text class="budget-label">本月收入预算（元）</text>
           <input class="budget-input" type="digit" v-model="incomeInput" placeholder="例如 10000" />
         </view>
-        <view class="budget-btn" @tap="saveTargets">
+        <view class="budget-btn fire-button-primary" @tap="saveTargets">
           <text class="budget-btn-text">保存本月预算</text>
         </view>
         <text class="budget-note">修改预算不会影响已有记录，只作为“是否超额”的判断基准。</text>
@@ -92,7 +92,7 @@
           </text>
         </view>
         <view class="record-actions">
-          <view class="action-btn" @tap="editRecord(x)"><text class="action-text">修改</text></view>
+          <view class="action-btn fire-button-outline fire-button-sm" @tap="editRecord(x)"><text class="action-text">修改</text></view>
           <view class="action-btn" @tap="confirmDelete(x)"><text class="action-text delete">删除</text></view>
         </view>
       </view>
