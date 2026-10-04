@@ -15,6 +15,7 @@ app.$mount()
 import {
 	createSSRApp
 } from 'vue'
+import { tencentCloudConfig } from './utils/tencent-cloud.js'
 export function createApp() {
 	const app = createSSRApp(App)
   app.config.globalProperties.$tencentCloud = tencentCloudConfig
