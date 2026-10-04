@@ -213,6 +213,11 @@ export default {
   },
 
   onLoad() {
+    // 登录状态仅用于当前 Mock 演示
+    if (uni.getStorageSync('fire_login_status') !== true) {
+      uni.reLaunch({ url: '/pages/login/login' })
+      return
+    }
     // 首次启动先展示沉浸式引导页，完成后再进入首页
     if (!state.started) {
       uni.reLaunch({ url: '/pages/onboarding/onboarding' })
