@@ -6,7 +6,7 @@ export default {
     bootstrap()
     // 每次冷启动先进入唯一启动页，避免上次停留在分享页时被直接恢复。
     const pages = getCurrentPages()
-    const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\\//, '') : ''
+    const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
     if (route !== 'pages/launch/index' && !getApp().__fireLaunchRedirecting) {
       getApp().__fireLaunchRedirecting = true
       setTimeout(() => {
