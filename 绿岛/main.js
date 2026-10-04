@@ -1,3 +1,4 @@
+import './uni.scss'
 import App from './App'
 
 // #ifndef VUE3
