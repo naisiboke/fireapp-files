@@ -1,3 +1,4 @@
+<!-- FIRE BottomTabs component -->
 <template>
   <view class="bottom-tabs">
     <view
