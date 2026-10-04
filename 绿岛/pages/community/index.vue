@@ -371,7 +371,7 @@
 </template>
 
 <script>
-import BottomTabs from '@/components/BodttomTabs.vue'
+import BottomTabs from '@/components/BottomTabs.vue'
 import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
 
