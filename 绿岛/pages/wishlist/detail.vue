@@ -10,7 +10,7 @@
         <view class="info-row"><text>冷静期</text><text>默认 {{ item.days || 7 }} 天</text></view>
       </view>
       <view class="progress-card"><text class="progress-title">{{ coolingFinished ? '冷静期已结束' : '冷静期进行中' }}</text><text class="countdown">{{ coolingFinished ? '可以做出最终决定' : countdownText }}</text><view class="progress-track"><view class="progress-fill" :style="{width:progress+'%'}"></view></view><text class="progress-tip">{{ coolingFinished ? '你已经完成了这次冷静期挑战。' : '先给自己一点时间，再决定是否购买。' }}</text></view>
-      <view v-if="coolingFinished" class="actions"><button class="save" @tap="finish('abandoned')">挑战成功</button><button class="buy" @tap="finish('bought')">挑战失败</button></view>
+      <view v-if="coolingFinished" class="actions"><button class="save fire-button-primary" @tap="finish('abandoned')">挑战成功</button><button class="buy fire-button-outline" @tap="finish('bought')">挑战失败</button></view>
       <view v-else class="actions"><button class="save" @tap="finish('abandoned')">提前结束，即为省下</button><button class="buy" @tap="finish('bought')">我坚持不住了，已购买</button></view>
     </scroll-view>
     <view v-else class="missing"><text>拔草项目不存在或已删除</text><button @tap="back">返回列表</button></view>
