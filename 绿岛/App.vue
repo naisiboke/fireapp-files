@@ -4,16 +4,8 @@ import { bootstrap, persist } from './store/index.js'
 export default {
   onLaunch() {
     bootstrap()
-    // 启动顺序：沉浸式引导 → 登录页 → 首页
-    const hasSeenIsland = uni.getStorageSync('fire_island_onboarding_done') === true
-    const hasLoggedIn = uni.getStorageSync('fire_login_status') === true
-    const guestMode = uni.getStorageSync('fire_guest_mode') === true
-    const route = !hasSeenIsland
-      ? '/pages/onboarding/onboarding'
-      : (!hasLoggedIn && !guestMode ? '/pages/login/login' : null)
-    if (route) {
-      setTimeout(() => uni.reLaunch({ url: route }), 0)
-    }
+    // 首屏永远先进入空白启动页，由启动页统一判断引导、登录和首页。
+    setTimeout(() => uni.reLaunch({ url: '/pages/launch/index' }), 0)
   },
   onHide() {
     persist()
