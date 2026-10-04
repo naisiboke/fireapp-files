@@ -17,6 +17,7 @@ import {
 } from 'vue'
 export function createApp() {
 	const app = createSSRApp(App)
+  app.config.globalProperties.$tencentCloud = tencentCloudConfig
 	return {
 		app
 	}
