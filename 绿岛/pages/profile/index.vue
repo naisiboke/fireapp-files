@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import BottomTabs from '@/components/BodttomTabs.vue'
+import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
 
 const ICONS = {
@@ -180,7 +180,7 @@ export default {
     },
 
     goPage(url) {
-      uni.reLaunch({ url: url })
+      uni.navigateTo({ url: url })
     },
     goOnboarding() {
       uni.showToast({ title: '个人资料编辑开发中', icon: 'none' })
