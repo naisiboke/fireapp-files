@@ -42,8 +42,8 @@ export default {
     },
   },
   onBackPress() {
-    uni.navigateBack()
-    return true
+    // 不在 onBackPress 中再次调用 navigateBack，避免触发递归错误。
+    return false
   },
 }
 </script>
