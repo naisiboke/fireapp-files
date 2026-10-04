@@ -8,9 +8,9 @@
     </view></view>
     <view v-else class="empty"><text class="empty-icon">＋</text><text class="empty-title">{{ filter==='active'?'给心动留一点时间':'这里还没有记录' }}</text><text class="empty-sub">添加一个想买的东西，设置 3、7 或 30 天冷静期。</text></view>
     <view v-if="!showAdd" class="add" @tap="showAdd=true"><text>＋ 添加消费计划</text></view>
-    <view v-if="showAdd" class="mask" :style="panelStyle" @tap="closeAdd">
-      <view class="sheet" @tap.stop>
-        <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" @tap="closeAdd" aria-label="关闭">×</button></view>
+    <view v-if="showAdd" class="mask" :style="panelStyle">
+      <view class="sheet">
+        <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" type="button" @tap="closeAdd" @click="closeAdd" aria-label="关闭">×</button></view>
         <scroll-view class="sheet-scroll" scroll-y :scroll-into-view="focusedField">
           <view class="sheet-content">
             <text class="field-label">名称</text>
