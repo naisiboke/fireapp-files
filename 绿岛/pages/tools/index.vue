@@ -104,7 +104,7 @@ export default {
 </script>
 
 <style>
-@keyframes toolPageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toolPageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes toolSlideIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 .tools-view { min-height: 100vh; padding: 60px 24px 140px; background: #f3f4f2; box-sizing: border-box; animation: toolPageIn .32s cubic-bezier(.22,1,.36,1) both; }
 .tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) both; }
