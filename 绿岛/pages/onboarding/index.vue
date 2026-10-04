@@ -21,7 +21,7 @@ export default {
   methods:{
     makeWords(){
       const pool=['来不及了','养老负债','35岁危机','没有退路了','房贷','焦虑','加班','失业','通胀','比较','绩效','责任','时间不够','要是失败','存款太少','不敢停下','未来怎么办','压力','选择太少','还不能休息'];
-      this.words=Array.from({length:54},(_,i)=>{const angle=(i/54)*Math.PI*2-Math.PI/2;const core=['来不及了','养老负债','35岁危机','没有退路了'].includes(pool[(i*17)%pool.length]);const radiusX=core?30:38;const radiusY=core?28:36;const x=50+Math.cos(angle)*radiusX;const y=50+Math.sin(angle)*radiusY;return{text:pool[(i*17)%pool.length],core,bg:i%5===0&&!core,style:{left:x+'%',top:y+'%',fontSize:core?'clamp(30px,22vw,86px)':'clamp(16px,5vw,29px)','--angle':((i*7%17)-8)+'deg','--word-delay':(i%15*.07)+'s',animationDelay:(i%15*.07)+'s'}}})
+      this.words=Array.from({length:54},(_,i)=>{const angle=(i/54)*Math.PI*2-Math.PI/2;const core=['来不及了','养老负债','35岁危机','没有退路了'].includes(pool[(i*17)%pool.length]);const radiusX=core?30:38;const radiusY=core?28:36;const x=50+Math.cos(angle)*radiusX;const y=50+Math.sin(angle)*radiusY;return{text:pool[(i*17)%pool.length],core,bg:i%5===0&&!core,style:{left:x+'%',top:y+'%',marginLeft:'-50%',marginTop:'-50%',fontSize:core?'clamp(30px,22vw,86px)':'clamp(16px,5vw,29px)','--angle':((i*7%17)-8)+'deg','--word-delay':(i%15*.07)+'s',animationDelay:(i%15*.07)+'s'}}})
     },
     skip(){this.enter(true)},
     enter(skip=false){if(this.revealing)return;if(skip){state.started=true;persist();uni.reLaunch({url:'/pages/index/index'});return}this.revealing=true;setTimeout(()=>{state.started=true;persist();uni.reLaunch({url:'/pages/index/index'})},650)},
