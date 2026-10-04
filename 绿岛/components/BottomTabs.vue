@@ -45,7 +45,7 @@ export default {
   methods: {
     updateVisibility() {
       const pages = getCurrentPages()
-      const route = pages.length ? pages[pages.length - 1].route : ''
+      const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
       this.visible = ['pages/index/index','pages/tools/index','pages/community/index','pages/profile/index'].includes(route)
     },
     switchTab(path) {
