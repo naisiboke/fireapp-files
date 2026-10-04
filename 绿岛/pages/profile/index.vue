@@ -180,7 +180,7 @@ export default {
     },
 
     goPage(url) {
-      uni.navigateTo({ url: url })
+      uni.reLaunch({ url: url })
     },
     goOnboarding() {
       uni.showToast({ title: '个人资料编辑开发中', icon: 'none' })
