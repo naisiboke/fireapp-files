@@ -30,6 +30,7 @@ export default {
       tabs: [
         { path: '/pages/index/index',     key: 'home' },
         { path: '/pages/tools/index',     key: 'tools' },
+        { path: '/pages/community/index', key: 'community' },
         { path: '/pages/profile/index',   key: 'profile' },
       ],
     }
