@@ -127,31 +127,6 @@
       }
     }
   ],
-  "tabBar": {
-    "custom": true,
-    "color": "#839084",
-    "selectedColor": "#243830",
-    "backgroundColor": "#fafbf7",
-    "borderStyle": "white",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/tools/index",
-        "text": "工具"
-      },
-      {
-        "pagePath": "pages/community/index",
-        "text": "社区"
-      },
-      {
-        "pagePath": "pages/profile/index",
-        "text": "我的"
-      }
-    ]
-  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarBackgroundColor": "#fdfdfb",
