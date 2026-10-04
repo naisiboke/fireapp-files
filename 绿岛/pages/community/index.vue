@@ -313,13 +313,13 @@
 
           <view class="post-block">
             <text class="post-label">主题</text>
-            <input class="post-input" v-model="postDraft.title" maxlength="80" placeholder="用一句话概括你的经历" />
+            <input class="post-input" v-model="postDraft.title" type="text" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="80" placeholder="用一句话概括你的经历" />
           </view>
 
           <view class="post-block">
             <text class="post-label">简介</text>
             <view class="post-textarea-wrap">
-              <textarea class="post-textarea" v-model="postDraft.content" maxlength="300" placeholder="简单写下这段经历的背景和现在的状态……" />
+              <textarea class="post-textarea" v-model="postDraft.content" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="300" placeholder="简单写下这段经历的背景和现在的状态……" />
               <text class="post-counter">{{ postDraft.content.length }} / 300</text>
             </view>
           </view>
@@ -327,8 +327,8 @@
           <view class="post-block">
             <text class="post-label">时间点</text>
             <view v-for="(row, i) in postDraft.timeline" :key="i" class="post-tl-row">
-              <input class="pt-year" v-model="row.year" type="number" maxlength="4" placeholder="年份" />
-              <input class="pt-title" v-model="row.title" maxlength="60" placeholder="事件描述" />
+              <input class="pt-year" v-model="row.year" type="number" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="4" placeholder="年份" />
+              <input class="pt-title" v-model="row.title" type="text" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="60" placeholder="事件描述" />
               <view class="pt-remove" @tap="removeTimelineRow(i)"><text class="pt-remove-icon">×</text></view>
             </view>
             <view class="post-add" @tap="addTimelineRow"><text class="post-add-text">＋ 添加时间点</text></view>
