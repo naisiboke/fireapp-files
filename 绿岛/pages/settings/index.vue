@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { state, reset } from '@/store/index.js'
+import { state, clearAllData } from '@/store/index.js'
 
 export default {
   data() {
@@ -73,9 +73,7 @@ export default {
         content: '会清除当前设备内的所有记录，不可撤销。',
         success: (res) => {
           if (res.confirm) {
-            uni.clearStorageSync()
-            reset()
-            state.started = false
+            clearAllData()
             uni.reLaunch({ url: '/pages/onboarding/onboarding' })
           }
         },
