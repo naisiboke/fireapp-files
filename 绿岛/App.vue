@@ -4,8 +4,7 @@ import { bootstrap, persist } from './store/index.js'
 export default {
   onLaunch() {
     bootstrap()
-    // 首屏永远先进入空白启动页，由启动页统一判断引导、登录和首页。
-    setTimeout(() => uni.reLaunch({ url: '/pages/launch/index' }), 0)
+    // pages.json 的首屏启动页统一负责跳转，App 不再重复导航。
   },
   onHide() {
     persist()
