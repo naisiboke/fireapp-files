@@ -208,6 +208,11 @@ export default {
   },
 
   onLoad() {
+    // 首次启动先展示沉浸式引导页，完成后再进入首页
+    if (!state.started) {
+      uni.reLaunch({ url: '/pages/onboarding/index' })
+      return
+    }
     this.tick()
     this.timer = setInterval(this.tick, 1000)
   },
