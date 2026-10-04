@@ -14,9 +14,9 @@
         <scroll-view class="sheet-scroll" scroll-y :scroll-into-view="focusedField">
           <view class="sheet-content">
             <text class="field-label">名称</text>
-            <input id="plan-name" v-model="form.name" class="input" type="text" placeholder="请输入消费计划名称" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" @focus="focusedField='plan-name'" />
+            <input id="plan-name" v-model="form.name" class="input" type="text" placeholder="请输入消费计划名称" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" @input="onNameInput" @focus="focusedField='plan-name'" />
             <text class="field-label">预计金额</text>
-            <view id="plan-amount" class="money-input"><text>¥</text><input v-model="form.amount" type="digit" :disabled="false" :readonly="false" placeholder="预计金额" :adjust-position="true" :cursor-spacing="24" @tap.stop @focus="focusedField='plan-amount'" /></view>
+            <view id="plan-amount" class="money-input"><text>¥</text><input v-model="form.amount" type="digit" :disabled="false" :readonly="false" placeholder="预计金额" :adjust-position="true" :cursor-spacing="24" @input="form.amount=$event.detail.value" @focus="focusedField='plan-amount'" /></view>
             <text class="field-label">分类</text>
             <view class="category-row"><view v-for="cat in categories" :key="cat.id" class="choice" :class="{active:form.category===cat.id}" @tap="form.category=cat.id">{{ cat.name }}</view></view>
             <text class="field-label">冷静期</text>
