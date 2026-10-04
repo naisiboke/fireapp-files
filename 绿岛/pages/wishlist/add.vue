@@ -23,7 +23,11 @@ import { state, persist } from '@/store/index.js'
 const form=reactive({name:'',amount:'',category:'other',days:7})
 const error=ref('')
 const categories=[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}]
-function back(){uni.navigateBack()}
+function back(){
+  const pages=getCurrentPages()
+  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.switchTab({url:'/pages/tools/index'})})
+  else uni.switchTab({url:'/pages/tools/index'})
+}
 function handleSubmit(){
   const name=String(form.name||'').trim()
   const amount=Number(form.amount)
