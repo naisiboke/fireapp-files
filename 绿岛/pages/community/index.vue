@@ -590,11 +590,7 @@ export default {
     },
 
     openPost() {
-      const d = CS.draft()
-      this.postDraft = d
-        ? { ...EMPTY_DRAFT(), ...d, timeline: (d.timeline && d.timeline.length) ? d.timeline : [{ year: '', title: '' }] }
-        : EMPTY_DRAFT()
-      this.modal = 'post'
+      uni.navigateTo({ url: '/pages/community/share' })
     },
 
     closePost() {
