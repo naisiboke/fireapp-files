@@ -244,10 +244,10 @@ export default {
     back() {
       if (this._navigating) return
       this._navigating = true
-      uni.reLaunch({
-        url: '/pages/tools/index',
-        complete: () => { setTimeout(() => { this._navigating = false }, 300) }
-      })
+      const pages = getCurrentPages()
+      const done = () => { setTimeout(() => { this._navigating = false }, 300) }
+      if (pages.length > 1) uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/tools/index', complete: done }), complete: done })
+      else uni.reLaunch({ url: '/pages/tools/index', complete: done })
     },
 
     toggleBudget() {
