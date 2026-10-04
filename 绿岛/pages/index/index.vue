@@ -213,15 +213,20 @@ export default {
   },
 
   onLoad() {
-    // 登录状态仅用于当前 Mock 演示
-    if (uni.getStorageSync('fire_login_status') !== true) {
+    // 与 App.vue 保持相同的启动判断，避免默认首页抢先渲染
+    const hasSeenIsland = uni.getStorageSync('fire_island_onboarding_done') === true
+    const hasLoggedIn = uni.getStorageSync('fire_login_status') === true
+    const guestMode = uni.getStorageSync('fire_guest_mode') === true
+    if (!hasSeenIsland) {
+      uni.reLaunch({ url: '/pages/onboarding/onboarding' })
+      return
+    }
+    if (!hasLoggedIn && !guestMode) {
       uni.reLaunch({ url: '/pages/login/login' })
       return
     }
-    // 首次启动先展示沉浸式引导页，完成后再进入首页
     if (!state.started) {
-      uni.reLaunch({ url: '/pages/onboarding/onboarding' })
-      return
+      state.started = true
     }
     this.bindVisibilityEvents()
     this.startCountdown()
