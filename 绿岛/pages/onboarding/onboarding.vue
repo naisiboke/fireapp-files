@@ -11,12 +11,12 @@
       >{{ word.text }}</text>
     </view>
 
-    <button class="skip-button" @tap="skip">跳过引导</button>
+    <button class="skip-button fire-button-outline fire-button-sm" @tap="skip">跳过引导</button>
 
     <view class="hope-layer">
       <view class="green-beacon"></view>
       <text class="hope-title">在喧嚣中，抓住你的绿岛。</text>
-      <button class="enter-button" @tap="enter">踏上绿岛</button>
+      <button class="enter-button fire-button-primary" @tap="enter">踏上绿岛</button>
     </view>
 
     <view v-if="revealing" class="reveal-layer" :style="revealStyle"></view>
