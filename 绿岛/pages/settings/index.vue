@@ -60,9 +60,9 @@ export default {
     safeBack() {
       const pages = getCurrentPages()
       if (pages.length > 1) {
-        uni.navigateBack({ delta: 1, fail: () => uni.switchTab({ url: '/pages/profile/index' }) })
+        uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/profile/index' }) })
       } else {
-        uni.switchTab({ url: '/pages/profile/index' })
+        uni.reLaunch({ url: '/pages/profile/index' })
       }
     },
     toggleSound() {
