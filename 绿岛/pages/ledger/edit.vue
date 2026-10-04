@@ -94,7 +94,7 @@
         </view>
       </view>
 
-      <view v-if="keyboardCollapsed" class="save-btn" @click="submit">
+      <view v-if="keyboardCollapsed" class="save-btn fire-button-primary fire-button-lg" @click="submit">
         <text class="save-btn-text">{{ editing ? '保存修改' : '完成' }}</text>
       </view>
     </view>
