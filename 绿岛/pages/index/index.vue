@@ -110,15 +110,12 @@
 
       <text class="safe-note">F.I.R.E · 让选择回到自己手中</text>
     </view>
-
-    <BottomTabs current="home" />
   </view>
 </template>
 
 <script>
 import { state } from '@/store/index.js'
 import { FireEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
-import BottomTabs from '@/components/BottomTabs.vue'
 
 const TASK_ICONS = {
   ledger:   'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
@@ -133,8 +130,6 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs },
-
   data() {
     return {
       state,
