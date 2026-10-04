@@ -244,7 +244,7 @@ export default {
     back() {
       if (this._navigating) return
       this._navigating = true
-      uni.switchTab({
+      uni.reLaunch({
         url: '/pages/tools/index',
         complete: () => { setTimeout(() => { this._navigating = false }, 300) }
       })
