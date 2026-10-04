@@ -271,12 +271,8 @@ export default {
       this._navigating = true
       uni.navigateBack({
         delta: 1,
-        fail: () => {
-          uni.switchTab({ url: '/pages/index/index' })
-        },
-        complete: () => {
-          setTimeout(() => { this._navigating = false }, 400)
-        }
+        success: () => { setTimeout(() => { this._navigating = false }, 300) },
+        fail: () => { this._navigating = false }
       })
     },
 
