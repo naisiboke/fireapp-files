@@ -178,11 +178,12 @@ export default {
 
   methods: {
     back() {
+      if (this._backPending) return
+      this._backPending = true
       uni.navigateBack({
         delta: 1,
-        fail: function () {
-          uni.switchTab({ url: '/pages/index/index' })
-        }
+        success: () => { setTimeout(() => { this._backPending = false }, 300) },
+        fail: () => { this._backPending = false }
       })
     },
 
