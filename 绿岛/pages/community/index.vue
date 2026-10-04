@@ -590,7 +590,7 @@ export default {
     },
 
     openPost() {
-      uni.navigateTo({ url: '/pages/community/share' })
+      uni.navigateTo({ url: '/pages/community/share?from=community' })
     },
 
     closePost() {
