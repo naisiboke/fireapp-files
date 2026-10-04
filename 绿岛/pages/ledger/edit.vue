@@ -99,6 +99,7 @@
       </view>
     </view>
 
+    <BottomTabs current="tools" />
   </view>
 </template>
 
@@ -108,6 +109,7 @@ import {
   LocalDay, LedgerCategories, SaveExpense, HeroDay, HeroComplete,
 } from '@/utils/engine.js'
 import { categoryIconUri } from '@/utils/category-icons.js'
+import BottomTabs from '@/components/BottomTabs.vue'
 
 const EMPTY_DRAFT = () => ({
   type: 'expense',
@@ -119,6 +121,7 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
+  components: { BottomTabs },
   data() {
     return {
       editing: false,
