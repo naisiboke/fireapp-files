@@ -104,7 +104,7 @@ function enter(event) {
 function skip() {
   if (revealing.value) return
   finishOnboarding()
-  uni.reLaunch({ url: '/pages/index/index' })
+  uni.reLaunch({ url: '/pages/login/login' })
 }
 </script>
 
