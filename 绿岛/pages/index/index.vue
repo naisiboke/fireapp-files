@@ -57,6 +57,14 @@
       </view>
     </view>
 
+    <view v-if="state.goalPlan && state.goalPlan.name" class="goal-card">
+      <view class="goal-card-head"><text class="goal-card-label">我的目标</text><text class="goal-card-link" @tap="goGoal">查看目标 ›</text></view>
+      <text class="goal-card-name">{{ state.goalPlan.name }}</text>
+      <text class="goal-card-meta">目标金额 ¥ {{ formatMoney(state.goalPlan.amount) }} · 预期 {{ state.goalPlan.expectedMonths }} 个月</text>
+      <view class="goal-card-progress"><view class="goal-card-progress-fill" :style="{ width: (state.goalPlan.progress || 0) + '%' }"></view></view>
+      <view class="goal-card-foot"><text>每月存入 ¥ {{ formatMoney(state.goalPlan.monthlyDeposit) }}</text><text>{{ state.goalPlan.targetDate || '尚未计算' }}</text></view>
+    </view>
+
     <view class="home-content">
 
       <view class="home-metrics">
@@ -243,6 +251,7 @@ export default {
     },
     goCalculator() { uni.showToast({ title: '计算器页面待开发', icon: 'none' }) },
     goResult() { uni.showToast({ title: '计划详情待开发', icon: 'none' }) },
+    goGoal() { uni.showToast({ title: '目标详情待开发', icon: 'none' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goTask(t) {
       if (t.id === 'ledger') uni.navigateTo({ url: '/pages/ledger/index' })
@@ -291,6 +300,14 @@ export default {
 .btn-primary { margin-top: 24px; padding: 16px 20px; border-radius: 10px; background: #243830; display: flex; justify-content: center; align-items: center; }
 .btn-primary-text { color: #fff; font-size: 15px; font-weight: 500; }
 
+.goal-card { margin: 0 24px 24px; padding: 20px; border-radius: 18px; background: linear-gradient(135deg, #eef4e8, #e3eee4); border: 1px solid #d9e6d6; box-sizing: border-box; }
+.goal-card-head, .goal-card-foot { display: flex; justify-content: space-between; align-items: center; }
+.goal-card-label { font-size: 14px; color: #527059; font-weight: 700; }
+.goal-card-link, .goal-card-meta, .goal-card-foot { font-size: 12px; color: #718074; }
+.goal-card-name { display: block; margin: 14px 0 6px; font-size: 23px; color: #243830; font-weight: 700; }
+.goal-card-meta { display: block; line-height: 1.7; }
+.goal-card-progress { height: 6px; margin: 16px 0 12px; border-radius: 6px; background: #d5e3d4; overflow: hidden; }
+.goal-card-progress-fill { height: 100%; border-radius: 6px; background: #527059; }
 .home-content { padding: 0 24px; }
 .home-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 24px 0; border-top: 1px solid #e5e9e0; border-bottom: 1px solid #e5e9e0; }
 .metric { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
