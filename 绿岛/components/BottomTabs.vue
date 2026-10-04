@@ -66,21 +66,24 @@ export default {
 
 <style>
 .bottom-tabs {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
-  width: 100%;
-  max-width: 460px;
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 68px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: #fafbf7;
+  background: #fafbf7 !important;
   border-top: 1px solid #e5e9e0;
-  padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
-  z-index: 100;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  z-index: 99999 !important;
   box-sizing: border-box;
-}
-.tab-item {
+  transform: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}.tab-item {
   display: flex;
   align-items: center;
   justify-content: center;
