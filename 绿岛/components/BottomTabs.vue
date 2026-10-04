@@ -3,7 +3,7 @@
     <view
       v-for="t in tabs"
       :key="t.path"
-      class="tab-item"
+      class="tab-item" :class="{ active: t.key === current }"
       @click="switchTab(t.path)"
     >
       <image class="tab-icon" :src="iconUri(t.key, t.key === current)" mode="aspectFit" />
@@ -84,13 +84,19 @@ export default {
   visibility: visible !important;
   opacity: 1 !important;
 }.tab-item {
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6px 0;
+  border-radius: 12px;
+  transition: transform 180ms ease, background-color 180ms ease;
 }
+.tab-item.active { background: #eef3ec; }
+.tab-item:active { transform: scale(.98); }
 .tab-icon {
   width: 26px;
   height: 26px;
 }
+@media (prefers-reduced-motion: reduce) { .tab-item { transition: none; } .tab-item:active { transform: none; } }
 </style>
