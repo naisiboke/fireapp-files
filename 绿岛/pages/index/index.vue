@@ -210,7 +210,7 @@ export default {
   onLoad() {
     // 首次启动先展示沉浸式引导页，完成后再进入首页
     if (!state.started) {
-      uni.reLaunch({ url: '/pages/onboarding/index' })
+      uni.reLaunch({ url: '/pages/onboarding/onboarding' })
       return
     }
     this.tick()
