@@ -139,6 +139,11 @@ export default {
       years: 0, months: 0, days: 0,
       hours: 0, minutes: 0, seconds: 0,
       timer: null,
+      timeout: null,
+      raf: null,
+      visibilityHandler: null,
+      pageShowHandler: null,
+      pageHideHandler: null,
     }
   },
 
