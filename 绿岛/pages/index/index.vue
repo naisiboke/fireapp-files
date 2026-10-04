@@ -129,7 +129,7 @@
 </template>
 
 <script>
-import BottomTabs from '@/components/BottomTabs.vue'
+import BottomTabs from '@/components/BodttomTabs.vue'
 import { state } from '@/store/index.js'
 import { FireEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
 
