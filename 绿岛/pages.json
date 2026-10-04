@@ -1,7 +1,7 @@
 {
   "pages": [
     {
-      "path": "pages/onboarding/index",
+      "path": "pages/onboarding/onboarding",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": ""
