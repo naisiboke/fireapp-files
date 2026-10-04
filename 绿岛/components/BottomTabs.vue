@@ -1,5 +1,5 @@
 <template>
-  <view v-if="visible" class="bottom-tabs">
+  <view class="bottom-tabs">
     <view
       v-for="t in tabs"
       :key="t.path"
@@ -27,8 +27,6 @@ export default {
   data() {
     return {
       _navigating: false,
-      visible: true,
-      routeTimer: null,
       tabs: [
         { path: '/pages/index/index',     key: 'home' },
         { path: '/pages/tools/index',     key: 'tools' },
@@ -37,22 +35,12 @@ export default {
       ],
     }
   },
-  mounted() {
-    this.updateVisibility()
-    this.routeTimer = setInterval(this.updateVisibility, 180)
-  },
-  unmounted() { if (this.routeTimer) clearInterval(this.routeTimer) },
   methods: {
-    updateVisibility() {
-      const pages = getCurrentPages()
-      const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
-      this.visible = ['pages/index/index','pages/tools/index','pages/community/index','pages/profile/index'].includes(route)
-    },
     switchTab(path) {
       if (this._navigating) return
       this._navigating = true
       const current = getCurrentPages()
-      const currentPath = current.length ? '/' + current[current.length - 1].route : ''
+      const currentPath = current.length ? '/' + String(current[current.length - 1].route || '').replace(/^\//, '') : ''
       if (currentPath === path) {
         this._navigating = false
         return
