@@ -366,10 +366,12 @@
         </view>
       </view>
     </view>
+    <BottomTabs current="community" />
   </view>
 </template>
 
 <script>
+import BottomTabs from '@/components/BottomTabs.vue'
 import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
 
@@ -381,6 +383,7 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
+  components: { BottomTabs },
   data() {
     return {
       POST_TAGS: COMMUNITY_POST_TAGS,
