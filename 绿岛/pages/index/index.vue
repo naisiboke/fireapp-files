@@ -82,6 +82,14 @@
         </view>
       </view>
 
+      <view v-if="wishlistCount" class="wishlist-home-card">
+        <view class="wishlist-home-head"><text class="section-title">我的拔草</text><text class="wishlist-home-count">{{ wishlistCount }} 项进行中</text></view>
+        <view v-for="item in wishlistPreview" :key="item.id" class="wishlist-home-row" @tap="goWishlist">
+          <view class="wishlist-home-copy"><text class="wishlist-home-name">{{ item.name }}</text><text class="wishlist-home-sub">¥ {{ formatMoney(item.amount) }} · {{ wishlistStatus(item) }}</text></view>
+          <text class="wishlist-home-arrow">›</text>
+        </view>
+      </view>
+
       <view class="section">
         <view class="section-head">
           <text class="section-title">今日行动</text>
@@ -189,8 +197,14 @@ export default {
     incomeTotal()  { return LedgerSummary(state, undefined, 'income').total },
     wishlistSaved() {
       return (state.items || [])
-        .filter(x => x.status === 'abandoned' && Number.isFinite(x.amount) && x.amount > 0)
-        .reduce((sum, x) => sum + x.amount, 0)
+        .filter(x => x.status === 'abandoned' && Number(x.amount) > 0)
+        .reduce((sum, x) => sum + Number(x.amount), 0)
+    },
+    wishlistCount() {
+      return (state.items || []).filter(x => x.status === 'active').length
+    },
+    wishlistPreview() {
+      return (state.items || []).filter(x => x.status === 'active').slice(0, 3)
     },
     todayCount() {
       if (!state.hero) return 0
@@ -338,6 +352,11 @@ export default {
     goResult() { uni.showToast({ title: '计划详情待开发', icon: 'none' }) },
     goGoal() { uni.showToast({ title: '目标详情待开发', icon: 'none' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
+    goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
+    wishlistStatus(item) {
+      const left = Math.max(0, Math.ceil((Number(item.created || Date.now()) + Number(item.days || 7) * 86400000 - Date.now()) / 86400000))
+      return left ? '冷静期剩余 ' + left + ' 天' : '冷静期已结束'
+    },
     goTask(t) {
       if (t.id === 'ledger') uni.navigateTo({ url: '/pages/ledger/index' })
       else uni.showToast({ title: '这个任务待开发', icon: 'none' })
@@ -409,7 +428,15 @@ export default {
 .metric-value.metric-expense { color: #8a4f16; }
 .metric-value.metric-income  { color: #25613f; }
 
-.section { margin-top: 28px; }
+.wishlist-home-card { margin-top: 24px; padding: 18px; border: 1px solid #e1e7de; border-radius: 16px; background: #f4f8f1; }
+.wishlist-home-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+.wishlist-home-count { font-size: 12px; color: #718074; }
+.wishlist-home-row { display:flex; align-items:center; padding: 13px 0; border-top:1px solid #e1e7de; }
+.wishlist-home-copy { flex:1; min-width:0; }
+.wishlist-home-name { display:block; color:#243830; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wishlist-home-sub { display:block; margin-top:4px; color:#718074; font-size:11px; }
+.wishlist-home-arrow { color:#718074; font-size:22px; }
+\n.section { margin-top: 28px; }
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .section-title { font-size: 18px; font-weight: 700; color: #143e37; }
 .section-count { font-size: 14px; color: #527059; }
