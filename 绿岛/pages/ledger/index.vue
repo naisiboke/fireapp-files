@@ -354,16 +354,8 @@ export default {
   },
 
   onBackPress() {
-    if (this._navigating) return true
-    this._navigating = true
-    uni.navigateBack({
-      delta: 1,
-      fail: function () {
-        uni.switchTab({ url: '/pages/index/index' })
-      }
-    })
-    setTimeout(() => { this._navigating = false }, 400)
-    return true
+    // 交给系统处理返回，避免在回调里再次 navigateBack 造成递归。
+    return false
   },
 }
 </script>
