@@ -22,7 +22,14 @@ const saved=CS.draft()
 const form=reactive(saved?{...empty(),...saved,timeline:saved.timeline?.length?saved.timeline:[{year:'',title:''}]}:empty())
 const validTimeline=computed(()=>form.timeline.filter(x=>String(x.year).trim()&&String(x.title).trim()))
 const ready=computed(()=>form.tags.length>0&&form.title.trim()&&form.content.trim()&&validTimeline.value.length>0)
-function close(){CS.saveDraft(form);uni.navigateBack()}
+function exitToSafePage(){
+ const seen=uni.getStorageSync('fire_island_onboarding_done')===true
+ const logged=uni.getStorageSync('fire_login_status')===true
+ const guest=uni.getStorageSync('fire_guest_mode')===true
+ const url=!seen?'/pages/onboarding/onboarding':(!logged&&!guest?'/pages/login/login':'/pages/community/index')
+ uni.reLaunch({url})
+}
+function close(){CS.saveDraft(form);exitToSafePage()}
 function toggleTag(tag){const i=form.tags.indexOf(tag);if(i>=0)form.tags.splice(i,1);else form.tags.push(tag)}
 function addRow(){form.timeline.push({year:'',title:''})}
 function removeRow(i){if(form.timeline.length>1)form.timeline.splice(i,1)}
@@ -32,7 +39,7 @@ function publish(){
  const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'pending'}
  const list=CS.ugc();list.unshift(post)
  if(!CS.saveUGC(list)){uni.showToast({title:'保存失败',icon:'none'});return}
- CS.clearDraft();uni.showToast({title:'已提交，审核通过后展示',icon:'none'});setTimeout(()=>uni.navigateBack(),300)
+ CS.clearDraft();uni.showToast({title:'已提交，审核通过后展示',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index'}),300)
 }
 </script>
 <style lang="scss">
