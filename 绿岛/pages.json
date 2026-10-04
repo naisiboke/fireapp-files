@@ -1,6 +1,20 @@
 {
   "pages": [
     {
+      "path": "pages/register/register",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
       "path": "pages/onboarding/onboarding",
       "style": {
         "navigationStyle": "custom",
