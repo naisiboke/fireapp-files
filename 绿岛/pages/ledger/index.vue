@@ -281,12 +281,8 @@ export default {
       this._navigating = true
       uni.switchTab({
         url: path,
-        fail: () => {
-          uni.navigateTo({ url: path })
-        },
-        complete: () => {
-          setTimeout(() => { this._navigating = false }, 400)
-        }
+        success: () => { setTimeout(() => { this._navigating = false }, 300) },
+        fail: () => { this._navigating = false }
       })
     },
 
