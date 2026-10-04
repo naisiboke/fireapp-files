@@ -34,8 +34,8 @@ function categoryName(v){return categories[v]||'其他'}
 function categoryIcon(v){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[v]||'＋'}
 function back(){
   const pages=getCurrentPages()
-  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.switchTab({url:'/pages/tools/index'})})
-  else uni.switchTab({url:'/pages/tools/index'})
+  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/tools/index'})})
+  else uni.reLaunch({url:'/pages/tools/index'})
 }
 function finish(status){
   if(!item.value||item.value.status!=='active')return
