@@ -38,6 +38,9 @@
       <view v-if="visiblePosts.length === 0" class="empty">
         <text class="empty-h2">还没有人在路上分享</text>
         <text class="empty-p">成为第一个写下自己故事的人吧</text>
+        <view class="empty-btn" @tap="openPost">
+          <text class="empty-btn-text">分享我的经历</text>
+        </view>
       </view>
 
       <view v-for="(post, i) in visiblePosts" :key="post.id" class="card" :style="{ animationDelay: (i * 40) + 'ms' }">
