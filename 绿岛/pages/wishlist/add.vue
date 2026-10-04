@@ -14,7 +14,7 @@
         <text v-if="error" class="error">{{error}}</text>
       </view>
     </scroll-view>
-    <view class="submit-bar"><button class="submit" type="button" @click="handleSubmit">完成</button></view>
+    <view class="submit-bar"><button class="submit fire-button-primary fire-button-lg" type="button" @click="handleSubmit">完成</button></view>
   </view>
 </template>
 <script setup>
