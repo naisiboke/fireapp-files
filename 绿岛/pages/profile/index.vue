@@ -201,7 +201,7 @@ export default {
 </script>
 
 <style>
-@keyframes profilePageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes profilePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes profileMenuIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
 .profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) both;
   min-height: 100vh;
