@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/wishlist/add",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "添加消费计划"
+      }
+    },
+    {
       "path": "pages/register/register",
       "style": {
         "navigationStyle": "custom",
