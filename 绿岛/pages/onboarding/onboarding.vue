@@ -84,6 +84,7 @@ function setLightTheme() {
 
 function finishOnboarding() {
   state.started = true
+  uni.setStorageSync('fire_island_onboarding_done', true)
   setLightTheme()
   persist()
 }
@@ -96,7 +97,7 @@ function enter(event) {
   revealing.value = true
   setTimeout(() => {
     finishOnboarding()
-    uni.reLaunch({ url: '/pages/index/index' })
+    uni.reLaunch({ url: '/pages/login/login' })
   }, 620)
 }
 
