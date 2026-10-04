@@ -38,17 +38,12 @@
 export default {
   methods: {
     back() {
-      const pages = getCurrentPages()
-      if (pages.length > 1) {
-        uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/profile/index' }) })
-      } else {
-        uni.reLaunch({ url: '/pages/profile/index' })
-      }
+      uni.navigateBack()
     },
   },
   onBackPress() {
-    // 不在 onBackPress 中再次调用 navigateBack，避免触发递归错误。
-    return false
+    uni.navigateBack()
+    return true
   },
 }
 </script>

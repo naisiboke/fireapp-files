@@ -244,10 +244,10 @@ export default {
     back() {
       if (this._navigating) return
       this._navigating = true
-      const pages = getCurrentPages()
-      const done = () => { setTimeout(() => { this._navigating = false }, 300) }
-      if (pages.length > 1) uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/tools/index', complete: done }), complete: done })
-      else uni.reLaunch({ url: '/pages/tools/index', complete: done })
+      uni.switchTab({
+        url: '/pages/tools/index',
+        complete: () => { setTimeout(() => { this._navigating = false }, 300) }
+      })
     },
 
     toggleBudget() {
@@ -354,8 +354,16 @@ export default {
   },
 
   onBackPress() {
-    // 交给系统处理返回，避免在回调里再次 navigateBack 造成递归。
-    return false
+    if (this._navigating) return true
+    this._navigating = true
+    uni.navigateBack({
+      delta: 1,
+      fail: function () {
+        uni.switchTab({ url: '/pages/index/index' })
+      }
+    })
+    setTimeout(() => { this._navigating = false }, 400)
+    return true
   },
 }
 </script>

@@ -32,11 +32,7 @@ const createdText=computed(()=>item.value?new Date(Number(item.value.created)).t
 function money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})}
 function categoryName(v){return categories[v]||'其他'}
 function categoryIcon(v){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[v]||'＋'}
-function back(){
-  const pages=getCurrentPages()
-  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/tools/index'})})
-  else uni.reLaunch({url:'/pages/tools/index'})
-}
+function back(){uni.navigateBack()}
 function finish(status){
   if(!item.value||item.value.status!=='active')return
   const target=state.items.find(x=>x.id===item.value.id)

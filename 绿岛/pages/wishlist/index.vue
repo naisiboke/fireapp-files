@@ -92,7 +92,7 @@ export default {
       setTimeout(() => { this.submitLock = false }, 350)
     },
     money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})},
-    back(){uni.reLaunch({url:'/pages/tools/index'})},
+    back(){uni.switchTab({url:'/pages/tools/index'})},
     categoryIcon(c){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[c]||'＋'},
     statusText(x){if(x.status==='active'){const left=Math.max(0,Math.ceil((Number(x.created||Date.now())+Number(x.days||7)*86400000-Date.now())/86400000));return left?'冷静期剩余 '+left+' 天':'冷静期已结束'}return x.status==='abandoned'?'已放弃购买 · 已计入省下金额':'已购买 · 未计入省下金额'},
     addItem(){const name=String(this.form.name||'').trim(),amount=Number(this.form.amount);state.items.push({id:'item-'+Date.now(),name,amount,category:this.form.category,days:this.form.days,created:Date.now(),status:'active',note:''});persist();this.form={name:'',amount:'',category:'other',days:7};this.closeAdd();uni.showToast({title:'消费计划已添加',icon:'success'})},

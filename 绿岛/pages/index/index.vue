@@ -11,12 +11,6 @@
       </view>
 
       <view v-if="!state.financeEntered" class="home-unconfigured">
-        <view class="blank-summary" aria-label="尚未填写财务数据">
-          <view class="freedom-head"><text class="freedom-label">预计自由日</text><text class="plan-link">待填写</text></view>
-          <view class="blank-countdown"><text class="blank-countdown-value">待填写</text></view>
-          <text class="countdown-target">剩余年份：待填写</text>
-          <view class="freedom-foot"><text class="foot-left">当前资产 待填写</text><text class="foot-right">进度 待填写</text></view>
-        </view>
         <text class="unconfigured-label">从了解自己开始</text>
         <text class="unconfigured-h2">先填写你的财务数据</text>
         <text class="unconfigured-sub">填写资产、每月存入和退休后消费，就能看到你的自由日与计划进度。</text>
@@ -76,15 +70,15 @@
       <view class="home-metrics">
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月消费 ›</text>
-          <text class="metric-value metric-expense">{{ state.financeEntered ? '¥ ' + formatAmount(expenseTotal / 100) : '待填写' }}</text>
+          <text class="metric-value metric-expense">¥ {{ formatAmount(expenseTotal / 100) }}</text>
         </view>
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月收入 ›</text>
-          <text class="metric-value metric-income">{{ state.financeEntered ? '¥ ' + formatAmount(incomeTotal / 100) : '待填写' }}</text>
+          <text class="metric-value metric-income">¥ {{ formatAmount(incomeTotal / 100) }}</text>
         </view>
         <view class="metric">
           <text class="metric-label">拔草已省下</text>
-          <text class="metric-value">{{ state.financeEntered ? '¥ ' + formatAmount(wishlistSaved) : '待填写' }}</text>
+          <text class="metric-value">¥ {{ formatAmount(wishlistSaved) }}</text>
         </view>
       </view>
 
@@ -414,10 +408,6 @@ export default {
 .foot-left, .foot-right { font-size: 12px; color: #687760; }
 
 .home-unconfigured { position: relative; z-index: 2; padding: 16px 0 24px; }
-.blank-summary { padding: 0 0 20px; }
-.blank-countdown { display:flex; align-items:center; justify-content:center; min-height:68px; margin-top:12px; border-top:1px solid rgba(229,233,224,.8); border-bottom:1px solid rgba(229,233,224,.8); }
-.blank-countdown-value { font-size:28px; color:#839084; letter-spacing:1px; }
-
 .unconfigured-label { display: block; font-size: 18px; font-weight: 700; color: #203c2b; }
 .unconfigured-h2 { display: block; font-size: 24px; font-weight: 600; color: #243830; margin: 14px 0 10px; line-height: 1.5; }
 .unconfigured-sub { display: block; font-size: 14px; line-height: 1.8; color: #52605a; }

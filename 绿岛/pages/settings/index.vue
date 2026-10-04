@@ -49,22 +49,14 @@
 </template>
 
 <script>
-import { state, clearAllData } from '@/store/index.js'
+import { state, reset } from '@/store/index.js'
 
 export default {
   data() {
     return { state: state }
   },
   methods: {
-    back() { this.safeBack() },
-    safeBack() {
-      const pages = getCurrentPages()
-      if (pages.length > 1) {
-        uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/profile/index' }) })
-      } else {
-        uni.reLaunch({ url: '/pages/profile/index' })
-      }
-    },
+    back() { uni.navigateBack() },
     toggleSound() {
       state.soundEnabled = !state.soundEnabled
       // 触发一次存储
@@ -81,7 +73,9 @@ export default {
         content: '会清除当前设备内的所有记录，不可撤销。',
         success: (res) => {
           if (res.confirm) {
-            clearAllData()
+            uni.clearStorageSync()
+            reset()
+            state.started = false
             uni.reLaunch({ url: '/pages/onboarding/onboarding' })
           }
         },
@@ -89,8 +83,8 @@ export default {
     },
   },
   onBackPress() {
-    // 不在 onBackPress 中再次调用 navigateBack，避免触发递归错误。
-    return false
+    uni.navigateBack()
+    return true
   },
 }
 </script>

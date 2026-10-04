@@ -307,7 +307,8 @@ export default {
   },
 
   onBackPress() {
-    return false
+    this.back()
+    return true
   },
 }
 </script>

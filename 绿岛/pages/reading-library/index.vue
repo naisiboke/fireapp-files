@@ -21,7 +21,7 @@
 export default {
   data() { return { tab: 'shelf' } },
   methods: {
-    back() { const pages=getCurrentPages(); if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/tools/index'})}); else uni.reLaunch({url:'/pages/tools/index'}) },
+    back() { uni.switchTab({ url: '/pages/tools/index' }) },
   },
 }
 </script>
