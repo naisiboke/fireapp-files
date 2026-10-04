@@ -15,7 +15,8 @@
 </template>
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
-import { state, persist, HeroDay, HeroComplete, HeroLevel } from '@/utils/engine.js'
+import { state, persist } from '@/store/index.js'
+import { HeroDay, HeroComplete, HeroLevel } from '@/utils/engine.js'
 export default {
   components:{BottomTabs},
   data(){return{state,today:new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric'}),tasks:[{id:'assets',title:'记录本月资产',desc:'更新当前资产，让计划保持清晰。'},{id:'savings',title:'检视储蓄目标',desc:'看看每月存入是否符合计划。'},{id:'wishlist',title:'处理一笔待消费计划',desc:'给一笔消费留出冷静期。'},{id:'read',title:'阅读 10 分钟',desc:'留一点时间思考真正想要的生活。'}] }},
