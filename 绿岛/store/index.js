@@ -2,6 +2,19 @@ import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { LocalDay, HeroDay } from '../utils/engine.js'
 
+export const WISHLIST_KEY = 'fire_wishlist_v1'
+
+function readWishlist() {
+  try {
+    const value = uni.getStorageSync(WISHLIST_KEY)
+    return Array.isArray(value) ? value : null
+  } catch (e) { return null }
+}
+
+function writeWishlist(items) {
+  try { uni.setStorageSync(WISHLIST_KEY, JSON.parse(JSON.stringify(items || []))) } catch (e) {}
+}
+
 const seed = () => ({
   finance: {
     assets: 1248000,
@@ -39,6 +52,8 @@ export function bootstrap() {
   if (saved && saved.finance && Array.isArray(saved.items)) {
     Object.assign(state, saved)
   }
+  const wishlist = readWishlist()
+  if (wishlist) state.items = wishlist
   if (!Array.isArray(state.ledger)) state.ledger = []
   if (!Array.isArray(state.assetHistory)) state.assetHistory = []
   if (typeof state.soundEnabled !== 'boolean') state.soundEnabled = true
@@ -55,6 +70,7 @@ export function persist() {
       const plain = JSON.parse(JSON.stringify(toRaw(state)))
       delete plain.ready
       storage.set('state', plain)
+      writeWishlist(plain.items)
     } catch (e) {
       console.warn('[persist]', e)
     }
