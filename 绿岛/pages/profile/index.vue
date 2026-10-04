@@ -201,7 +201,9 @@ export default {
 </script>
 
 <style>
-.profile-page {
+@keyframes profilePageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes profileMenuIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+.profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) both;
   min-height: 100vh;
   padding: 60px 24px 120px;
   background: #f3f4f2;
@@ -342,7 +344,7 @@ export default {
   box-shadow: 0 5px 16px rgba(23,61,53,0.04);
 }
 
-.menu-item {
+ .menu-item { animation: profileMenuIn .46s cubic-bezier(.22,1,.36,1) both; }\n.menu-item:nth-child(2){animation-delay:.06s}.menu-item:nth-child(3){animation-delay:.12s}.menu-item:nth-child(4){animation-delay:.18s}.menu-item:nth-child(5){animation-delay:.24s}\n.menu-item {
   display: flex;
   align-items: center;
   gap: 14px;
