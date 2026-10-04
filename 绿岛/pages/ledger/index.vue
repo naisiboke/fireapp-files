@@ -269,10 +269,9 @@ export default {
     back() {
       if (this._navigating) return
       this._navigating = true
-      uni.navigateBack({
-        delta: 1,
-        success: () => { setTimeout(() => { this._navigating = false }, 300) },
-        fail: () => { this._navigating = false }
+      uni.redirectTo({
+        url: '/pages/tools/index',
+        complete: () => { setTimeout(() => { this._navigating = false }, 300) }
       })
     },
 
