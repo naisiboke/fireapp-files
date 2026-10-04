@@ -151,17 +151,23 @@ function skip() {
 .skip-button {
   position: absolute;
   z-index: 5;
-  top: calc(18px + env(safe-area-inset-top));
-  right: 18px;
+  top: calc(env(safe-area-inset-top) + 16px);
+  right: 16px;
   min-width: 88px;
   min-height: 44px;
   padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 999px;
   background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.72);
-  font-size: 12px;
-  line-height: 1.2;
+  color: rgba(255,255,255,.74);
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 .hope-layer {
   position: absolute;
