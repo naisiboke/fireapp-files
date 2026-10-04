@@ -37,11 +37,11 @@ export default {
       ],
     }
   },
-  onLoad() {
+  mounted() {
     this.updateVisibility()
     this.routeTimer = setInterval(this.updateVisibility, 180)
   },
-  onUnload() { if (this.routeTimer) clearInterval(this.routeTimer) },
+  unmounted() { if (this.routeTimer) clearInterval(this.routeTimer) },
   methods: {
     updateVisibility() {
       const pages = getCurrentPages()
