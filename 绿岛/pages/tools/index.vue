@@ -96,7 +96,7 @@ export default {
       u.lastUsed = Date.now()
       state.toolUsage[t.route] = u
       persist()
-      if (t.url) uni.navigateTo({ url: t.url })
+      if (t.url) uni.reLaunch({ url: t.url })
       else uni.showToast({ title: t.name + ' 开发中', icon: 'none' })
     },
   },
