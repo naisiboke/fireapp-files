@@ -62,17 +62,14 @@ export default {
 
 <style>
 .bottom-tabs {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   width: 100%;
   min-height: 68px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: rgba(250, 251, 247, .98);
   border-top: 1px solid #e5e9e0;
-  box-shadow: 0 -6px 18px rgba(36, 56, 48, .08);
+  box-shadow: 0 -2px 10px rgba(36, 56, 48, .05);
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   box-sizing: border-box;
   z-index: 99999;
