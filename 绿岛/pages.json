@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/launch/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
       "path": "pages/community/share",
       "style": {
         "navigationStyle": "custom",
