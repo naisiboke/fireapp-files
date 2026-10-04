@@ -7,7 +7,7 @@
       <view class="item-icon">{{ categoryIcon(item.category) }}</view><view class="item-copy"><text class="item-name">{{ item.name }}</text><text class="item-price">¥ {{ money(item.amount) }}</text><text class="item-sub">{{ statusText(item) }}</text></view><text class="arrow">›</text>
     </view></view>
     <view v-else class="empty"><text class="empty-icon">＋</text><text class="empty-title">{{ filter==='active'?'给心动留一点时间':'这里还没有记录' }}</text><text class="empty-sub">添加一个想买的东西，设置 3、7 或 30 天冷静期。</text></view>
-    <view v-if="!showAdd" class="add" @tap="showAdd=true"><text>＋ 添加消费计划</text></view>
+    <view v-if="!showAdd" class="add" @tap="openAdd"><text>＋ 添加消费计划</text></view>
     <view v-if="showAdd" class="mask" :style="panelStyle">
       <view class="sheet">
         <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" type="button" @tap="closeAdd" @click="closeAdd" aria-label="关闭">×</button></view>
@@ -78,6 +78,7 @@ export default {
     saved(){try{return WishlistSaved(state)}catch(e){return this.items.filter(x=>x.status==='abandoned').reduce((a,x)=>a+Number(x.amount||0),0)}},
   },
   methods:{
+    openAdd(){ uni.navigateTo({ url: '/pages/wishlist/add' }) },
     closeAdd(){ this.showAdd=false; this.focusedField=''; this.formError=''; uni.hideKeyboard() },
     handleSubmit(){
       if (this.submitLock) return
