@@ -71,7 +71,12 @@ export function bootstrap() {
   state.stateVersion = STATE_VERSION
   const wishlist = readWishlist()
   if (wishlist) state.items = wishlist
-  HeroDay(state)
+  try {
+    HeroDay(state)
+  } catch (e) {
+    // 空白新用户没有计算所需数据时，保持可用的空白状态。
+    state.hero = null
+  }
   state.ready = true
 }
 
