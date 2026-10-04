@@ -260,7 +260,7 @@ export default {
 </script>
 
 <style>
-@keyframes firePageIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes firePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
 .home-masthead { animation: fireCardIn .48s cubic-bezier(.22,1,.36,1) both; }
