@@ -21,7 +21,7 @@
 export default {
   data() { return { tab: 'shelf' } },
   methods: {
-    back() { uni.switchTab({ url: '/pages/tools/index' }) },
+    back() { uni.reLaunch({ url: '/pages/tools/index' }) },
   },
 }
 </script>
