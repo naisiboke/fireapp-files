@@ -64,7 +64,8 @@ export default {
       persist()
     },
     replayOnboarding() {
-      uni.showToast({ title: '启动流程开发中', icon: 'none' })
+      state.started = false
+      uni.reLaunch({ url: '/pages/onboarding/onboarding' })
     },
     confirmReset() {
       uni.showModal({
@@ -72,8 +73,10 @@ export default {
         content: '会清除当前设备内的所有记录，不可撤销。',
         success: (res) => {
           if (res.confirm) {
+            uni.clearStorageSync()
             reset()
-            uni.showToast({ title: '已重置', icon: 'success' })
+            state.started = false
+            uni.reLaunch({ url: '/pages/onboarding/onboarding' })
           }
         },
       })
