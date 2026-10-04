@@ -116,12 +116,10 @@
     </view>
 
     <text class="version">FIRE Forge · v1.0.0</text>
-    <BottomTabs current="profile" />
   </view>
 </template>
 
 <script>
-import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
 
 const ICONS = {
@@ -144,7 +142,6 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs },
   data() {
     return {
       state: state,
@@ -344,7 +341,9 @@ export default {
   box-shadow: 0 5px 16px rgba(23,61,53,0.04);
 }
 
- .menu-item { animation: profileMenuIn .46s cubic-bezier(.22,1,.36,1) both; }\n.menu-item:nth-child(2){animation-delay:.06s}.menu-item:nth-child(3){animation-delay:.12s}.menu-item:nth-child(4){animation-delay:.18s}.menu-item:nth-child(5){animation-delay:.24s}\n.menu-item {
+ .menu-item { animation: profileMenuIn .46s cubic-bezier(.22,1,.36,1) both; }
+.menu-item:nth-child(2){animation-delay:.06s}.menu-item:nth-child(3){animation-delay:.12s}.menu-item:nth-child(4){animation-delay:.18s}.menu-item:nth-child(5){animation-delay:.24s}
+.menu-item {
   display: flex;
   align-items: center;
   gap: 14px;
