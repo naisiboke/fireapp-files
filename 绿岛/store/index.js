@@ -64,6 +64,8 @@ export function bootstrap() {
 
 let saveTimer = null
 export function persist() {
+  // 拔草数据立即落盘，返回首页时不会被旧存储覆盖。
+  writeWishlist(toRaw(state).items)
   clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     try {
