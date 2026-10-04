@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import BottomTabs from '@/components/BottomTabs.vue'
+import BottomTabs from '@/components/BodttomTabs.vue'
 import { state, persist } from '@/store/index.js'
 
 const ICONS = {
