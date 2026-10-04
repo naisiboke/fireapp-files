@@ -99,7 +99,6 @@
       </view>
     </view>
 
-    <BottomTabs current="tools" />
   </view>
 </template>
 
@@ -109,7 +108,6 @@ import {
   LocalDay, LedgerCategories, SaveExpense, HeroDay, HeroComplete,
 } from '@/utils/engine.js'
 import { categoryIconUri } from '@/utils/category-icons.js'
-import BottomTabs from '@/components/BottomTabs.vue'
 
 const EMPTY_DRAFT = () => ({
   type: 'expense',
@@ -121,7 +119,6 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
-  components: { BottomTabs },
   data() {
     return {
       editing: false,
@@ -183,10 +180,9 @@ export default {
     back() {
       if (this._backPending) return
       this._backPending = true
-      uni.navigateBack({
-        delta: 1,
-        success: () => { setTimeout(() => { this._backPending = false }, 300) },
-        fail: () => { this._backPending = false }
+      uni.redirectTo({
+        url: '/pages/ledger/index',
+        complete: () => { setTimeout(() => { this._backPending = false }, 300) }
       })
     },
 
@@ -311,13 +307,7 @@ export default {
   },
 
   onBackPress() {
-    if (this._backPending) return true
-    this._backPending = true
-    uni.navigateBack({
-      delta: 1,
-      success: () => { setTimeout(() => { this._backPending = false }, 300) },
-      fail: () => { this._backPending = false }
-    })
+    this.back()
     return true
   },
 }
