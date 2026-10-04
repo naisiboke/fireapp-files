@@ -366,7 +366,7 @@
         </view>
       </view>
     </view>
-    <BottomTabs current="community" />
+    <BottomTabs v-if="modal !== 'post'" current="community" />
   </view>
 </template>
 
@@ -903,20 +903,33 @@ export default {
 .post-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
-  background: rgba(36,56,48,0.4);
+  z-index: 100000;
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff;
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   justify-content: center;
+  pointer-events: auto;
+  animation: post-screen-in .3s cubic-bezier(.22,1,.36,1) both;
 }
 .post-modal {
+  position: relative;
+  z-index: 100001;
   width: 100%;
-  height: 95vh;
+  height: 100%;
+  min-height: 0;
+  padding-top: env(safe-area-inset-top);
   background: #ffffff;
-  border-radius: 20px 20px 0 0;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  pointer-events: auto;
+}
+@keyframes post-screen-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .post-head {
   display: flex;
@@ -929,7 +942,9 @@ export default {
 .post-h2 { font-size: 17px; font-weight: 600; color: #243830; }
 .post-close { width: 36px; height: 36px; border-radius: 50%; background: #f2f6ee; display: flex; align-items: center; justify-content: center; }
 
-.post-scroll { flex: 1; min-height: 0; padding: 20px; }
+.post-scroll { position: relative; z-index: 1; flex: 1; height: 0; min-height: 0; padding: 20px; box-sizing: border-box; pointer-events: auto; }
+.post-input, .post-textarea, .pt-year, .pt-title { pointer-events: auto !important; position: relative; z-index: 2; }
+.post-input:focus, .post-textarea:focus, .pt-year:focus, .pt-title:focus { border-color: #4f8068; outline: none; box-shadow: 0 0 0 2px rgba(79,128,104,.12); }
 
 .post-block { margin-bottom: 24px; }
 .post-label { display: block; font-size: 12px; font-weight: 500; color: #52605a; margin-bottom: 10px; }
@@ -998,14 +1013,19 @@ export default {
 .preview-body { display: block; font-size: 13px; color: #426052; line-height: 1.75; white-space: pre-wrap; }
 
 .post-foot {
+  position: relative;
+  z-index: 100002;
   flex-shrink: 0;
   padding: 16px 20px calc(12px + env(safe-area-inset-bottom));
   border-top: 1px solid #e8efe4;
   background: #ffffff;
+  pointer-events: auto;
 }
 .post-actions { display: flex; gap: 10px; }
 .post-draft-btn {
   flex: 1;
+  min-height: 48px;
+  pointer-events: auto;
   height: 48px;
   border: 1px solid #dce4d7;
   border-radius: 10px;
@@ -1017,6 +1037,8 @@ export default {
 .post-draft-text { font-size: 14px; color: #243830; }
 .post-submit {
   flex: 1;
+  min-height: 48px;
+  pointer-events: auto;
   height: 48px;
   border-radius: 10px;
   background: linear-gradient(135deg, #243830, #527059);
@@ -1033,4 +1055,5 @@ export default {
   color: #66736a;
   margin-top: 8px;
 }
+@media (prefers-reduced-motion: reduce) { .post-backdrop { animation: none; } }
 </style>
