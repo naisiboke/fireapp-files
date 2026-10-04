@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import BottomTabs from '@/components/BottomTabs.vue'
+import BottomTabs from '@/components/BodttomTabs.vue'
 import { state } from '@/store/index.js'
 
 const ICONS = {
