@@ -40,7 +40,7 @@ button {
 button::after { border: 0 !important; }
 button:active { transform: scale(var(--button-pressed)); }
 button:focus-visible { outline: 0; box-shadow: var(--button-focus); }
-.fire-button-primary { background: var(--button-primary); color: #fff; box-shadow: var(--button-shadow); }
+.fire-button-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--button-primary); color: #fff; box-shadow: var(--button-shadow); }
 .fire-button-secondary { background: var(--button-secondary); color: #173d35; }
 .fire-button-outline { background: transparent; border-color: var(--button-outline); color: #173d35; }
 .fire-button-danger { background: var(--button-danger); color: #fff; }
