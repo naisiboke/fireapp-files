@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/wishlist/detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "拔草详情"
+      }
+    },
+    {
       "path": "pages/wishlist/add",
       "style": {
         "navigationStyle": "custom",
