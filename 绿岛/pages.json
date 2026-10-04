@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/community/share",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "分享我的经历"
+      }
+    },
+    {
       "path": "pages/wishlist/detail",
       "style": {
         "navigationStyle": "custom",
