@@ -262,7 +262,15 @@ export default {
 </script>
 
 <style>
-.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; }
+@keyframes firePageIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
+.home-masthead { animation: fireCardIn .48s cubic-bezier(.22,1,.36,1) both; }
+.home-metrics { animation: fireCardIn .48s .06s cubic-bezier(.22,1,.36,1) both; }
+.task-row { animation: fireCardIn .42s cubic-bezier(.22,1,.36,1) both; }
+.task-row:nth-child(2) { animation-delay: .08s; }.task-row:nth-child(3) { animation-delay: .14s; }.task-row:nth-child(4) { animation-delay: .2s; }
+.goal-card { animation: fireCardIn .48s .1s cubic-bezier(.22,1,.36,1) both; }
+.btn-primary:active,.task-row:active,.metric:active { transform: scale(.98); transition: transform .12s ease; }
 
 .home-masthead { position: relative; padding: 60px 24px 24px; overflow: hidden; }
 .masthead-bg { position: absolute; left: 0; top: 0; right: 0; height: 375px; background-size: cover; background-position: center; z-index: 0; }
