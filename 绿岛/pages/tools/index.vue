@@ -58,7 +58,7 @@ const TOOL_CATALOG = [
   { route: 'calculator', url: '', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
   { route: 'wishlist', url: '', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
   { route: 'hero', url: '', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
-  { route: 'reading-library', url: '', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
+  { route: 'reading-library', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
   { route: 'time-ledger', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪' },
 ]
 
