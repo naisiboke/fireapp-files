@@ -35,10 +35,12 @@
     </view>
 
     <text class="safe-note">更多工具正在开发</text>
+    <BottomTabs current="tools" />
   </view>
 </template>
 
 <script>
+import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist } from '@/store/index.js'
 
 const ICONS = {
@@ -64,6 +66,7 @@ function svgUri(svg) {
 }
 
 export default {
+  components: { BottomTabs },
   data() { return { state } },
   computed: {
     sortedTools() {
