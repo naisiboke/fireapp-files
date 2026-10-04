@@ -116,10 +116,12 @@
     </view>
 
     <text class="version">FIRE Forge · v1.0.0</text>
+    <BottomTabs current="profile" />
   </view>
 </template>
 
 <script>
+import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
 
 const ICONS = {
@@ -142,6 +144,7 @@ function svgUri(svg) {
 }
 
 export default {
+  components: { BottomTabs },
   data() {
     return {
       state: state,
