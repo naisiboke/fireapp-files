@@ -56,7 +56,15 @@ export default {
     return { state: state }
   },
   methods: {
-    back() { uni.navigateBack() },
+    back() { this.safeBack() },
+    safeBack() {
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack({ delta: 1, fail: () => uni.switchTab({ url: '/pages/profile/index' }) })
+      } else {
+        uni.switchTab({ url: '/pages/profile/index' })
+      }
+    },
     toggleSound() {
       state.soundEnabled = !state.soundEnabled
       // 触发一次存储
@@ -81,8 +89,8 @@ export default {
     },
   },
   onBackPress() {
-    uni.navigateBack()
-    return true
+    // 不在 onBackPress 中再次调用 navigateBack，避免触发递归错误。
+    return false
   },
 }
 </script>
