@@ -366,15 +366,12 @@
         </view>
       </view>
     </view>
-
-    <BottomTabs current="community" />
   </view>
 </template>
 
 <script>
 import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
-import BottomTabs from '@/components/BottomTabs.vue'
 
 const EMPTY_DRAFT = () => ({
   tags: [],
@@ -384,8 +381,6 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
-  components: { BottomTabs },
-
   data() {
     return {
       POST_TAGS: COMMUNITY_POST_TAGS,
@@ -426,6 +421,18 @@ export default {
       return this.postDraft.timeline.filter(x => String(x.year).trim() && String(x.title).trim())
     },
   },
+
+  watch: {
+    modal(value) {
+      if (value === 'post') uni.hideTabBar({ animation: false })
+      else uni.showTabBar({ animation: false })
+    },
+  },
+  onShow() {
+    if (this.modal === 'post') uni.hideTabBar({ animation: false })
+    else uni.showTabBar({ animation: false })
+  },
+  onHide() { uni.showTabBar({ animation: false }) },
 
   onLoad() {
     this.favorites = CS.favorites()
