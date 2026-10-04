@@ -105,7 +105,12 @@ export default {
 </script>
 
 <style>
-.tools-view { min-height: 100vh; padding: 60px 24px 140px; background: #f3f4f2; box-sizing: border-box; }
+@keyframes toolPageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toolSlideIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+.tools-view { min-height: 100vh; padding: 60px 24px 140px; background: #f3f4f2; box-sizing: border-box; animation: toolPageIn .32s cubic-bezier(.22,1,.36,1) both; }
+.tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) both; }
+.tool-card:nth-child(2) { animation-delay: .06s; }.tool-card:nth-child(3) { animation-delay: .12s; }.tool-card:nth-child(4) { animation-delay: .18s; }.tool-card:nth-child(5) { animation-delay: .24s; }.tool-card:nth-child(6) { animation-delay: .3s; }
+.tool-card:active { transform: translateX(3px) scale(.99); transition: transform .12s ease; }
 .tools-head { margin-bottom: 24px; }
 .tools-h1 { display: block; font-size: 28px; font-weight: 700; color: #143e37; letter-spacing: 0.5px; }
 .tools-sub { display: block; font-size: 13px; color: #71807a; margin-top: 8px; }
