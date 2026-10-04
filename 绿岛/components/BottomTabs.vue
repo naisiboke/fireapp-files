@@ -39,10 +39,19 @@ export default {
     switchTab(path) {
       if (this._navigating) return
       this._navigating = true
+      const current = getCurrentPages()
+      const currentPath = current.length ? '/' + current[current.length - 1].route : ''
+      if (currentPath === path) {
+        this._navigating = false
+        return
+      }
       uni.switchTab({
         url: path,
-        fail: () => { uni.reLaunch({ url: path }) },
-        complete: () => { setTimeout(() => { this._navigating = false }, 400) },
+        success: () => { setTimeout(() => { this._navigating = false }, 400) },
+        fail: (err) => {
+          this._navigating = false
+          console.warn('[BottomTabs] switchTab cancelled', err)
+        },
       })
     },
     iconUri(key, active) {
