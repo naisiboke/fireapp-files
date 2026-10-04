@@ -37,10 +37,10 @@
     </view>
 
     <!-- 操作 -->
-    <view class="btn light" @tap="replayOnboarding">
+    <view class="btn light fire-button-secondary" @tap="replayOnboarding">
       <text class="btn-text light-text">重新查看启动流程</text>
     </view>
-    <view class="btn danger" @tap="confirmReset">
+    <view class="btn danger fire-button-danger" @tap="confirmReset">
       <text class="btn-text">重置演示数据</text>
     </view>
 
