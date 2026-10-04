@@ -213,18 +213,85 @@ export default {
       uni.reLaunch({ url: '/pages/onboarding/onboarding' })
       return
     }
-    this.tick()
-    this.timer = setInterval(this.tick, 1000)
+    this.bindVisibilityEvents()
+    this.startCountdown()
   },
-  onUnload()   { if (this.timer) clearInterval(this.timer) },
-  onHide()     { if (this.timer) clearInterval(this.timer) },
-  onShow()     {
-    if (!this.timer) this.timer = setInterval(this.tick, 1000)
-    this.tick()
+  onShow() {
+    this.startCountdown()
   },
-  beforeUnmount() { if (this.timer) clearInterval(this.timer) },
+  onHide() {
+    this.stopCountdown()
+  },
+  onUnload() {
+    this.unbindVisibilityEvents()
+    this.stopCountdown()
+  },
+  beforeUnmount() {
+    this.unbindVisibilityEvents()
+    this.stopCountdown()
+  },
 
   methods: {
+    clearCountdownTasks() {
+      if (this.timer) {
+        clearInterval(this.timer)
+        this.timer = null
+      }
+      if (this.timeout) {
+        clearTimeout(this.timeout)
+        this.timeout = null
+      }
+      if (this.raf) {
+        cancelAnimationFrame(this.raf)
+        this.raf = null
+      }
+    },
+    startCountdown() {
+      this.clearCountdownTasks()
+      this.tick()
+      this.timer = setInterval(() => {
+        this.tick()
+      }, 1000)
+    },
+    stopCountdown() {
+      this.clearCountdownTasks()
+    },
+    bindVisibilityEvents() {
+      // H5 标签页切换、锁屏恢复时，按当前系统时间重新计算
+      // #ifdef H5
+      if (typeof document !== 'undefined' && !this.visibilityHandler) {
+        this.visibilityHandler = () => {
+          if (document.visibilityState === 'visible') this.startCountdown()
+          else this.stopCountdown()
+        }
+      }
+      if (typeof window !== 'undefined' && !this.pageShowHandler) {
+        this.pageShowHandler = () => this.startCountdown()
+        this.pageHideHandler = () => this.stopCountdown()
+      }
+      if (typeof document !== 'undefined' && this.visibilityHandler) {
+        document.addEventListener('visibilitychange', this.visibilityHandler)
+      }
+      if (typeof window !== 'undefined' && this.pageShowHandler) {
+        window.addEventListener('pageshow', this.pageShowHandler)
+        window.addEventListener('pagehide', this.pageHideHandler)
+      }
+      // #endif
+    },
+    unbindVisibilityEvents() {
+      // #ifdef H5
+      if (typeof document !== 'undefined' && this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler)
+      }
+      if (typeof window !== 'undefined' && this.pageShowHandler) {
+        window.removeEventListener('pageshow', this.pageShowHandler)
+        window.removeEventListener('pagehide', this.pageHideHandler)
+      }
+      // #endif
+      this.visibilityHandler = null
+      this.pageShowHandler = null
+      this.pageHideHandler = null
+    },
     tick() {
       const r = this.fireResult
       if (!r.date) { this.years = this.months = this.days = 0; this.hours = this.minutes = this.seconds = 0; return }
