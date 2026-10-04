@@ -1,13 +1,7 @@
-<template>
-  <view class="app-shell"><slot /><BottomTabs /></view>
-</template>
-
 <script>
 import { bootstrap, persist } from './store/index.js'
-import BottomTabs from './components/BottomTabs.vue'
 
 export default {
-  components: { BottomTabs },
   onLaunch() {
     bootstrap()
   },
