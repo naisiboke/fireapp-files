@@ -3,6 +3,20 @@ import { storage } from '../utils/storage.js'
 import { LocalDay, HeroDay } from '../utils/engine.js'
 
 export const WISHLIST_KEY = 'fire_wishlist_v1'
+export const STATE_VERSION = 2
+export const FIRE_STORAGE_KEYS = [
+  'fire_forge_state',
+  'fire_wishlist_v1',
+  'fire_login_status',
+  'fire_guest_mode',
+  'fire_island_onboarding_done',
+  'fire_theme_v1',
+  'firelife_favorites_v1',
+  'firelife_ugc_v1',
+  'firelife_assets_v1',
+  'firelife_applied_models_v1',
+  'firelife_post_draft_v1',
+]
 
 function readWishlist() {
   try {
@@ -15,49 +29,48 @@ function writeWishlist(items) {
   try { uni.setStorageSync(WISHLIST_KEY, JSON.parse(JSON.stringify(items || []))) } catch (e) {}
 }
 
+function hasFinanceData(finance) {
+  if (!finance || typeof finance !== 'object') return false
+  return ['assets','expense','income','monthlyDeposit','retirementExpense','goal']
+    .some(key => Number(finance[key]) > 0)
+}
+
 const seed = () => ({
+  stateVersion: STATE_VERSION,
   finance: {
-    assets: 1248000,
-    expense: 8600,
-    income: 17200,
-    monthlyDeposit: 15000,
-    retirementExpense: 8000,
-    rate: 8,
-    withdrawal: 4,
-    mode: 'fire',
-    goal: 2000000,
+    assets: 0, expense: 0, income: 0, monthlyDeposit: 0, retirementExpense: 0,
+    rate: 8, withdrawal: 4, mode: 'fire', goal: 0,
   },
-  profile: { name: '自由的旅人', passive: 3200, goal: '工作自由' },
-  items: [],
-  completed: [],
-  exp: 0,
-  started: false,
-  financeEntered: true,
-  goalPlan: null,
-  goalDraft: null,
-  hero: null,
-  ledger: [],
-  assetHistory: [],
-  monthlyTargets: {},
-  toolUsage: {},
-  timeLedger: null,
-  soundEnabled: true,
-  reading: undefined,
+  profile: { name: '自由的旅人', passive: 0, goal: '' },
+  items: [], completed: [], exp: 0, started: false, financeEntered: false,
+  goalPlan: null, goalDraft: null, hero: null, ledger: [], assetHistory: [],
+  monthlyTargets: {}, toolUsage: {}, timeLedger: null, soundEnabled: true,
+  reading: [], ready: false,
 })
 
 export const state = reactive({ ...seed(), ready: false })
 
 export function bootstrap() {
+  const defaults = seed()
   const saved = storage.get('state', null)
-  if (saved && saved.finance && Array.isArray(saved.items)) {
+  if (saved && saved.finance && typeof saved === 'object') {
     Object.assign(state, saved)
+    state.finance = { ...defaults.finance, ...(saved.finance || {}) }
+    if (typeof saved.financeEntered !== 'boolean') state.financeEntered = hasFinanceData(state.finance)
   }
-  const wishlist = readWishlist()
-  if (wishlist) state.items = wishlist
+  if (!Array.isArray(state.items)) state.items = []
+  if (!Array.isArray(state.completed)) state.completed = []
   if (!Array.isArray(state.ledger)) state.ledger = []
   if (!Array.isArray(state.assetHistory)) state.assetHistory = []
+  if (!state.monthlyTargets || typeof state.monthlyTargets !== 'object') state.monthlyTargets = {}
+  if (!state.toolUsage || typeof state.toolUsage !== 'object') state.toolUsage = {}
+  if (!Array.isArray(state.reading)) state.reading = []
+  if (typeof state.exp !== 'number') state.exp = 0
+  if (typeof state.started !== 'boolean') state.started = false
   if (typeof state.soundEnabled !== 'boolean') state.soundEnabled = true
-  if (!state.monthlyTargets) state.monthlyTargets = {}
+  state.stateVersion = STATE_VERSION
+  const wishlist = readWishlist()
+  if (wishlist) state.items = wishlist
   HeroDay(state)
   state.ready = true
 }
@@ -81,5 +94,11 @@ export function persist() {
 
 export function reset() {
   Object.assign(state, seed(), { ready: true })
-  persist()
+}
+
+export function clearAllData() {
+  FIRE_STORAGE_KEYS.forEach(key => {
+    try { uni.removeStorageSync(key) } catch (e) {}
+  })
+  Object.assign(state, seed(), { ready: true })
 }
