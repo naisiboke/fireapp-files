@@ -1,68 +1,51 @@
 # 躺平倒计时更新与验证
 
-## 范围和路由
+## 页面和字段
 
-新增页面 /pages/calculator/index（同一页包含表单和结果），工具页固定为第一个入口。
-首页“填写财务数据”“查看计划”打开退休模式，“查看目标”打开 ?mode=goal。
-不修改主导航、引导/登录状态或记账、拔草、社区、英雄传页面。
+- 路由：`/pages/calculator/index`
+- 工具页第一入口：躺平倒计时
+- FIRE 模式字段：
+  - `finance.assets`：当前资产，元，新建时为空
+  - `finance.monthlyDeposit`：每月存入，元/月，新建时为空
+  - `finance.retirementExpense`：退休后每月消费，元/月，新建时为空
+  - `finance.rate`：预期年化收益率，%/年，新建默认真实值 4
+  - `finance.withdrawal`：退休后提取率，%/年，新建默认真实值 4
+- 目标模式金额字段新建为空；年化收益率默认真实值 4。
+- 页面、校验和诊断中已移除月被动收入；旧 storage 中的 `monthlyPassiveIncome` 或旧 `profile.passive` 不会被删除，但不会被新页面读取或要求填写。
 
-检查发现：原工具入口 URL 为空，UniApp 工程没有计算页面；原引擎有 FireEngine、GoalEngine。
-HTML 参考也使用相同的函数，但当前 UniApp/HTML 中没有名为 PRO 深度诊断的现成实现。
-保留其他页面的 PRO 入口，在计算结果页提供覆盖度、储蓄率与收益敏感性诊断；
-不新增付费接口或修改会员状态。
+## 计算和保存
 
-## 字段和公式
+沿用 `utils/engine.js` 的 `FireEngine` 和 `GoalEngine`：
 
-| 页面字段 | 保存位置 | 单位 |
-| --- | --- | --- |
-| 当前可投资资产 | finance.assets | 人民币元 |
-| 每月存入 | finance.monthlyDeposit | 元/月 |
-| 退休后每月消费 | finance.retirementExpense | 元/月 |
-| 预期年化收益率 | finance.rate | %/年 |
-| 年度提取率 | finance.withdrawal | %/年，默认假设4 |
-| 月被动收入（可选） | profile.passive | 元/月 |
-| 目标名/已准备/金额/月存/预期月数/收益率 | goalDraft，再经确认到goalPlan | 元、元/月、个月、%/年 |
-| 自由日基准与日期 | freedomPlan.calculatedAt、deadline、signature | 毫秒时间戳 |
-
-finance.expense、income 是旧版生活支出/收入，不用退休消费覆盖这些字段。
-旧版缺少 monthlyDeposit 时沿用 income-expense；缺少 retirementExpense 时沿用 expense。
-reading 对象、账目、拔草、收藏、未知旧字段均保留。新安装采用零金额、financeEntered=false。
-无法区分旧演示数据和用户真实保存数据，升级时不擅自删除旧值。
-
-退休门槛 = 月退休消费 × 12 ÷ (withdrawal/100)。
-有效月收益率 = (1 + rate/100)^(1/12) - 1。
-每个月：资产 = 上月资产 × (1 + 月收益率) + 月存入，最多模拟1200个月。
-目标模式沿用 GoalEngine 的目标金额、期望月数及年金终值分析。
-被动覆盖度仅作诊断，不从引擎的退休消费中偷偷扣减。
-保存计算基准和截止时间，避免每次打开页面重新将自由日向后推移。
-日历运算沿用 addCalendarMonths、ReelCalendarParts、ReelParts。
-
-## 验证方式与结果
-
-使用实际 JS 引擎/store/计算页面提交及生命周期函数，模拟 UniApp storage、Vue refs/computed 和浏览器事件。
-54项检查已执行通过，另外执行旧/新引擎在-10%、0%、8%、50%收益率下的退休/目标公式对照通过。
-可在安装 Node 后从“绿岛”目录运行：
-
-```sh
-node scripts/check-finance.mjs
+```
+FIRE目标资产 = 退休后每月消费 × 12 ÷ (提取率 ÷ 100)
+月收益率 = (1 + 年化收益率 ÷ 100) ^ (1 ÷ 12) - 1
+每月资产 = 上月资产 × (1 + 月收益率) + 每月存入
 ```
 
-脚本无需 npm 依赖；它不会访问真实用户数据。
-该检查不是 Vue 模板编译或手机界面测试。
+计算基准保存在 `freedomPlan.calculatedAt`，自由日保存在 `freedomPlan.deadline`，重复打开不会把日期向后推移。
+目标模式先写 `goalDraft`，用户点击“更新目标到首页”后才写 `goalPlan`。
+保存使用现有 store/storage，不覆盖记账、拔草、社区、阅读或未知字段。
 
-| 用户验收项 | 已执行验证 | 未验证部分 |
-| --- | --- | --- |
-| 1. 无数据空白表单 | 实际 onLoad/校验逻辑通过 | H5/App显示 |
-| 2. 有效输入计算保存 | 实际提交函数与存储通过，包括保存失败回滚 | 触屏与键盘输入 |
-| 3. 重开回显和编辑 | onLoad、重算与重启读取通过 | 真机重启 |
-| 4. 金额/周期/日期/单位 | 零收益与复利公式对照、目标月存分析、月末日期通过；字段单位已代码核对 | 手机排版 |
-| 5. 计时和动效 | 每秒更新、H5隐藏/恢复/pageshow、单定时器和卸载清理通过；AnimatedNumber只对改变的值淡出120ms/淡入120ms | 0.24秒淡出/淡入的实际视觉 |
-| 6. 首页同步 | refreshFinance实际读取通过，首页onShow已接入 | 页面切换渲染 |
-| 7. 目标确认才展示 | 草稿/确认保存与首页goalPlan条件通过 | 点击结果视觉 |
-| 8. 数据保护 | 账目、拔草、阅读、收藏、UGC、未知字段保留通过 | 不同设备存储权限 |
-| 9. 双模式与PRO诊断 | 退休/目标提交、覆盖度与敏感性通过；旧PRO入口未改 | 真机展开操作 |
+## Pro 诊断
 
-当前环境没有本地 shell、npm执行工具、HBuilderX或可启动的浏览器/真机实例，
-因此未执行 npm install、build:h5，也没有把这些未执行的检查标为通过。
-请用 HBuilderX 导入含 App.vue/main.js/pages.json 的“绿岛”文件夹运行 H5，
-再进行 Android/iOS 真机的键盘、页面返回与动效检查。
+会员判断兼容已有可能的状态来源：
+
+- `state.proMember === true`
+- `state.profile.pro === true`
+- `state.membership.pro === true`
+- `fire_pro_member === true`
+
+项目当前没有统一会员字段，因此默认显示锁定卡片。非会员不会渲染诊断正文，只显示开通提示；会员正文由当前真实数据生成，并分为状态、自由日、储蓄速度、消费/提取率、风险、行动和下一阶段七段。
+
+## 验证
+
+`scripts/check-finance.mjs` 使用真实引擎、store、计算页提交逻辑，并模拟 UniApp storage 和 H5 生命周期。当前验证结果：
+
+```
+58 finance checks passed
+```
+
+包含空白表单、默认4%、金额校验、保存/回显/重算、目标确认、旧字段迁移、数据保留、计时器、Pro 条件渲染、迷你目标卡片静态检查。
+
+当前环境没有 HBuilderX、npm、浏览器或真机，因此没有标记 H5 编译、键盘输入、刘海屏和实际视觉效果为已通过。

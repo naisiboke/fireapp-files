@@ -24,10 +24,7 @@ export function validateFireForm(form) {
     withdrawal: numberField(form.withdrawal, '年度提取率（%/年）', 1, 10, errors),
     mode: 'fire',
   }
-  const passive = String(form.passive == null ? '' : form.passive).trim()
-  const optional = {}
-  if (passive) optional.passive = numberField(passive, '月被动收入（元/月）', 0, 1e9, errors)
-  return { errors, finance, optional }
+  return { errors, finance }
 }
 
 export function validateGoalForm(form) {

@@ -21,7 +21,7 @@ check('blank required fields', helpers.validateFireForm({}).errors.length === 5)
 check('invalid assets', helpers.validateFireForm({...fire,assets:'abc'}).errors.length === 1)
 check('negative assets', helpers.validateFireForm({...fire,assets:-1}).errors.length === 1)
 check('negative annual rate allowed', helpers.validateFireForm({...fire,rate:-5}).errors.length === 0)
-check('passive income optional', helpers.validateFireForm(fire).errors.length === 0)
+check('no legacy income field required', helpers.validateFireForm(fire).errors.length === 0 && !('optional' in helpers.validateFireForm(fire)))
 check('zero retirement expense rejected', helpers.validateFireForm({...fire,retirementExpense:0}).errors.length === 1)
 check('fractional goal months rejected', helpers.validateGoalForm({...goal,expectedMonths:1.5}).errors.length === 1)
 check('unconfigured state has no date', helpers.freedomResult({financeEntered:false,finance:fire}).date === null)
@@ -67,9 +67,9 @@ function makePage() {
 }
 let page = makePage()
 hooks.onLoad({})
-check('empty form and no result', page.fire.assets === '' && page.fire.rate === '' && page.fireResult.value === null)
+check('empty form and no result', page.fire.assets === '' && page.fire.rate === '4' && page.fire.withdrawal === '4' && page.fireResult.value === null)
 page.calculate()
-check('validation messages block saving', page.errors.value.length === 4 && !db.fire_forge_state)
+check('validation messages block saving', page.errors.value.length === 3 && !db.fire_forge_state)
 const existing = {
   ledger:[{id:'l',date:'2026-10-07',cents:100}],items:[{id:'i',status:'active',amount:120}],
   assetHistory:[{id:'a',amount:400}],reading:{shelf:['x'],history:[{id:1}]},completed:['t'],exp:150,
@@ -77,18 +77,18 @@ const existing = {
 }
 Object.assign(store.state,copy(existing))
 db.firelife_favorites_v1=['fav']; db.firelife_ugc_v1=[{id:'ugc'}]
-Object.assign(page.fire,{assets:'0',monthlyDeposit:'1000',retirementExpense:'1000',rate:'0',withdrawal:'4',passive:'200'})
+Object.assign(page.fire,{assets:'0',monthlyDeposit:'1000',retirementExpense:'1000',rate:'0',withdrawal:'4'})
 page.calculate()
 check('submit saves real finance synchronously', store.state.financeEntered && page.fireResult.value.months === 300 && !!db.fire_forge_state)
 const initialDeadline = store.state.freedomPlan.deadline
 check('other state fields retained', Object.keys(existing).every(key=>JSON.stringify(store.state[key])===JSON.stringify(existing[key])))
 check('community storage untouched', db.firelife_favorites_v1[0] === 'fav' && db.firelife_ugc_v1[0].id === 'ugc')
-check('coverage diagnosis', page.coverage.value === 20)
+check('asset based coverage diagnosis', page.coverage.value === 0)
 store.state.finance.assets = 987
 store.refreshFinance()
 check('homepage refresh reads finance', store.state.finance.assets === 0 && store.state.freedomPlan.deadline === initialDeadline)
 page = makePage(); hooks.onLoad({})
-check('reopen restores input and fixed date', page.fire.monthlyDeposit === '1000' && page.fire.passive === '200' && page.fireResult.value.date.getTime() === initialDeadline)
+check('reopen restores input and fixed date', page.fire.monthlyDeposit === '1000' && page.fireResult.value.date.getTime() === initialDeadline)
 page.fire.assets = '1000'; page.calculate()
 check('editing recalculates', store.state.finance.assets === 1000 && page.fireResult.value.months === 299)
 page.mode.value = 'goal'
@@ -151,6 +151,11 @@ check('calculator registered exactly once', pages.filter(p=>p.path==='pages/calc
 const tools = source('pages/tools/index.vue')
 check('calculator pinned first', tools.indexOf("{ route: 'calculator'") < tools.indexOf("{ route: 'ledger'") && tools.includes("a.tool.route === 'calculator'"))
 check('home has editable finance entry', source('pages/index/index.vue').includes("uni.navigateTo({ url: '/pages/calculator/index' })"))
+check('calculator defaults annual return and withdrawal to 4', source('pages/calculator/index.vue').includes("rate:'4',withdrawal:'4'"))
+check('calculator has no passive income field', !source('pages/calculator/index.vue').includes('passive') && !source('utils/finance-plan.js').includes('passive'))
+check('pro diagnosis is gated before rendering', source('pages/calculator/index.vue').includes('showDiagnosis && isProMember') && source('pages/calculator/index.vue').includes('showDiagnosis && !isProMember'))
+check('mini home goal card keeps only compact fields', source('pages/index/index.vue').includes('goal-card-mini') && source('pages/index/index.vue').includes('remainingDays'))
+
 
 const numberCode = source('components/AnimatedNumber.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .+$/gm,'')
 const numberProps={value:1}, numberTimers=new Map()

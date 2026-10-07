@@ -21,10 +21,6 @@
           <text class="unit">{{ field.unit }}</text>
         </view>
       </view>
-      <view class="form-row">
-        <label for="passive">月被动收入（可选，仅用于诊断）</label>
-        <view class="input-row"><input id="passive" v-model="fire.passive" type="text" aria-label="月被动收入，可选，元每月" placeholder="不填则保留原数据" :adjust-position="true" :cursor-spacing="32" @input="invalidate('fire')" /><text class="unit">元/月</text></view>
-      </view>
       <text class="formula">FIRE 目标资产 = 退休后每月消费 × 12 ÷ 年度提取率。收益按月复利，每月存入在月末投入。</text>
     </view>
 
@@ -68,12 +64,22 @@
         <text class="formula">仅计算会保存目标草稿；确认更新后，首页才展示这项目标。</text>
       </template>
       <template v-else>
-        <button class="secondary" @click="showDiagnosis = !showDiagnosis">{{ showDiagnosis ? '收起' : '查看' }} PRO 深度诊断</button>
-        <view v-if="showDiagnosis" class="diagnosis">
-          <view class="result-row"><text>被动收入覆盖度</text><text>{{ coverage === null ? '未填写' : coverage.toFixed(1) + '%' }}</text></view>
-          <view class="result-row"><text>月储蓄率</text><text>{{ savingsRate === null ? '未填写月收入' : savingsRate.toFixed(1) + '%' }}</text></view>
-          <view class="result-row"><text>收益率降低 2 个百分点</text><text>{{ conservative.years === null ? '100 年内暂未可达' : conservative.years + ' 年' }}</text></view>
-          <text class="formula">覆盖度使用被动收入 ÷ 退休后每月消费；储蓄率使用每月存入 ÷ 已记录月收入。收益敏感性仍使用同一 FIRE 引擎。</text>
+        <button class="secondary" @click="toggleDiagnosis">{{ showDiagnosis ? '收起' : '查看' }} PRO 深度诊断</button>
+        <view v-if="showDiagnosis && !isProMember" class="pro-lock-card">
+          <text class="pro-lock-title">Pro 深度诊断</text>
+          <text class="pro-lock-copy">根据你的 FIRE 数据生成更完整的财务建议</text>
+          <text class="pro-lock-badge">会员专属功能</text>
+          <button class="secondary pro-open" @click="showProPrompt">开通 Pro 会员</button>
+        </view>
+        <view v-if="proNotice" class="pro-notice" role="status" aria-live="polite">
+          <text>Pro 诊断需要会员权限，开通后即可查看完整分析。</text>
+          <button class="secondary" @click="proNotice = false">知道了</button>
+        </view>
+        <view v-if="showDiagnosis && isProMember" class="diagnosis">
+          <view v-for="section in diagnosisSections" :key="section.title" class="diagnosis-section">
+            <text class="diagnosis-title">{{ section.title }}</text>
+            <text class="diagnosis-copy">{{ section.body }}</text>
+          </view>
         </view>
       </template>
       <button class="secondary" @click="goHome">返回首页</button>
@@ -90,22 +96,22 @@ import { state, refreshFinance, persistNow } from '@/store/index.js'
 import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts } from '@/utils/engine.js'
 import { validateFireForm, validateGoalForm, hasValidFinance, freedomResult, createFreedomPlan } from '@/utils/finance-plan.js'
 
-const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false)
-const fire = reactive({assets:'',monthlyDeposit:'',retirementExpense:'',rate:'',withdrawal:'4',passive:''})
-const goal = reactive({name:'',assets:'',amount:'',monthlyDeposit:'',expectedMonths:'',rate:''})
+const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false)
+const fire = reactive({assets:'',monthlyDeposit:'',retirementExpense:'',rate:'4',withdrawal:'4'})
+const goal = reactive({name:'',assets:'',amount:'',monthlyDeposit:'',expectedMonths:'',rate:'4'})
 const fireFields = [
   {key:'assets',label:'当前可投资资产',unit:'元',placeholder:'请输入当前资产，可填0'},
   {key:'monthlyDeposit',label:'每月存入金额',unit:'元/月',placeholder:'请输入每月存入，可填0'},
   {key:'retirementExpense',label:'退休后每月消费',unit:'元/月',placeholder:'请输入退休后每月消费'},
-  {key:'rate',label:'预期年化收益率',unit:'%/年',placeholder:'请输入收益率，可填0'},
-  {key:'withdrawal',label:'退休后年度提取率',unit:'%/年',placeholder:'计算假设，默认4'},
+  {key:'rate',label:'预期年化收益率',unit:'%/年',placeholder:'请输入年化收益率，例如4'},
+  {key:'withdrawal',label:'退休后年度提取率',unit:'%/年',placeholder:'请输入提取率，例如4'},
 ]
 const goalFields = [
   {key:'assets',label:'为目标已准备的金额',unit:'元',placeholder:'请输入已准备金额，可填0'},
   {key:'amount',label:'目标金额',unit:'元',placeholder:'请输入目标金额'},
   {key:'monthlyDeposit',label:'每月存入金额',unit:'元/月',placeholder:'请输入每月存入，可填0'},
   {key:'expectedMonths',label:'期望多久达到',unit:'个月',placeholder:'请输入整数个月'},
-  {key:'rate',label:'预期年化收益率',unit:'%/年',placeholder:'请输入收益率，可填0'},
+  {key:'rate',label:'预期年化收益率',unit:'%/年',placeholder:'请输入年化收益率，例如4'},
 ]
 const fireResult = ref(null), goalResult = ref(null), calculatedGoal = ref(null), now = ref(Date.now())
 const configured = computed(() => hasValidFinance(state))
@@ -119,18 +125,44 @@ const countdownUnits = computed(() => parts.value ? [
   {id:'minutes',value:parts.value.minutes,label:'分'},{id:'seconds',value:parts.value.seconds,label:'秒'},
 ] : [])
 const coverage = computed(() => {
-  const p = state.profile && state.profile.passive, expense = Number(state.finance.retirementExpense)
-  return Number.isFinite(p) && expense > 0 ? p / expense * 100 : null
+  const assets = Number(state.finance.assets), expense = Number(state.finance.retirementExpense), withdrawal = Number(state.finance.withdrawal)
+  return Number.isFinite(assets) && Number.isFinite(expense) && expense > 0 && Number.isFinite(withdrawal)
+    ? Math.min(100, Math.max(0, (assets * withdrawal / 100 / 12) / expense * 100)) : null
 })
-const savingsRate = computed(() => Number(state.finance.income) > 0 ? state.finance.monthlyDeposit / state.finance.income * 100 : null)
+const depositRatio = computed(() => {
+  const deposit = Number(state.finance.monthlyDeposit), expense = Number(state.finance.retirementExpense)
+  return Number.isFinite(deposit) && expense > 0 ? deposit / expense * 100 : null
+})
 const conservative = computed(() => FireEngine({...state.finance,rate:Math.max(-50,state.finance.rate - 2)}))
+const isProMember = computed(() => {
+  const profile = state.profile || {}
+  const membership = state.membership || {}
+  return state.proMember === true || profile.pro === true || membership.pro === true || uni.getStorageSync('fire_pro_member') === true
+})
+const diagnosisSections = computed(() => {
+  if (!isProMember.value || !fireResult.value) return []
+  const r = fireResult.value
+  const years = r.years === null ? '当前假设下100年内暂未达到' : r.years + ' 年'
+  return [
+    { title: '当前财务状态分析', body: '当前资产 ' + money(state.finance.assets) + ' 元，每月存入 ' + money(state.finance.monthlyDeposit) + ' 元；FIRE目标门槛为 ' + money(r.target) + ' 元。' },
+    { title: '自由日距离分析', body: r.date ? '预计在 ' + dateText(r.date) + ' 达到目标，距离约 ' + years + '。当前进度为 ' + r.progress.toFixed(1) + '%。' : '当前假设下暂未在100年内达到目标，请先调整资产、每月存入或收益率。' },
+    { title: '储蓄速度分析', body: '每月存入与退休后每月消费的比例为 ' + (depositRatio.value === null ? '暂无数据' : depositRatio.value.toFixed(1) + '%') + '；提高稳定存入金额会缩短计划周期。' },
+    { title: '消费和提取率分析', body: '退休后每月消费为 ' + money(state.finance.retirementExpense) + ' 元，年度提取率为 ' + state.finance.withdrawal + '%；提取率越低，所需目标资产越高。' },
+    { title: '风险提示', body: '这是基于固定收益率的长期模拟，不包含税费、通胀、市场波动和突发支出。请把结果当作规划基准，不当作收益承诺。' },
+    { title: '优先行动建议', body: '先保持记账和每月存入记录，定期核对实际资产与计划差异；若进度偏离，再调整支出或收入结构。' },
+    { title: '下一阶段计划', body: '建议每月复盘一次资产、存入金额和退休后消费假设，再决定是否更新自由日。' },
+  ]
+})
 let timer = null, visible = false, navigating = false
-function switchMode(next) { mode.value = next; errors.value = []; now.value = Date.now() }
+function switchMode(next) { mode.value = next; errors.value = []; showDiagnosis.value = false; proNotice.value = false; now.value = Date.now() }
 function invalidate(which) {
   errors.value = []
+  proNotice.value = false
   if (which === 'fire') fireResult.value = null
   else { goalResult.value = null; calculatedGoal.value = null }
 }
+function toggleDiagnosis() { showDiagnosis.value = !showDiagnosis.value; proNotice.value = false }
+function showProPrompt() { proNotice.value = true }
 function money(value) { return Number(value).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}) }
 function dateText(date) { return date.toLocaleDateString('zh-CN') }
 function stopClock() { if (timer !== null) clearInterval(timer); timer = null }
@@ -167,7 +199,6 @@ function calculate() {
   if (mode.value === 'fire') {
     const oldFinance = state.finance, oldProfile = state.profile, oldPlan = state.freedomPlan, oldEntered = state.financeEntered
     state.finance = {...state.finance,...parsed.finance}
-    if ('passive' in parsed.optional) state.profile = {...state.profile,passive:parsed.optional.passive}
     state.financeEntered = true
     state.freedomPlan = createFreedomPlan(state.finance)
     if (persistNow()) {
@@ -204,7 +235,6 @@ onLoad(options => {
   mode.value = options && options.mode === 'goal' ? 'goal' : 'fire'
   if (configured.value) {
     for (const key of ['assets','monthlyDeposit','retirementExpense','rate','withdrawal']) fire[key] = String(state.finance[key])
-    fire.passive = state.profile && Number.isFinite(state.profile.passive) ? String(state.profile.passive) : ''
     fireResult.value = freedomResult(state)
   }
   const saved = state.goalDraft || state.goalPlan
@@ -245,7 +275,7 @@ onBackPress(event => {
 .calculator-page { min-height:100vh; box-sizing:border-box; padding:calc(24px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom)); background:#f3f4f2; color:#243830; }
 .page-head { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
 .back,.head-space { width:44px; min-height:44px; flex-shrink:0; }
-.back { display:flex; align-items:center; justify-content:center; padding:0; border:0; background:transparent; color:#243830; font-size:30px; }
+.back { display:flex; align-items:center; justify-content:center; padding:0; border:0; background:transparent; color:#173d35; font-size:30px; font-weight:600; }
 .page-title { flex:1; font-size:18px; font-weight:600; }
 .intro-title,.intro-sub,.empty-hint,.formula,.result-label,.result-sub,.unreachable { display:block; }
 .intro-title { font-size:25px; font-weight:700; color:#173d35; }
@@ -283,5 +313,15 @@ button[disabled] { opacity:.5; }
 .result-row { display:flex; justify-content:space-between; gap:12px; padding:10px 0; font-size:13px; line-height:1.7; }
 .result-row text:last-child { text-align:right; }
 .diagnosis { margin-top:14px; border-top:1px solid #e7eee7; }
+.pro-lock-card,.pro-notice { margin-top:14px; padding:16px; border:1px solid #dce7db; border-radius:12px; background:#f2f7ef; }
+.pro-lock-title { display:block; color:#173d35; font-size:16px; font-weight:700; }
+.pro-lock-copy,.pro-lock-badge { display:block; margin-top:7px; color:#71807a; font-size:13px; line-height:1.6; }
+.pro-lock-badge { color:#527059; font-weight:600; }
+.pro-open { margin-top:12px; }
+.pro-notice text { display:block; color:#52605a; font-size:13px; line-height:1.7; }
+.pro-notice button { margin-top:10px; }
+.diagnosis-section { padding:14px 0; border-bottom:1px solid #e7eee7; }
+.diagnosis-title { display:block; color:#173d35; font-size:15px; font-weight:700; }
+.diagnosis-copy { display:block; margin-top:6px; color:#52605a; font-size:13px; line-height:1.8; }
 @media (prefers-reduced-motion:reduce) { button { transition:none; } button:active { transform:none; } .countdown-number { animation:none; } }
 </style>

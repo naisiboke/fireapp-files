@@ -59,12 +59,10 @@
       </view>
     </view>
 
-    <view v-if="homeGoal && homeGoal.name" class="goal-card">
-      <view class="goal-card-head"><text class="goal-card-label">我的目标</text><text class="goal-card-link" @tap="goGoal">查看目标 ›</text></view>
+    <view v-if="homeGoal && homeGoal.name" class="goal-card goal-card-mini" @tap="goGoal">
       <text class="goal-card-name">{{ homeGoal.name }}</text>
-      <text class="goal-card-meta">目标金额 ¥ {{ formatMoney(homeGoal.amount) }} · 预期 {{ homeGoal.expectedMonths }} 个月</text>
+      <text class="goal-card-meta">{{ homeGoal.remainingDays !== null ? '还剩 ' + homeGoal.remainingDays + ' 天' : '目标进度 ' + homeGoal.progress.toFixed(0) + '%' }}</text>
       <view class="goal-card-progress"><view class="goal-card-progress-fill" :style="{ width: (homeGoal.progress || 0) + '%' }"></view></view>
-      <view class="goal-card-foot"><text>每月存入 ¥ {{ formatMoney(homeGoal.monthlyDeposit) }}</text><text>{{ homeGoal.targetDate || '尚未计算' }}</text></view>
     </view>
 
     <view class="home-content">
@@ -190,7 +188,7 @@ export default {
       const plan = state.goalPlan
       if (!plan) return null
       const r = GoalEngine(plan)
-      return { ...plan, progress: r.progress, targetDate: r.date ? r.date.toLocaleDateString('zh-CN') : '100年内暂未可达' }
+      return { ...plan, progress: r.progress, targetDate: r.date ? r.date.toLocaleDateString('zh-CN') : '100年内暂未可达', remainingDays: r.date ? Math.max(0, Math.ceil((r.date.getTime() - Date.now()) / 86400000)) : null }
     },
     targetText() {
       const r = this.fireResult
@@ -389,6 +387,10 @@ export default {
 .task-row { animation: fireCardIn .42s cubic-bezier(.22,1,.36,1) both; }
 .task-row:nth-child(2) { animation-delay: .08s; }.task-row:nth-child(3) { animation-delay: .14s; }.task-row:nth-child(4) { animation-delay: .2s; }
 .goal-card { animation: fireCardIn .48s .1s cubic-bezier(.22,1,.36,1) both; }
+.goal-card-mini { margin: -4px 24px 12px auto; width: min(42vw, 180px); min-height: 0; padding: 10px 12px; border-radius: 12px; cursor: pointer; }
+.goal-card-mini .goal-card-name { margin: 0; font-size: 13px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.goal-card-mini .goal-card-meta { margin-top: 4px; font-size: 11px; line-height: 1.4; }
+.goal-card-mini .goal-card-progress { height: 3px; margin: 7px 0 0; }
 .btn-primary:active,.task-row:active,.metric:active { transform: scale(.98); transition: transform .12s ease; }
 
 .home-masthead { position: relative; padding: 60px 24px 24px; overflow: hidden; }
