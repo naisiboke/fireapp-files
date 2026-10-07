@@ -437,12 +437,22 @@ export default {
   },
   onHide() { uni.showTabBar({ animation: false }) },
 
-  onLoad() {
+  async onLoad() {
     this.favorites = CS.favorites()
     this.allUGC = this.buildUGCList()
     this.netWorth = CS.netWorth()
     const d = CS.draft()
     if (d) this.postDraft = { ...EMPTY_DRAFT(), ...d, timeline: (d.timeline && d.timeline.length) ? d.timeline : [{ year: '', title: '' }] }
+    try {
+      await CS.hydrate()
+      this.favorites = CS.favorites()
+      this.allUGC = this.buildUGCList()
+      this.netWorth = CS.netWorth()
+      const latest = CS.draft()
+      if (latest) this.postDraft = { ...EMPTY_DRAFT(), ...latest, timeline: (latest.timeline && latest.timeline.length) ? latest.timeline : [{ year: '', title: '' }] }
+    } catch (error) {
+      uni.showToast({ title: error.message || '云端社区数据读取失败，请重试', icon: 'none' })
+    }
   },
 
   methods: {

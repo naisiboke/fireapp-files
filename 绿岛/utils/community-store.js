@@ -1,3 +1,4 @@
+import { isApiConfigured, fetchUserCollection, saveUserCollection, deleteUserCollection } from './api-service.js'
 import { isApiConfigured, saveUserCollection } from './api-service.js'
 const K_FAV = 'firelife_favorites_v1'
 const K_UGC = 'firelife_ugc_v1'
@@ -38,5 +39,12 @@ export const CS = {
 
   draft: () => read(K_DRAFT, null),
   saveDraft: (v) => write(K_DRAFT, v, 'post-draft'),
-  clearDraft: () => { try { uni.removeStorageSync(K_DRAFT) } catch {} },
+  clearDraft: () => { try { uni.removeStorageSync(K_DRAFT); if (isApiConfigured()) deleteUserCollection('post-draft').catch((error) => console.warn('[community-cloud-sync]', 'post-draft', error)) } catch {} },
+  hydrate: async () => {
+    if (!isApiConfigured()) return false
+    const names = [['favorites', K_FAV], ['ugc', K_UGC], ['net-worth', K_ASSETS], ['applied-models', K_APPLIED], ['post-draft', K_DRAFT]]
+    const values = await Promise.all(names.map(([name]) => fetchUserCollection(name)))
+    values.forEach((value, index) => { if (value !== undefined && value !== null) { try { uni.setStorageSync(names[index][1], JSON.stringify(value)) } catch {} } })
+    return true
+  },
 }

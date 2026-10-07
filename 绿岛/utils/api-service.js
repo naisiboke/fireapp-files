@@ -30,3 +30,14 @@ export async function fetchUserCollection(collection) {
 export async function saveUserCollection(collection, items) {
   return apiRequest('/v1/me/collections/' + encodeURIComponent(collection), { method: 'PUT', data: { items } })
 }
+
+export async function fetchUserCollection(collection) {
+  const payload = await apiRequest('/v1/me/collections/' + encodeURIComponent(collection))
+  return payload && payload.items ? payload.items : payload
+}
+export async function saveUserCollection(collection, items) {
+  return apiRequest('/v1/me/collections/' + encodeURIComponent(collection), { method: 'PUT', data: { items } })
+}
+export async function deleteUserCollection(collection) {
+  return apiRequest('/v1/me/collections/' + encodeURIComponent(collection), { method: 'DELETE' })
+}
