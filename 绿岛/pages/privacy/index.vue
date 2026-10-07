@@ -33,7 +33,7 @@ export default { data() { return { sections: [
 { title: '二十一、隐私政策更新方式', text: '当数据类型、使用目的、服务器或权利安排发生重要变化时，我们会更新本页面的版本和时间，并在适当位置提示。继续使用更新后的功能表示你已阅读更新内容；需要单独同意的事项会按法律要求另行处理。' },
 { title: '二十二、联系方式', text: '当前项目没有配置真实运营主体名称、办公地址或客服邮箱。发布前请补充 PRIVACY_CONTACT_EMAIL、PRIVACY_OPERATOR_NAME 和 PRIVACY_OPERATOR_ADDRESS，并在应用内和应用商店同步展示。配置完成前，请通过项目维护入口提交隐私问题。' },
 { title: '二十三、生效日期和最后更新时间', text: '本政策 v1.0 于 2026-10-07 生效，最后更新时间为 2026-10-07。后续版本会在本页更新版本号和时间。' },
-] } }, methods: { close() { const pages = getCurrentPages(); if (pages.length > 1) return uni.navigateBack({ delta: 1 }); uni.reLaunch({ url: '/pages/profile/index' }) } }, onBackPress() { this.close(); return true } }
+] } }, methods: { close() { uni.reLaunch({ url: '/pages/profile/index' }) } }, onBackPress() { this.close(); return true } }
 </script>
 
 <style>
