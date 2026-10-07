@@ -23,3 +23,10 @@ export async function savePrivacySettings(settings) { return apiRequest('/v1/me/
 export async function exportUserData() { return apiRequest('/v1/me/export') }
 export async function deleteUserData() { return apiRequest('/v1/me/state', { method: 'DELETE' }) }
 export async function requestAccountDeletion() { return apiRequest('/v1/me/deletion', { method: 'POST', data: { reason: 'user_requested' } }) }
+export async function fetchUserCollection(collection) {
+  const payload = await apiRequest('/v1/me/collections/' + encodeURIComponent(collection))
+  return payload && payload.items ? payload.items : payload
+}
+export async function saveUserCollection(collection, items) {
+  return apiRequest('/v1/me/collections/' + encodeURIComponent(collection), { method: 'PUT', data: { items } })
+}

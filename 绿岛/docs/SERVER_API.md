@@ -13,6 +13,8 @@
 | GET | `/v1/me/export` | 导出用户可读的数据副本 |
 | DELETE | `/v1/me/state` | 删除账户数据（不等同于注销账户） |
 | POST | `/v1/me/deletion` | 提交账号注销申请并返回处理状态 |
+| GET | `/v1/me/collections/:name` | 读取社区收藏、UGC 草稿和其他独立集合 |
+| PUT | `/v1/me/collections/:name` | 保存社区收藏、UGC 草稿和其他独立集合 |
 
 ## 请求约定
 
