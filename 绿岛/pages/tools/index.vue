@@ -53,8 +53,8 @@ const ICONS = {
 }
 
 const TOOL_CATALOG = [
+  { route: 'calculator', url: '/pages/calculator/index', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
   { route: 'ledger', url: '/pages/ledger/index', icon: 'ledger', color: '#426052', bg: '#edf2e9', name: '记账', desc: '轻松记下每笔消费' },
-  { route: 'calculator', url: '', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
   { route: 'wishlist', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
   { route: 'hero', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
   { route: 'reading-library', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
@@ -76,6 +76,8 @@ export default {
         const score = (Number(u.clicks) || 0) + (Number(u.visits) || 0)
         return { tool: t, score, index: i }
       }).sort(function (a, b) {
+        if (a.tool.route === 'calculator') return -1
+        if (b.tool.route === 'calculator') return 1
         if (b.score !== a.score) return b.score - a.score
         return a.index - b.index
       }).map(function (x) { return x.tool })

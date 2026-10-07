@@ -8,7 +8,11 @@ export function addCalendarMonths(start, months) {
   return date
 }
 
-export function SavingsProjection(assets, target, deposit, annualRate) {
+export function SavingsProjection(assets, target, deposit, annualRate, start = new Date()) {
+  if (![assets, target, deposit, annualRate].every(Number.isFinite) ||
+      assets < 0 || target <= 0 || deposit < 0 || annualRate <= -100) {
+    return { target: null, months: null, years: null, progress: 0, date: null, monthlySaving: null }
+  }
   const rate = Math.pow(1 + annualRate / 100, 1 / 12) - 1
   let value = assets, months = 0
   while (value + 1e-7 < target && months < 1200) {
@@ -21,20 +25,21 @@ export function SavingsProjection(assets, target, deposit, annualRate) {
     months: reached ? months : null,
     years: reached ? (months / 12).toFixed(1) : null,
     progress: Math.min(100, Math.max(0, assets / target * 100)),
-    date: reached ? addCalendarMonths(new Date(), months) : null,
+    date: reached ? addCalendarMonths(start, months) : null,
     monthlySaving: deposit,
   }
 }
 
-export function FireEngine(f) {
+export function FireEngine(f, start) {
   const retirementExpense = Number.isFinite(f.retirementExpense) ? f.retirementExpense : f.expense
   const deposit = Number.isFinite(f.monthlyDeposit) ? f.monthlyDeposit : Math.max(0, f.income - f.expense)
   const target = retirementExpense * 12 / (f.withdrawal / 100)
-  return SavingsProjection(f.assets, target, deposit, f.rate)
+  return SavingsProjection(f.assets, target, deposit, f.rate, start)
 }
 
 export function GoalEngine(g) {
-  const r = SavingsProjection(g.assets, g.amount, g.monthlyDeposit, g.rate)
+  const start = Number.isFinite(g.calculatedAt) ? new Date(g.calculatedAt) : new Date()
+  const r = SavingsProjection(g.assets, g.amount, g.monthlyDeposit, g.rate, start)
   const n = g.expectedMonths
   const rate = Math.pow(1 + g.rate / 100, 1 / 12) - 1
   const growth = Math.pow(1 + rate, n)

@@ -125,6 +125,13 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "FIRE 英雄传"
       }
+    },
+    {
+      "path": "pages/calculator/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "躺平倒计时"
+      }
     }
   ],
   "tabBar": {

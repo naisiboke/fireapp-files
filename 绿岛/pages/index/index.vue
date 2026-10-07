@@ -10,8 +10,10 @@
         <text class="masthead-date">{{ todayText }}</text>
       </view>
 
-      <view v-if="!state.financeEntered" class="home-unconfigured">
+      <view v-if="!financeConfigured" class="home-unconfigured">
         <text class="unconfigured-label">从了解自己开始</text>
+        <text class="unconfigured-sub">自由日：待填写 · 剩余年份：待填写</text>
+        <text class="unconfigured-sub">当前资产：待填写</text>
         <text class="unconfigured-h2">先填写你的财务数据</text>
         <text class="unconfigured-sub">填写资产、每月存入和退休后消费，就能看到你的自由日与计划进度。</text>
         <view class="btn-primary" @tap="goCalculator">
@@ -25,25 +27,25 @@
           <text class="plan-link">查看计划 ›</text>
         </view>
 
-        <view class="day-countdown">
+        <view v-if="fireResult.date" class="day-countdown">
           <view class="calendar-unit">
-            <text class="calendar-num">{{ years }}</text>
+            <text :key="'years-' + years" class="calendar-num countdown-number">{{ years }}</text>
             <text class="calendar-label">年</text>
           </view>
           <view class="calendar-unit">
-            <text class="calendar-num">{{ months }}</text>
+            <text :key="'months-' + months" class="calendar-num countdown-number">{{ months }}</text>
             <text class="calendar-label">个月</text>
           </view>
           <view class="calendar-unit">
-            <text class="calendar-num">{{ days }}</text>
+            <text :key="'days-' + days" class="calendar-num countdown-number">{{ days }}</text>
             <text class="calendar-label">日</text>
           </view>
         </view>
 
-        <view class="countdown-clock">
-          <view class="clock-unit"><text class="clock-num">{{ pad(hours) }}</text><text class="clock-label">时</text></view>
-          <view class="clock-unit"><text class="clock-num">{{ pad(minutes) }}</text><text class="clock-label">分</text></view>
-          <view class="clock-unit"><text class="clock-num">{{ pad(seconds) }}</text><text class="clock-label">秒</text></view>
+        <view v-if="fireResult.date" class="countdown-clock">
+          <view class="clock-unit"><text :key="'hours-' + hours" class="clock-num countdown-number">{{ pad(hours) }}</text><text class="clock-label">时</text></view>
+          <view class="clock-unit"><text :key="'minutes-' + minutes" class="clock-num countdown-number">{{ pad(minutes) }}</text><text class="clock-label">分</text></view>
+          <view class="clock-unit"><text :key="'seconds-' + seconds" class="clock-num countdown-number">{{ pad(seconds) }}</text><text class="clock-label">秒</text></view>
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
@@ -57,12 +59,12 @@
       </view>
     </view>
 
-    <view v-if="state.goalPlan && state.goalPlan.name" class="goal-card">
+    <view v-if="homeGoal && homeGoal.name" class="goal-card">
       <view class="goal-card-head"><text class="goal-card-label">我的目标</text><text class="goal-card-link" @tap="goGoal">查看目标 ›</text></view>
-      <text class="goal-card-name">{{ state.goalPlan.name }}</text>
-      <text class="goal-card-meta">目标金额 ¥ {{ formatMoney(state.goalPlan.amount) }} · 预期 {{ state.goalPlan.expectedMonths }} 个月</text>
-      <view class="goal-card-progress"><view class="goal-card-progress-fill" :style="{ width: (state.goalPlan.progress || 0) + '%' }"></view></view>
-      <view class="goal-card-foot"><text>每月存入 ¥ {{ formatMoney(state.goalPlan.monthlyDeposit) }}</text><text>{{ state.goalPlan.targetDate || '尚未计算' }}</text></view>
+      <text class="goal-card-name">{{ homeGoal.name }}</text>
+      <text class="goal-card-meta">目标金额 ¥ {{ formatMoney(homeGoal.amount) }} · 预期 {{ homeGoal.expectedMonths }} 个月</text>
+      <view class="goal-card-progress"><view class="goal-card-progress-fill" :style="{ width: (homeGoal.progress || 0) + '%' }"></view></view>
+      <view class="goal-card-foot"><text>每月存入 ¥ {{ formatMoney(homeGoal.monthlyDeposit) }}</text><text>{{ homeGoal.targetDate || '尚未计算' }}</text></view>
     </view>
 
     <view class="home-content">
@@ -70,15 +72,15 @@
       <view class="home-metrics">
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月消费 ›</text>
-          <text class="metric-value metric-expense">¥ {{ formatAmount(expenseTotal / 100) }}</text>
+          <text class="metric-value metric-expense">{{ financeConfigured ? '¥ ' + formatAmount(expenseTotal / 100) : '待填写' }}</text>
         </view>
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月收入 ›</text>
-          <text class="metric-value metric-income">¥ {{ formatAmount(incomeTotal / 100) }}</text>
+          <text class="metric-value metric-income">{{ financeConfigured ? '¥ ' + formatAmount(incomeTotal / 100) : '待填写' }}</text>
         </view>
         <view class="metric">
           <text class="metric-label">拔草已省下</text>
-          <text class="metric-value">¥ {{ formatAmount(wishlistSaved) }}</text>
+          <text class="metric-value">{{ financeConfigured ? '¥ ' + formatAmount(wishlistSaved) : '待填写' }}</text>
         </view>
       </view>
 
@@ -124,8 +126,9 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
-import { state } from '@/store/index.js'
-import { FireEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
+import { state, refreshFinance } from '@/store/index.js'
+import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
+import { GoalEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
 
 const TASK_ICONS = {
   ledger:   'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
@@ -152,6 +155,7 @@ export default {
       visibilityHandler: null,
       pageShowHandler: null,
       pageHideHandler: null,
+      pageVisible: false,
     }
   },
 
@@ -179,13 +183,13 @@ export default {
       </svg>`
       return { backgroundImage: `url("${svgUri(svg.trim())}")` }
     },
-    fireResult() {
-      try {
-        const r = FireEngine(state.finance)
-        return Number.isFinite(r.progress) ? r : { target: 0, months: null, progress: 0, date: null }
-      } catch (e) {
-        return { target: 0, months: null, progress: 0, date: null }
-      }
+    financeConfigured() { return hasValidFinance(state) },
+    fireResult() { return freedomResult(state) },
+    homeGoal() {
+      const plan = state.goalPlan
+      if (!plan) return null
+      const r = GoalEngine(plan)
+      return { ...plan, progress: r.progress, targetDate: r.date ? r.date.toLocaleDateString('zh-CN') : '100年内暂未可达' }
     },
     targetText() {
       const r = this.fireResult
@@ -246,11 +250,14 @@ export default {
     this.startCountdown()
   },
   onShow() {
+    this.pageVisible = true
+    refreshFinance()
     const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
     if (Array.isArray(savedWishlist)) state.items = savedWishlist
     this.startCountdown()
   },
   onHide() {
+    this.pageVisible = false
     this.stopCountdown()
   },
   onUnload() {
@@ -279,7 +286,12 @@ export default {
     },
     startCountdown() {
       this.clearCountdownTasks()
+      if (!this.pageVisible) return
+      // #ifdef H5
+      if (typeof document !== 'undefined' && document.hidden) return
+      // #endif
       this.tick()
+      if (!this.financeConfigured || !this.fireResult.date) return
       this.timer = setInterval(() => {
         this.tick()
       }, 1000)
@@ -350,9 +362,9 @@ export default {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#769383" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${p}"/></svg>`
       return svgUri(svg)
     },
-    goCalculator() { uni.showToast({ title: '计算器页面待开发', icon: 'none' }) },
-    goResult() { uni.showToast({ title: '计划详情待开发', icon: 'none' }) },
-    goGoal() { uni.showToast({ title: '目标详情待开发', icon: 'none' }) },
+    goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
+    goResult() { uni.navigateTo({ url: '/pages/calculator/index' }) },
+    goGoal() { uni.navigateTo({ url: '/pages/calculator/index?mode=goal' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item) {
@@ -368,6 +380,9 @@ export default {
 </script>
 
 <style>
+@keyframes homeNumberFade { from { opacity: .3; } to { opacity: 1; } }
+.countdown-number { display: inline-block; animation: homeNumberFade .24s ease; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .countdown-number { animation: none; } }
 @keyframes firePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
