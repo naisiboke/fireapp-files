@@ -29,23 +29,23 @@
 
         <view v-if="fireResult.date" class="day-countdown">
           <view class="calendar-unit">
-            <text :key="'years-' + years" class="calendar-num countdown-number">{{ years }}</text>
+            <AnimatedNumber class="calendar-num" :value="years" />
             <text class="calendar-label">年</text>
           </view>
           <view class="calendar-unit">
-            <text :key="'months-' + months" class="calendar-num countdown-number">{{ months }}</text>
+            <AnimatedNumber class="calendar-num" :value="months" />
             <text class="calendar-label">个月</text>
           </view>
           <view class="calendar-unit">
-            <text :key="'days-' + days" class="calendar-num countdown-number">{{ days }}</text>
+            <AnimatedNumber class="calendar-num" :value="days" />
             <text class="calendar-label">日</text>
           </view>
         </view>
 
         <view v-if="fireResult.date" class="countdown-clock">
-          <view class="clock-unit"><text :key="'hours-' + hours" class="clock-num countdown-number">{{ pad(hours) }}</text><text class="clock-label">时</text></view>
-          <view class="clock-unit"><text :key="'minutes-' + minutes" class="clock-num countdown-number">{{ pad(minutes) }}</text><text class="clock-label">分</text></view>
-          <view class="clock-unit"><text :key="'seconds-' + seconds" class="clock-num countdown-number">{{ pad(seconds) }}</text><text class="clock-label">秒</text></view>
+          <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(hours)" /><text class="clock-label">时</text></view>
+          <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(minutes)" /><text class="clock-label">分</text></view>
+          <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(seconds)" /><text class="clock-label">秒</text></view>
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
@@ -126,6 +126,7 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
+import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { state, refreshFinance } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
 import { GoalEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
@@ -143,7 +144,7 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs },
+  components: { BottomTabs, AnimatedNumber },
   data() {
     return {
       state,
@@ -380,9 +381,6 @@ export default {
 </script>
 
 <style>
-@keyframes homeNumberFade { from { opacity: .3; } to { opacity: 1; } }
-.countdown-number { display: inline-block; animation: homeNumberFade .24s ease; font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { .countdown-number { animation: none; } }
 @keyframes firePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }

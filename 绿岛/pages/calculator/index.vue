@@ -48,7 +48,7 @@
       <template v-if="result.date">
         <view class="countdown-line">
           <view v-for="part in countdownUnits" :key="part.id" class="countdown-unit">
-            <text :key="part.id + ':' + part.value" class="countdown-number">{{ part.value }}</text><text class="countdown-label">{{ part.label }}</text>
+            <AnimatedNumber class="countdown-number" :value="part.value" /><text class="countdown-label">{{ part.label }}</text>
           </view>
         </view>
         <text class="result-sub">剩余 {{ totalDays }} 天 · {{ result.months === 0 ? '已达到目标' : '预计到达 ' + dateText(result.date) }}</text>
@@ -84,6 +84,7 @@
 
 <script setup>
 import { computed, reactive, ref, onUnmounted } from 'vue'
+import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { onLoad, onShow, onHide, onUnload, onBackPress } from '@dcloudio/uni-app'
 import { state, refreshFinance, persistNow } from '@/store/index.js'
 import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts } from '@/utils/engine.js'
@@ -274,7 +275,7 @@ button[disabled] { opacity:.5; }
 .result-label { font-size:18px; font-weight:600; }
 .countdown-line { display:flex; flex-wrap:wrap; gap:8px 12px; margin:20px 0 12px; }
 .countdown-unit { display:flex; align-items:baseline; gap:3px; }
-.countdown-number { display:inline-block; min-width:2ch; font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; animation:numberFade .24s ease; }
+.countdown-number { display:inline-block; min-width:2ch; font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; }
 .countdown-label { font-size:12px; color:#71807a; }
 .result-sub,.unreachable { font-size:13px; line-height:1.8; color:#71807a; }
 .progress { margin:20px 0 8px; height:6px; border-radius:6px; background:#dfe8db; overflow:hidden; }
@@ -282,6 +283,5 @@ button[disabled] { opacity:.5; }
 .result-row { display:flex; justify-content:space-between; gap:12px; padding:10px 0; font-size:13px; line-height:1.7; }
 .result-row text:last-child { text-align:right; }
 .diagnosis { margin-top:14px; border-top:1px solid #e7eee7; }
-@keyframes numberFade { 0% { opacity:.3; } 100% { opacity:1; } }
 @media (prefers-reduced-motion:reduce) { button { transition:none; } button:active { transform:none; } .countdown-number { animation:none; } }
 </style>

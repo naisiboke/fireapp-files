@@ -151,4 +151,32 @@ check('calculator registered exactly once', pages.filter(p=>p.path==='pages/calc
 const tools = source('pages/tools/index.vue')
 check('calculator pinned first', tools.indexOf("{ route: 'calculator'") < tools.indexOf("{ route: 'ledger'") && tools.includes("a.tool.route === 'calculator'"))
 check('home has editable finance entry', source('pages/index/index.vue').includes("uni.navigateTo({ url: '/pages/calculator/index' })"))
+
+const numberCode = source('components/AnimatedNumber.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .+$/gm,'')
+const numberProps={value:1}, numberTimers=new Map()
+let numberWatch, numberDestroy, numberId=0, reduced=false
+const numberEnv={
+  ref:value=>({value}),watch:(_getter,callback)=>{numberWatch=callback},
+  onBeforeUnmount:callback=>{numberDestroy=callback},defineProps:()=>numberProps,
+  setTimeout:callback=>{numberTimers.set(++numberId,callback);return numberId},
+  clearTimeout:key=>numberTimers.delete(key),
+  window:{matchMedia:()=>({matches:reduced})},
+}
+const animated=new Function(...Object.keys(numberEnv),numberCode+'\nreturn {displayed,fading};')(...Object.values(numberEnv))
+check('number initial value is stationary', animated.displayed.value===1 && !animated.fading.value)
+numberProps.value=2;numberWatch(2)
+check('changed value fades old digit first', animated.displayed.value===1 && animated.fading.value && numberTimers.size===1)
+let pending=[...numberTimers.values()][0];numberTimers.clear();pending()
+check('new value fades in after swap', animated.displayed.value===2 && !animated.fading.value)
+numberWatch(2)
+check('unchanged digit creates no animation task', numberTimers.size===0 && !animated.fading.value)
+numberProps.value=3;numberWatch(3);numberProps.value=4;numberWatch(4)
+check('rapid value changes replace pending timer', numberTimers.size===1)
+pending=[...numberTimers.values()][0];numberTimers.clear();pending()
+check('rapid changes end with latest number', animated.displayed.value===4)
+reduced=true;numberProps.value=5;numberWatch(5)
+check('reduced motion updates immediately', animated.displayed.value===5 && numberTimers.size===0)
+reduced=false;numberProps.value=6;numberWatch(6);numberDestroy()
+check('number unmount cancels pending task', numberTimers.size===0)
+
 console.log(results.length + ' finance checks passed')
