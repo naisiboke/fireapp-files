@@ -1,9 +1,11 @@
 <script>
-import { bootstrap, persist } from './store/index.js'
+import { bootstrap, hydrateFromServer, persist } from './store/index.js'
 
 export default {
   onLaunch() {
     bootstrap()
+    // 配置云端 API 后以服务端数据为正式来源；未配置时保持本地过渡缓存。
+    hydrateFromServer()
     // 每次冷启动先进入唯一启动页，避免上次停留在分享页时被直接恢复。
     const pages = getCurrentPages()
     const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''

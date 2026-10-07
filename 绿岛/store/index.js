@@ -2,6 +2,7 @@ import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
+import { isApiConfigured, fetchUserState, saveUserState } from '../utils/api-service.js'
 
 export const STATE_VERSION = 3
 export const WISHLIST_KEY = 'fire_wishlist_v1'
@@ -45,6 +46,8 @@ const seed = () => ({
   timeLedger: null,
   soundEnabled: true,
   reading: undefined,
+  privacySettings: { cloudSync: true, personalizedContent: true },
+  cloudSync: { status: 'offline', message: '' },
   stateVersion: STATE_VERSION,
 })
 
@@ -76,6 +79,8 @@ function applySaved(saved) {
   if (!state.monthlyTargets) state.monthlyTargets = {}
   if (!state.toolUsage) state.toolUsage = {}
   if (typeof state.soundEnabled !== 'boolean') state.soundEnabled = true
+  state.privacySettings = { ...defaults.privacySettings, ...(state.privacySettings || {}) }
+  state.cloudSync = { status: 'offline', message: '', ...(state.cloudSync || {}) }
   state.stateVersion = STATE_VERSION
   if (saved && saved.finance && saved.freedomPlan &&
       saved.freedomPlan.signature === JSON.stringify(saved.finance)) {
@@ -127,14 +132,59 @@ export function refreshFinance() {
   if (ensureFreedomPlan()) persistNow()
 }
 
+function serializableState() {
+  const plain = JSON.parse(JSON.stringify(toRaw(state)))
+  delete plain.ready
+  delete plain.cloudSync
+  return plain
+}
+
+function writeLocal(plain) {
+  const success = storage.set('state', plain)
+  if (success) writeWishlist(plain.items)
+  return success
+}
+
+export async function syncStateToServer(snapshot = serializableState()) {
+  if (!isApiConfigured()) return { configured: false }
+  state.cloudSync = { status: 'syncing', message: '' }
+  try {
+    await saveUserState(snapshot)
+    state.cloudSync = { status: 'synced', message: '已与云端同步' }
+    return { configured: true, synced: true }
+  } catch (error) {
+    state.cloudSync = { status: 'error', message: error && error.message ? error.message : '云端同步失败' }
+    console.warn('[cloud-sync]', error)
+    return { configured: true, synced: false, error }
+  }
+}
+
+export async function hydrateFromServer() {
+  if (!isApiConfigured()) return { configured: false }
+  try {
+    const remote = await fetchUserState()
+    if (remote && typeof remote === 'object') {
+      applySaved(remote)
+      HeroDay(state)
+      writeLocal(serializableState())
+      state.cloudSync = { status: 'synced', message: '已从云端读取' }
+      return { configured: true, loaded: true }
+    }
+    return { configured: true, loaded: false }
+  } catch (error) {
+    state.cloudSync = { status: 'error', message: error && error.message ? error.message : '云端读取失败' }
+    console.warn('[cloud-hydrate]', error)
+    return { configured: true, loaded: false, error }
+  }
+}
+
 export function persistNow() {
   clearTimeout(saveTimer)
   saveTimer = null
   try {
-    const plain = JSON.parse(JSON.stringify(toRaw(state)))
-    delete plain.ready
-    const success = storage.set('state', plain)
-    if (success) writeWishlist(plain.items)
+    const plain = serializableState()
+    const success = writeLocal(plain)
+    if (success) syncStateToServer(plain)
     return success
   } catch (e) {
     console.warn('[persistNow]', e)
@@ -150,10 +200,9 @@ export function persist() {
   saveTimer = setTimeout(() => {
     saveTimer = null
     try {
-      const plain = JSON.parse(JSON.stringify(toRaw(state)))
-      delete plain.ready
-      storage.set('state', plain)
-      writeWishlist(plain.items)
+      const plain = serializableState()
+      writeLocal(plain)
+      syncStateToServer(plain)
     } catch (e) {
       console.warn('[persist]', e)
     }

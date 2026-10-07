@@ -31,45 +31,6 @@
       </view>
     </view>
 
-    <!-- 分组 1：财务核心 -->
-    <view class="group">
-      <text class="group-title">财务 FIRE 核心</text>
-      <view class="group-menu">
-        <view class="menu-item" @tap="goPage('/pages/ledger/index')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('assets')" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-name">我的资产与财务</text>
-            <text class="menu-sub">资产趋势、记录与自由目标</text>
-          </view>
-          <text class="chevron">›</text>
-        </view>
-
-        <view class="menu-item" @tap="comingSoon('自由日与目标日')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('calculator')" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-name">自由日与目标日</text>
-            <text class="menu-sub">两种计划，分别计算</text>
-          </view>
-          <text class="chevron">›</text>
-        </view>
-
-        <view class="menu-item" @tap="comingSoon('我的消费计划')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('wishlist')" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-name">我的消费计划</text>
-            <text class="menu-sub">{{ itemsCount }} 笔消费规划记录</text>
-          </view>
-          <text class="chevron">›</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 分组 2：成长 -->
     <view class="group">
       <text class="group-title">成长养成</text>
@@ -102,16 +63,7 @@
           <text class="chevron">›</text>
         </view>
 
-        <view class="menu-item" @tap="goPage('/pages/privacy/index')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('shield')" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-name">隐私政策</text>
-            <text class="menu-sub">数据存储与使用说明</text>
-          </view>
-          <text class="chevron">›</text>
-        </view>
+
       </view>
     </view>
 
@@ -160,9 +112,6 @@ export default {
     },
     avatarLetter() {
       return this.profileName.slice(0, 1)
-    },
-    itemsCount() {
-      return (state.items || []).length
     },
     expText() {
       return (state.exp || 0) + ' EXP'
