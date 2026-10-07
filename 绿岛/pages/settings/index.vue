@@ -9,7 +9,7 @@
       <view class="setting-row" @tap="togglePersonalized"><view class="row-copy"><text class="row-title">个性化内容</text><text class="row-sub">用于调整任务、阅读和社区推荐</text></view><view class="mini-switch" :class="{ on: state.privacySettings.personalizedContent }"><view class="mini-thumb"></view></view></view>
       <view class="privacy-link" @tap="openPrivacy"><text>隐私政策</text><text class="link-meta">v1.0 · 2026-10-07 ›</text></view>
     </view>
-    <view class="card"><text class="card-title">数据管理</text><text class="card-p">账户资料、财务与资产、收入和消费、记账、拔草、英雄传任务、EXP 与徽章、社区内容、收藏、阅读记录和书架都属于你的数据。</text><text class="card-p">当前云端服务状态：{{ syncText }}</text><view class="data-actions"><view class="action outline" @tap="exportData"><text>导出我的数据</text></view><view class="action danger-outline" @tap="deleteData"><text>删除我的数据</text></view></view><view class="privacy-link" @tap="requestDeletion"><text>账号注销</text><text class="link-meta">提交注销申请 ›</text></view></view>
+    <view class="card"><text class="card-title">数据管理</text><text class="card-p">账户资料、财务与资产、收入和消费、记账、拔草、英雄传任务、EXP 与徽章、社区内容、收藏、阅读记录和书架都属于你的数据。</text><text class="card-p">当前云端服务状态：{{ syncText }}</text><view class="data-actions"><view class="action outline" @tap="exportData"><text>导出我的数据</text></view><view class="action outline" @tap="retrySync"><text>重试云端同步</text></view><view class="action danger-outline" @tap="deleteData"><text>删除我的数据</text></view></view><view class="privacy-link" @tap="requestDeletion"><text>账号注销</text><text class="link-meta">提交注销申请 ›</text></view></view>
     <view class="card category-card"><text class="card-title">数据使用说明</text><view v-for="item in categories" :key="item.title" class="category-row"><text class="category-title">{{ item.title }}</text><text class="category-text">{{ item.text }}</text></view></view>
     <view class="card note"><text class="card-title">关于计算</text><text class="card-p">固定收益假设、月度复利、每月按填写金额在月末存入。自由模式按退休后消费与提取率计算，目标模式按目标金额计算。最多模拟 100 年，未达标时显示暂未可达。</text></view>
     <view class="btn light fire-button-secondary" @tap="replayOnboarding"><text class="btn-text light-text">重新查看启动流程</text></view><view class="btn danger fire-button-danger" @tap="confirmReset"><text class="btn-text">清除本机缓存并重新开始</text></view>
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { state, reset, persist } from '@/store/index.js'
+import { state, reset, persist, syncStateToServer } from '@/store/index.js'
 import { isApiConfigured, savePrivacySettings, exportUserData, deleteUserData, requestAccountDeletion } from '@/utils/api-service.js'
 export default {
   data() { return { state, categories: [
@@ -36,6 +36,7 @@ export default {
     async updatePrivacy(patch) { state.privacySettings = { ...state.privacySettings, ...patch }; persist(); if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，已保留本机过渡设置', icon: 'none' }); try { await savePrivacySettings(state.privacySettings); uni.showToast({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '同步失败，请重试', icon: 'none' }) } },
     toggleCloudSync() { this.updatePrivacy({ cloudSync: !state.privacySettings.cloudSync }) }, togglePersonalized() { this.updatePrivacy({ personalizedContent: !state.privacySettings.personalizedContent }) },
     openPrivacy() { uni.navigateTo({ url: '/pages/privacy/index' }) },
+    async retrySync() { if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，请先完成服务端配置', icon: 'none' }); const result = await syncStateToServer(); if (result.synced) uni.showToast({ title: '云端同步完成', icon: 'none' }); else uni.showToast({ title: (state.cloudSync && state.cloudSync.message) || '同步失败，请稍后重试', icon: 'none' }) },
     async exportData() { if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，暂时无法导出', icon: 'none' }); try { await exportUserData(); uni.showToast({ title: '导出请求已提交', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '导出失败，请重试', icon: 'none' }) } },
     deleteData() { uni.showModal({ title: '删除我的数据？', content: '这会删除云端数据（若服务已配置）并清除本机缓存，操作不可撤销。', success: async (res) => { if (!res.confirm) return; if (isApiConfigured()) { try { await deleteUserData() } catch (error) { return uni.showToast({ title: error.message || '云端删除失败，请重试', icon: 'none' }) } } uni.clearStorageSync(); reset(); state.started = false; uni.showToast({ title: isApiConfigured() ? '数据已删除' : '本机缓存已清除', icon: 'none' }); setTimeout(() => uni.reLaunch({ url: '/pages/onboarding/onboarding' }), 250) } }) },
     requestDeletion() { uni.showModal({ title: '提交账号注销？', content: '注销会停止账户使用并按服务端流程处理数据删除。', success: async (res) => { if (!res.confirm) return; if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，暂时无法提交注销', icon: 'none' }); try { await requestAccountDeletion(); uni.showToast({ title: '注销申请已提交', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '提交失败，请重试', icon: 'none' }) } } }) },
