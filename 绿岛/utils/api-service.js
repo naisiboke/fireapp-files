@@ -1,15 +1,26 @@
 // 统一云端数据服务入口。未配置地址时明确失败，不伪造保存成功。
+const DEFAULT_API_BASE_URL = 'https://ziyoukedu-d0gyrczqk4de53b87-1311439378.ap-shanghai.app.tcloudbase.com/api'
 export class ApiUnavailableError extends Error {
   constructor(message = '云端服务尚未配置，请稍后重试') { super(message); this.name = 'ApiUnavailableError'; this.code = 'API_NOT_CONFIGURED' }
 }
 export function getApiBaseUrl() {
-  try { const value = uni.getStorageSync('fire_api_base_url'); return typeof value === 'string' ? value.trim().replace(/\/$/, '') : '' } catch (e) { return '' }
+  try { const value = uni.getStorageSync('fire_api_base_url'); return typeof value === 'string' && value.trim() ? value.trim().replace(/\/$/, '') : DEFAULT_API_BASE_URL } catch (e) { return DEFAULT_API_BASE_URL }
 }
 export function isApiConfigured() { return Boolean(getApiBaseUrl()) }
 function accessToken() { try { return uni.getStorageSync('fire_access_token') || uni.getStorageSync('fire_login_token') || '' } catch (e) { return '' } }
+function clientId() {
+  try {
+    let value = uni.getStorageSync('fire_client_id')
+    if (!value) {
+      value = 'fire-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12)
+      uni.setStorageSync('fire_client_id', value)
+    }
+    return String(value)
+  } catch (e) { return '' }
+}
 export function apiRequest(path, options = {}) {
   const base = getApiBaseUrl(); if (!base) return Promise.reject(new ApiUnavailableError())
-  const headers = { 'Content-Type': 'application/json', ...(options.header || {}) }; const token = accessToken(); if (token) headers.Authorization = 'Bearer ' + token
+  const headers = { 'Content-Type': 'application/json', 'X-Fire-Client-Id': clientId(), ...(options.header || {}) }; const token = accessToken(); if (token) headers.Authorization = 'Bearer ' + token
   return new Promise((resolve, reject) => uni.request({ url: base + (path.startsWith('/') ? path : '/' + path), method: options.method || 'GET', data: options.data, header: headers, timeout: options.timeout || 12000,
     success: (response) => { const code = Number(response.statusCode || 0); if (code >= 200 && code < 300) return resolve(response.data); const message = response.data && (response.data.message || response.data.error); const error = new Error(message || '云端服务请求失败（' + code + '）'); error.statusCode = code; reject(error) },
     fail: (error) => reject(new Error(error && error.errMsg ? error.errMsg : '无法连接云端服务')),
