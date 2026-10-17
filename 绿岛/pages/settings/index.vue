@@ -31,7 +31,7 @@ export default {
   ] } },
   computed: { syncText() { if (!isApiConfigured()) return '未配置云端 API（本次不会伪造同步成功）'; if (state.cloudSync && state.cloudSync.status === 'error') return '同步失败：' + state.cloudSync.message; if (state.cloudSync && state.cloudSync.status === 'synced') return state.cloudSync.message || '已同步'; return '等待同步' } },
   methods: {
-    close() { const pages = getCurrentPages(); if (pages.length > 1) return uni.navigateBack({ delta: 1 }); uni.reLaunch({ url: '/pages/profile/index' }) },
+    close() { if (this.closing) return; this.closing = true; uni.reLaunch({ url: '/pages/profile/index', complete: () => { this.closing = false } }) },
     toggleSound() { state.soundEnabled = !state.soundEnabled; persist() },
     async updatePrivacy(patch) { state.privacySettings = { ...state.privacySettings, ...patch }; persist(); if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，已保留本机过渡设置', icon: 'none' }); try { await savePrivacySettings(state.privacySettings); uni.showToast({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '同步失败，请重试', icon: 'none' }) } },
     toggleCloudSync() { this.updatePrivacy({ cloudSync: !state.privacySettings.cloudSync }) }, togglePersonalized() { this.updatePrivacy({ personalizedContent: !state.privacySettings.personalizedContent }) },
@@ -42,7 +42,7 @@ export default {
     requestDeletion() { uni.showModal({ title: '提交账号注销？', content: '注销会停止账户使用并按服务端流程处理数据删除。', success: async (res) => { if (!res.confirm) return; if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置，暂时无法提交注销', icon: 'none' }); try { await requestAccountDeletion(); uni.showToast({ title: '注销申请已提交', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '提交失败，请重试', icon: 'none' }) } } }) },
     replayOnboarding() { state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' }) },
     confirmReset() { uni.showModal({ title: '清除本机数据？', content: '会清除本机缓存并重新进入引导流程；云端数据需要在数据管理中单独删除。', success: (res) => { if (!res.confirm) return; uni.clearStorageSync(); reset(); state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' }) } }) },
-  }, onBackPress() { this.close(); return true },
+  }, onBackPress() { if (!this.closing) this.close(); return true },
 }
 </script>
 
