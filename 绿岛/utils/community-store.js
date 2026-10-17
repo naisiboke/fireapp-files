@@ -1,5 +1,4 @@
 import { isApiConfigured, fetchUserCollection, saveUserCollection, deleteUserCollection } from './api-service.js'
-import { isApiConfigured, saveUserCollection } from './api-service.js'
 const K_FAV = 'firelife_favorites_v1'
 const K_UGC = 'firelife_ugc_v1'
 const K_ASSETS = 'firelife_assets_v1'
