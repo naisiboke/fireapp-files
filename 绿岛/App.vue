@@ -85,4 +85,16 @@ page {
   display: none !important;
 }
 /* #endif */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --button-primary: #7fae96;
+    --button-primary-hover: #9fc3ad;
+    --button-secondary: #263c32;
+    --button-outline: #93bda3;
+    --button-shadow: 0 4px 16px rgba(0,0,0,.24);
+  }
+  page, body { background: #17231e; color: #e9efe9; }
+  button { color: #e9efe9; }
+}
 </style>
