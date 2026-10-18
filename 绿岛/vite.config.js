@@ -35,6 +35,7 @@ export default defineConfig({
       output: {
         format: 'es',
         inlineDynamicImports: true,
+        codeSplitting: false,
       },
     },
   },
