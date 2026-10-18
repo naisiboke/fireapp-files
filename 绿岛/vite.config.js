@@ -29,6 +29,12 @@ export default defineConfig({
       scss: {},
     },
   },
+  // CloudBase SDK is a browser dependency. Force Vite to rebuild its optimized
+  // bundle so HBuilderX does not keep serving a stale 504 "Outdated Optimize Dep".
+  optimizeDeps: {
+    force: true,
+    include: ['@cloudbase/js-sdk'],
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
