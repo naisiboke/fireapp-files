@@ -1,7 +1,10 @@
 const FORBIDDEN_WORDS = [
   '傻逼', '妈的', '操你', '草泥马', '畜生', '废物', '垃圾', '脑残',
   '去死', '狗东西', '王八蛋', '他妈', '纳粹', '法西斯', '恐怖分子',
-  '极端主义', '管理员', '客服', '官方', 'admin', 'root',\n  '习近平', '李强', '毛泽东', '邓小平', '江泽民', '胡锦涛', '温家宝',\n  '中国共产党', '共产党', '国民党', '中华人民共和国', '中央政府', '国务院',\n  '政府', '国家', '政治', '总统', '主席', '总理', '军队', '警察', '法院',
+  '极端主义', '管理员', '客服', '官方', 'admin', 'root',
+  '习近平', '李强', '毛泽东', '邓小平', '江泽民', '胡锦涛', '温家宝',
+  '中国共产党', '共产党', '国民党', '中华人民共和国', '中央政府', '国务院',
+  '政府', '国家', '政治', '总统', '主席', '总理', '军队', '警察', '法院',
 ]
 
 export function validateNickname(input) {
@@ -12,12 +15,9 @@ export function validateNickname(input) {
   if (/(https?:\/\/|www\.|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|1\d{10})/i.test(value)) {
     return { ok: false, message: '昵称不能包含链接、邮箱或手机号' }
   }
-  const lower = value.toLowerCase()
-  if (FORBIDDEN_WORDS.some(word => lower.includes(word.toLowerCase()))) {
+  const normalized = value.toLowerCase().replace(/[\s·._-]/g, '')
+  if (FORBIDDEN_WORDS.some(word => normalized.includes(word.toLowerCase().replace(/[\s·._-]/g, '')))) {
     return { ok: false, message: '昵称包含不合适的内容，请换一个' }
-  }
-  if (/(政府|国家|政党|总统|领导).{0,4}(傻|蠢|垃圾|废物|狗|滚|去死)/.test(value)) {
-    return { ok: false, message: '昵称不能包含侮辱性或仇恨性内容' }
   }
   return { ok: true, value }
 }
