@@ -47,7 +47,7 @@ const seed = () => ({
   timeLedger: null,
   soundEnabled: true,
   reading: undefined,
-  privacySettings: { cloudSync: true, personalizedContent: true },
+  privacySettings: { cloudSync: true, personalizedContent: true, guardianAnimation: true },
   cloudSync: { status: 'offline', message: '' },
   stateVersion: STATE_VERSION,
 })
