@@ -84,13 +84,27 @@ function makeQuestions() {
   const adult = ['你目前的存款大约是多少？', '你每月到手收入大约是多少？', '每月收入中你能存下多少？', '你每月固定生活支出大约多少？', '你计划几年后买房？', '首付预算大约是多少？', '你计划几年后结婚？', '婚礼和彩礼预算大约多少？', '你计划几年后要孩子？', '孩子每年教育支出大约多少？', '你希望几年内还清房贷？', '父母医疗储备目标是多少？', '你希望退休时存下多少钱？', '你预计收入每年增长多少？', '你愿意承担多大投资波动？', '你每年旅行和娱乐支出多少？', '你每年保险支出多少？', '你希望每年给自己留多少自由支出？', '你是否有长期副业收入？', '你愿意为学习提升投入多少？']
   const later = ['房贷还剩多少年？', '子女教育金还缺多少？', '父母养老储备还缺多少？', '退休后每月希望花多少？', '你预计还会工作多少年？', '未来十年每年能存多少？', '你希望留下多少应急金？', '你是否计划换房？', '你是否计划帮助子女买房？', '你希望给家庭留下多少资产？']
   for (let i = 0; i < 100; i++) {
-    let text
+    let text = '基础财务问题'
     let type = 'money'
     let tag = '基础情况'
-    if (i < 10) { text = youth[i]; tag = '成长阶段'; type = i === 2 ? 'rate' : 'money' }
-    else if (i < 80) { text = adult[(i - 10) % adult.length]; tag = i < 35 ? '青年阶段' : i < 60 ? '家庭阶段' : '长期规划'; type = [1, 19, 34, 48, 63, 77].includes(i) ? 'income' : [2, 13, 33, 54, 68].includes(i) ? 'rate' : [4, 10, 22, 44, 55, 70].includes(i) ? 'years' : [14, 28, 42, 66].includes(i) ? 'ratePercent' : 'money' }
-    } else { text = later[(i - 80) % later.length]; tag = '中后期规划'; type = [84, 85, 88].includes(i) ? 'years' : i === 83 ? 'income' : 'money' }
-    questions.push({ id: 'q' + (i + 1), text, tag, type, options: OPTION_SETS[type] })
+    if (i < 10) {
+      text = youth[i]
+      tag = '成长阶段'
+      if (i === 2) type = 'rate'
+    } else if (i < 80) {
+      text = adult[(i - 10) % adult.length]
+      tag = i < 35 ? '青年阶段' : (i < 60 ? '家庭阶段' : '长期规划')
+      if ([1, 19, 34, 48, 63, 77].indexOf(i) >= 0) type = 'income'
+      else if ([2, 13, 33, 54, 68].indexOf(i) >= 0) type = 'rate'
+      else if ([4, 10, 22, 44, 55, 70].indexOf(i) >= 0) type = 'years'
+      else if ([14, 28, 42, 66].indexOf(i) >= 0) type = 'ratePercent'
+    } else {
+      text = later[(i - 80) % later.length]
+      tag = '中后期规划'
+      if ([84, 85, 88].indexOf(i) >= 0) type = 'years'
+      else if (i === 83) type = 'income'
+    }
+    questions.push({ id: 'q' + (i + 1), text: text, tag: tag, type: type, options: OPTION_SETS[type] })
   }
   return questions
 }
