@@ -28,7 +28,7 @@
       <view class="spinner"></view>
       <text class="generating-title">正在整理你的人生计划…</text>
       <text class="generating-sub">沿着年龄线，计算每一个重要节点</text>
-      <text class="generating-time">预计需要 15 秒</text>
+      <text class="generating-time">预计需要 5 秒</text>
     </view>
 
     <view v-else>
@@ -122,23 +122,30 @@ export default {
   computed: {
     visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
-    chartPoints() {
-      if (!this.curve.length) return ''
+    animatedCurve() {
+      const count = Math.max(1, Math.floor(this.curve.length * this.chartProgress))
+      return this.curve.slice(0, count)
+    },
+    animatedChartPoints() {
+      if (!this.animatedCurve.length) return ''
       const max = Math.max(1, this.peakBalance - this.minBalance)
-      return this.curve.map((point, index) => {
+      return this.animatedCurve.map((point, index) => {
         const x = 28 + index * 322 / Math.max(1, this.curve.length - 1)
         const y = 160 - (point.balance - this.minBalance) / max * 135
         return x.toFixed(1) + ',' + y.toFixed(1)
       }).join(' ')
     },
-    chartDots() {
-      if (!this.curve.length) return []
-      const step = Math.max(1, Math.floor(this.curve.length / 5))
+    animatedChartDots() {
+      if (!this.animatedCurve.length) return []
       const max = Math.max(1, this.peakBalance - this.minBalance)
-      return this.curve.filter((point, index) => index % step === 0 || index === this.curve.length - 1).map(point => {
+      return this.animatedCurve.filter((point, index) => index % Math.max(1, Math.floor(this.curve.length / 5)) === 0 || index === this.animatedCurve.length - 1).map(point => {
         const index = this.curve.indexOf(point)
         return { age: point.age, x: 28 + index * 322 / Math.max(1, this.curve.length - 1), y: 160 - (point.balance - this.minBalance) / max * 135 }
       })
+    },
+    historyCount() {
+      const history = uni.getStorageSync('fire_savings_curve_history_v1')
+      return Array.isArray(history) ? history.length : 0
     },
     peakBalance() { return this.curve.length ? Math.max(...this.curve.map(p => p.balance)) : 0 },
     minBalance() { return this.curve.length ? Math.min(...this.curve.map(p => p.balance)) : 0 },
@@ -157,7 +164,7 @@ export default {
       this.showResult = false
       if (this.generationTimer) clearTimeout(this.generationTimer)
       this.generationTimer = setTimeout(() => {
-        const startSavings = this.value('money', 3000)
+        const startSavings = this.value('balance', 3000)
         const income = this.value('income', 8000)
         const saveRate = this.value('rate', 0.3)
         const expense = Math.max(0, this.value('money', 3000) * 0.45)
@@ -175,15 +182,45 @@ export default {
           rows.push({ age: currentAge, balance: Math.round(balance) })
         }
         this.curve = rows
+        this.chartProgress = 0
         this.showResult = true
+        const history = uni.getStorageSync('fire_savings_curve_history_v1')
+        const savedHistory = Array.isArray(history) ? history : []
+        savedHistory.push({ age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, curve: rows, updatedAt: Date.now() })
+        uni.setStorageSync('fire_savings_curve_history_v1', savedHistory.slice(-10))
+        persist()
+        syncStateToServer()
         this.generating = false
+        if (this.chartTimer) clearInterval(this.chartTimer)
+        this.chartTimer = setInterval(() => {
+          this.chartProgress = Math.min(1, this.chartProgress + 0.035)
+          if (this.chartProgress >= 1) { clearInterval(this.chartTimer); this.chartTimer = null }
+        }, 100)
         this.generationTimer = null
         uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, updatedAt: Date.now() })
-      }, 15000)
+      }, 5000)
     },
-    addEvent() { this.customEvents.push({ age: this.age + 5, amount: 0, duration: 1 }) },
+    addEvent() { this.customEvents.push({ label: '买房', age: this.age + 5, amount: -100000, duration: 1 }) },
     removeEvent(index) { this.customEvents.splice(index, 1); this.recalculate() },
-    save() { this.recalculate(); uni.showToast({ title: '已保存到本机', icon: 'success' }) },
+    saveDraft() {
+      const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, questionIndex: this.questionIndex, events: this.customEvents, updatedAt: Date.now() }
+      uni.setStorageSync('fire_savings_curve_draft_v1', draft)
+      persist()
+      syncStateToServer()
+      uni.showToast({ title: '草稿已保存', icon: 'success' })
+    },
+    loadDraft() {
+      const draft = uni.getStorageSync('fire_savings_curve_draft_v1')
+      if (!draft) { uni.showToast({ title: '还没有草稿', icon: 'none' }); return }
+      this.age = draft.age || 28; this.lifeExpectancy = draft.lifeExpectancy || 85; this.answers = draft.answers || {}; this.questionIndex = draft.questionIndex || 0; this.customEvents = draft.events || []; this.started = true
+    },
+    loadHistory() {
+      const history = uni.getStorageSync('fire_savings_curve_history_v1')
+      if (!Array.isArray(history) || !history.length) { uni.showToast({ title: '还没有历史测算', icon: 'none' }); return }
+      const latest = history[history.length - 1]
+      this.age = latest.age; this.lifeExpectancy = latest.lifeExpectancy; this.answers = latest.answers || {}; this.customEvents = latest.events || []; this.curve = latest.curve || []; this.started = true; this.showResult = true; this.chartProgress = 1
+    },
+    save() { this.saveDraft(); this.recalculate() },
     formatMoney(value) { return Number(value || 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 }) },
   },
   onLoad() {
