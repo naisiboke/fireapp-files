@@ -43,7 +43,14 @@ export default {
   },
   methods: {
     close() { uni.navigateBack() },
-    upgrade() {\n      if (uni.getStorageSync('fire_login_status') !== true) {\n        uni.showToast({ title: '请先登录后升级', icon: 'none' })\n        setTimeout(() => uni.reLaunch({ url: '/pages/login/login?redirect=/pages/profile/membership' }), 350)\n        return\n      }\n      uni.showModal({ title: '立即升级 FIRE PRO', content: '会员价格为 9 元/月。支付功能正在接入，开放后可完成订阅。', showCancel: false, confirmText: '知道了' })\n    },
+    upgrade() {
+      if (uni.getStorageSync('fire_login_status') !== true) {
+        uni.showToast({ title: '请先登录后升级', icon: 'none' })
+        setTimeout(() => uni.reLaunch({ url: '/pages/login/login?redirect=/pages/profile/membership' }), 350)
+        return
+      }
+      uni.showModal({ title: '立即升级 FIRE PRO', content: '会员价格为 9 元/月。支付功能正在接入，开放后可完成订阅。', showCancel: false, confirmText: '知道了' })
+    },
   },
 }
 </script>
