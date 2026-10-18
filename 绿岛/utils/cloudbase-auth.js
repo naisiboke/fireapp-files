@@ -23,3 +23,9 @@ export async function saveAuthToken() {
   }
   throw new Error('登录令牌获取失败，请重试')
 }
+export async function getMediaURL(fileID) {
+  if (!fileID) return ''
+  const result = await app.getTempFileURL({ fileList: [fileID] })
+  const item = result && result.fileList && result.fileList[0]
+  return item && (item.tempFileURL || item.tempFileUrl || '')
+}
