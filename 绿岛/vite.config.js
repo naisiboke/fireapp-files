@@ -33,6 +33,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        format: 'es',
         inlineDynamicImports: true,
       },
     },
