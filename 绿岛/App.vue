@@ -1,6 +1,8 @@
 <script>
 import { bootstrap, hydrateFromServer, persist } from './store/index.js'
 
+const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register'])
+
 export default {
   onLaunch() {
     bootstrap()
@@ -18,6 +20,20 @@ export default {
         })
       }, 0)
     }
+  },
+  onShow() {
+    const pages = getCurrentPages()
+    const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
+    if (!route || PUBLIC_ROUTES.has(route)) return
+    if (uni.getStorageSync('fire_login_status') === true) return
+    uni.removeStorageSync('fire_guest_mode')
+    const app = getApp()
+    if (app.__fireAuthRedirecting) return
+    app.__fireAuthRedirecting = true
+    uni.reLaunch({
+      url: '/pages/login/login?redirect=/' + route,
+      complete: () => { app.__fireAuthRedirecting = false },
+    })
   },
   onHide() {
     persist()
