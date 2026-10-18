@@ -9,8 +9,8 @@
     </view>
 
     <view class="pro-card">
-      <view class="pro-head"><text class="pro-name">FIRE PRO</text><text class="pro-badge">即将上线</text></view>
-      <text class="pro-desc">为认真规划自由生活的人准备</text>
+      <view class="pro-head"><text class="pro-name">FIRE PRO</text><text class="pro-badge">¥9 / 月</text></view>
+      <text class="pro-desc">为认真规划自由生活的人准备</text><view class="price"><text class="price-num">¥9</text><text class="price-unit"> / 月</text></view>
       <view class="benefit" v-for="item in benefits" :key="item"><text class="check">✓</text><text>{{ item }}</text></view>
       <button class="notify" @tap="notify">订阅功能开放时提醒我</button>
     </view>
@@ -23,7 +23,7 @@
       <text class="free-item">✓ 登录后跨设备同步数据</text>
     </view>
 
-    <text class="note">订阅价格和支付方式将在正式开放前公布。不会在未确认的情况下扣费。</text>
+    <text class="note">行为建议 AI 只提供记录、消费和生活习惯建议，不提供金融服务、投资建议或理财推荐。订阅支付功能即将开放。</text>
   </view>
 </template>
 
@@ -36,6 +36,7 @@ export default {
         '更完整的财务趋势与年度报告',
         '自定义任务、提醒和成长统计',
         '更多主题、模板和专属内容',
+        '行为建议 AI：帮助发现消费和习惯模式',
         '优先体验新功能',
       ],
     }
@@ -48,5 +49,5 @@ export default {
 </script>
 
 <style>
-.member-page{min-height:100vh;padding:calc(62px + env(safe-area-inset-top)) 20px calc(34px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:10;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 20px 0;display:flex;align-items:center;justify-content:space-between;background:#fdfdfb;border-bottom:1px solid #edf1eb;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#243830}.close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#243830}.hero{padding:22px 4px 20px}.kicker{display:block;color:#527059;font-size:12px;letter-spacing:.14em;font-weight:600}.hero-title{display:block;color:#173d35;font-size:27px;font-weight:700;line-height:1.35;margin-top:10px}.hero-sub{display:block;color:#71807a;font-size:14px;line-height:1.7;margin-top:10px}.pro-card{padding:20px;border-radius:18px;background:linear-gradient(145deg,#173d35,#2e5e4d);color:#fff;box-shadow:0 10px 24px rgba(23,61,53,.16)}.pro-head{display:flex;align-items:center;justify-content:space-between}.pro-name{font-size:20px;font-weight:700;letter-spacing:.08em}.pro-badge{font-size:11px;padding:5px 8px;border-radius:20px;background:#d7e5bb;color:#173d35}.pro-desc{display:block;color:#dce9d8;font-size:13px;margin-top:8px}.benefit{display:flex;align-items:center;gap:9px;font-size:14px;line-height:1.5;margin-top:14px;color:#f4f8ef}.check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#d7e5bb;color:#173d35;font-size:12px}.notify{height:46px;margin-top:22px;border:0;border-radius:11px;background:#fff;color:#173d35;font-size:14px}.free-card{margin-top:14px;padding:18px;border:1px solid #e5e9e0;border-radius:16px;background:#fff}.free-title{display:block;color:#243830;font-size:15px;font-weight:600;margin-bottom:12px}.free-item{display:block;color:#52605a;font-size:13px;line-height:1.8}.note{display:block;text-align:center;color:#8b9489;font-size:12px;line-height:1.6;margin:18px 12px 0}
+.member-page{min-height:100vh;padding:calc(62px + env(safe-area-inset-top)) 20px calc(34px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:10;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 20px 0;display:flex;align-items:center;justify-content:space-between;background:#fdfdfb;border-bottom:1px solid #edf1eb;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#243830}.close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#243830}.hero{padding:22px 4px 20px}.kicker{display:block;color:#527059;font-size:12px;letter-spacing:.14em;font-weight:600}.hero-title{display:block;color:#173d35;font-size:27px;font-weight:700;line-height:1.35;margin-top:10px}.hero-sub{display:block;color:#71807a;font-size:14px;line-height:1.7;margin-top:10px}.pro-card{padding:20px;border-radius:18px;background:linear-gradient(145deg,#173d35,#2e5e4d);color:#fff;box-shadow:0 10px 24px rgba(23,61,53,.16)}.pro-head{display:flex;align-items:center;justify-content:space-between}.pro-name{font-size:20px;font-weight:700;letter-spacing:.08em}.pro-badge{font-size:11px;padding:5px 8px;border-radius:20px;background:#d7e5bb;color:#173d35}.pro-desc{display:block;color:#dce9d8;font-size:13px;margin-top:8px}.price{display:flex;align-items:baseline;margin-top:10px}.price-num{font-size:32px;font-weight:700}.price-unit{font-size:13px;color:#dce9d8}.benefit{display:flex;align-items:center;gap:9px;font-size:14px;line-height:1.5;margin-top:14px;color:#f4f8ef}.check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#d7e5bb;color:#173d35;font-size:12px}.notify{height:46px;margin-top:22px;border:0;border-radius:11px;background:#fff;color:#173d35;font-size:14px}.free-card{margin-top:14px;padding:18px;border:1px solid #e5e9e0;border-radius:16px;background:#fff}.free-title{display:block;color:#243830;font-size:15px;font-weight:600;margin-bottom:12px}.free-item{display:block;color:#52605a;font-size:13px;line-height:1.8}.note{display:block;text-align:center;color:#8b9489;font-size:12px;line-height:1.6;margin:18px 12px 0}
 </style>
