@@ -102,6 +102,7 @@ export default {
   data() {
     return {
       state: state,
+      avatarUrl: '',
     }
   },
 
@@ -138,7 +139,10 @@ export default {
     goPage(url) {
       uni.navigateTo({ url: url })
     },
-        goOnboarding() {\n      uni.navigateTo({ url: '/pages/profile/edit' })\n    },\n    openPro() {
+        goOnboarding() {
+      uni.navigateTo({ url: '/pages/profile/edit' })
+    },
+    openPro() {
       uni.showModal({
         title: 'FIRE PRO',
         content: 'Pro 会员权益即将上线，敬请期待。',
@@ -202,7 +206,8 @@ export default {
   justify-content: center;
   flex-shrink: 0;
 }
-.avatar-image { width: 100%; height: 100%; border-radius: 50%; }\n.avatar-text {
+.avatar-image { width: 100%; height: 100%; border-radius: 50%; }
+.avatar-text {
   color: #d7e5bb;
   font-size: 22px;
   font-weight: 300;
