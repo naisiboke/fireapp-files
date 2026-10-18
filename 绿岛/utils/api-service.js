@@ -8,8 +8,20 @@ export function getApiBaseUrl() {
 }
 export function isApiConfigured() { return Boolean(getApiBaseUrl()) }
 function accessToken() { try { return uni.getStorageSync('fire_access_token') || uni.getStorageSync('fire_login_token') || '' } catch (e) { return '' } }
+function tokenSubject(token) {
+  try {
+    const part = String(token || '').split('.')[1]
+    if (!part) return ''
+    const encoded = part.replace(/-/g, '+').replace(/_/g, '/')
+    const json = decodeURIComponent(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=').split('').map(char => '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2)).join(''))
+    const payload = JSON.parse(json)
+    return String(payload.sub || payload.openid || payload.user_id || payload.uid || '')
+  } catch (e) { return '' }
+}
 function clientId() {
   try {
+    const subject = tokenSubject(accessToken())
+    if (subject) return 'fire-user-' + subject
     let value = uni.getStorageSync('fire_client_id')
     if (!value) {
       value = 'fire-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12)
