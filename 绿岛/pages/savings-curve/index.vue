@@ -5,23 +5,30 @@
       <text class="close" @tap="close">×</text>
     </view>
 
-    <view class="intro-card" v-if="!started">
-      <text class="intro-title">看见钱会怎样走</text>
-      <text class="intro-copy">用 100 道简单选择题，估算从现在到预期寿命的存款变化。</text>
-      <view class="intro-row"><text>本地计算</text><text>不上传财务数据</text><text>可随时修改</text></view>
-      <view class="field-row">
-        <text>你的当前年龄</text>
-        <input v-model.number="age" type="number" class="age-input" />
-        <text>岁</text>
-      </view>
-      <view class="field-row">
-        <text>预计寿命</text>
-        <input v-model.number="lifeExpectancy" type="number" class="age-input" />
-        <text>岁</text>
-      </view>
-      <button class="primary" @tap="start">开始测算</button>
-      <view class="entry-links"><text @tap="loadDraft">查看我的草稿</text><text @tap="loadHistory">查看历史测算</text></view>
-      <text v-if="historyCount" class="entry-hint">已有 {{ historyCount }} 次测算记录</text>
+    <view class="intro-card" v-if="!started && !draftPanel && !historyPanel">
+      <text class="intro-title">普通人一生存款曲线</text>
+      <text class="intro-copy">用选择题整理你的收入、支出和人生计划。</text>
+      <button class="primary entry-main" @tap="start">开始新的计算</button>
+      <button class="entry-button" @tap="openDraftPanel">查看我的草稿</button>
+      <button class="entry-button" @tap="openHistoryPanel">查看我的历史结果</button>
+    </view>
+    <view v-else-if="draftPanel" class="intro-card list-panel">
+      <text class="intro-title">我的草稿</text>
+      <view v-if="draftData" class="saved-row"><text>已完成 {{ draftData.completedCount || 0 }} 题 · 上次第 {{ Number(draftData.questionIndex || 0) + 1 }} 题</text><text>{{ draftTime }}</text><button class="primary small" @tap="loadDraft">继续答题</button><button class="entry-button" @tap="deleteDraft">删除草稿</button></view>
+      <text v-else class="empty-copy">暂无草稿</text>
+      <button class="entry-button" @tap="closePanels">返回</button>
+    </view>
+    <view v-else-if="historyPanel" class="intro-card list-panel">
+      <text class="intro-title">历史结果</text>
+      <view v-if="historyItems.length" v-for="(item, index) in historyItems" :key="index" class="saved-row"><text>第 {{ index + 1 }} 次测算 · {{ item.age }} 岁</text><text>{{ formatDate(item.updatedAt) }}</text><button class="entry-button" @tap="viewHistory(item)">查看详情</button><button class="entry-button" @tap="deleteHistory(index)">删除</button></view>
+      <text v-else class="empty-copy">暂无历史结果</text>
+      <button class="entry-button" @tap="closePanels">返回</button>
+    </view>
+    <view v-else-if="started && profileStep" class="intro-card profile-step">
+      <text class="intro-title">先告诉我两个数字</text>
+      <view class="field-row"><text>当前年龄</text><input v-model="age" type="number" placeholder="请输入你的当前年龄" class="age-input" /><text>岁</text></view>
+      <view class="field-row"><text>预计寿命</text><input v-model="lifeExpectancy" type="number" placeholder="请输入你的预计寿命" class="age-input" /><text>岁</text></view>
+      <button class="primary" @tap="beginQuestions">进入第 1 题</button>
     </view>
 
     <view v-if="generating" class="generating-mask">
@@ -31,7 +38,7 @@
       <text class="generating-time">预计需要 5 秒</text>
     </view>
 
-    <view v-else>
+    <view v-else-if="started && !profileStep && !draftPanel && !historyPanel">
       <view class="progress-row"><text>第 {{ questionIndex + 1 }} / {{ visibleQuestions.length }} 题</text><text>{{ Math.round((questionIndex + 1) / visibleQuestions.length * 100) }}%</text></view>
       <view class="question-card" v-if="currentQuestion">
         <text class="question-tag">{{ currentQuestion.stage || currentQuestion.category }}</text>
@@ -84,7 +91,7 @@ import { SAVINGS_QUESTIONS } from '@/utils/savings-questions.js'
 
 export default {
   components: { BottomTabs },
-  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [] } },
+  data() { return { age: '', lifeExpectancy: '', started: false, profileStep: false, draftPanel: false, historyPanel: false, draftData: null, historyItems: [], questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [] } },
   computed: {
     visibleQuestions() {
       if (this.age < 18) return this.questions.filter(q => q.stage === 'youth')
@@ -126,7 +133,22 @@ export default {
   },
   methods: {
     close() { uni.navigateBack() },
-    start() { this.age = Math.max(8, Math.min(90, Number(this.age) || 28)); this.lifeExpectancy = Math.max(this.age + 1, Math.min(110, Number(this.lifeExpectancy) || 85)); this.started = true },
+    start() { this.started = true; this.profileStep = true; this.age = ''; this.lifeExpectancy = '' },
+    beginQuestions() {
+      const age = Number(this.age)
+      const life = Number(this.lifeExpectancy)
+      if (!Number.isFinite(age) || age < 8 || age > 90) { uni.showToast({ title: '请输入正确的当前年龄', icon: 'none' }); return }
+      if (!Number.isFinite(life) || life <= age || life > 110) { uni.showToast({ title: '请输入正确的预计寿命', icon: 'none' }); return }
+      this.age = age; this.lifeExpectancy = life; this.profileStep = false
+    },
+    openDraftPanel() { this.draftData = uni.getStorageSync('fire_savings_curve_draft_v1') || null; this.draftPanel = true },
+    openHistoryPanel() { const items = uni.getStorageSync('fire_savings_curve_history_v1'); this.historyItems = Array.isArray(items) ? items : []; this.historyPanel = true },
+    closePanels() { this.draftPanel = false; this.historyPanel = false },
+    deleteDraft() { uni.removeStorageSync('fire_savings_curve_draft_v1'); this.draftData = null },
+    deleteHistory(index) { this.historyItems.splice(index, 1); uni.setStorageSync('fire_savings_curve_history_v1', this.historyItems) },
+    formatDate(value) { return value ? new Date(value).toLocaleString('zh-CN') : '' },
+    viewHistory(item) { this.age = item.age; this.lifeExpectancy = item.lifeExpectancy; this.answers = item.answers || {}; this.customEvents = item.events || []; this.curve = item.curve || []; this.started = true; this.profileStep = false; this.historyPanel = false; this.showResult = true; this.chartProgress = 1 },
+
     choose(value) {
       if (!this.currentQuestion) return
       this.answers[this.currentQuestion.id] = value
