@@ -26,7 +26,14 @@ export async function saveAuthToken() {
 export async function uploadAvatar(filePath) {
   if (!filePath) throw new Error('未选择头像')
   const cloudPath = 'avatars/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.jpg'
-  const result = await app.uploadFile({ cloudPath, filePath })
+  let uploadPath = filePath
+  // H5 的 uni.chooseImage 返回临时 URL，CloudBase 浏览器 SDK 需要 File 对象。
+  if (typeof window !== 'undefined' && typeof filePath === 'string') {
+    const response = await fetch(filePath)
+    const blob = await response.blob()
+    uploadPath = new File([blob], 'avatar.jpg', { type: blob.type || 'image/jpeg' })
+  }
+  const result = await app.uploadFile({ cloudPath, filePath: uploadPath })
   return result && (result.fileID || result.fileId || cloudPath)
 }
 
