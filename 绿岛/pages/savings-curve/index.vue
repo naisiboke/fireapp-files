@@ -22,6 +22,13 @@
       <button class="primary" @tap="start">开始回答</button>
     </view>
 
+    <view v-if="generating" class="generating-mask">
+      <view class="spinner"></view>
+      <text class="generating-title">正在整理你的人生计划…</text>
+      <text class="generating-sub">沿着年龄线，计算每一个重要节点</text>
+      <text class="generating-time">预计需要 15 秒</text>
+    </view>
+
     <view v-else>
       <view class="progress-row"><text>第 {{ questionIndex + 1 }} / {{ visibleQuestions.length }} 题</text><text>{{ Math.round((questionIndex + 1) / visibleQuestions.length * 100) }}%</text></view>
       <view class="question-card" v-if="currentQuestion">
@@ -111,7 +118,7 @@ function makeQuestions() {
 
 export default {
   components: { BottomTabs },
-  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, customEvents: [], questions: makeQuestions(), curve: [] } },
+  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, customEvents: [], questions: makeQuestions(), curve: [] } },
   computed: {
     visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
@@ -145,26 +152,34 @@ export default {
     next() { if (this.questionIndex < this.visibleQuestions.length - 1) { this.questionIndex++; return } this.recalculate() },
     value(type, fallback) { const q = this.questions.find(x => x.type === type); return q && this.answers[q.id] !== undefined ? Number(this.answers[q.id]) : fallback },
     recalculate() {
-      const startSavings = this.value('money', 3000)
-      const income = this.value('income', 8000)
-      const saveRate = this.value('rate', 0.3)
-      const expense = Math.max(0, this.value('money', 3000) * 0.45)
-      const growth = this.value('ratePercent', 0.035)
-      const inflation = 0.025
-      const years = Math.max(1, this.lifeExpectancy - this.age)
-      let balance = startSavings
-      const rows = []
-      for (let i = 0; i <= years; i++) {
-        const currentAge = this.age + i
-        const eventTotal = this.customEvents.filter(e => Number(e.age) === currentAge).reduce((sum, e) => sum + Number(e.amount || 0), 0)
-        const annualIncome = income * 12 * Math.pow(1 + growth, i)
-        const annualExpense = expense * 12 * Math.pow(1 + inflation, i)
-        balance = balance * 1.035 + annualIncome * saveRate - annualExpense + eventTotal
-        rows.push({ age: currentAge, balance: Math.round(balance) })
-      }
-      this.curve = rows
-      this.showResult = true
-      uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, updatedAt: Date.now() })
+      if (this.generating) return
+      this.generating = true
+      this.showResult = false
+      if (this.generationTimer) clearTimeout(this.generationTimer)
+      this.generationTimer = setTimeout(() => {
+        const startSavings = this.value('money', 3000)
+        const income = this.value('income', 8000)
+        const saveRate = this.value('rate', 0.3)
+        const expense = Math.max(0, this.value('money', 3000) * 0.45)
+        const growth = this.value('ratePercent', 0.035)
+        const inflation = 0.025
+        const years = Math.max(1, this.lifeExpectancy - this.age)
+        let balance = startSavings
+        const rows = []
+        for (let i = 0; i <= years; i++) {
+          const currentAge = this.age + i
+          const eventTotal = this.customEvents.filter(event => Number(event.age) === currentAge).reduce((sum, event) => sum + Number(event.amount || 0), 0)
+          const annualIncome = income * 12 * Math.pow(1 + growth, i)
+          const annualExpense = expense * 12 * Math.pow(1 + inflation, i)
+          balance = balance * 1.035 + annualIncome * saveRate - annualExpense + eventTotal
+          rows.push({ age: currentAge, balance: Math.round(balance) })
+        }
+        this.curve = rows
+        this.showResult = true
+        this.generating = false
+        this.generationTimer = null
+        uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, updatedAt: Date.now() })
+      }, 15000)
     },
     addEvent() { this.customEvents.push({ age: this.age + 5, amount: 0, duration: 1 }) },
     removeEvent(index) { this.customEvents.splice(index, 1); this.recalculate() },
@@ -180,4 +195,4 @@ export default {
 
 <style>
 .curve-page{min-height:100vh;padding:calc(22px + env(safe-area-inset-top)) 18px 120px;background:#f7f6f1;color:#243830;box-sizing:border-box}.dark{background:#17231e;color:#e8efe8}.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.eyebrow{display:block;font-size:12px;color:#6c8c77;margin-bottom:5px}.title{display:block;font-size:23px;font-weight:700}.close{font-size:30px;line-height:1;color:#355f4f;padding:0 6px}.intro-card,.question-card,.chart-card,.events-card{background:rgba(255,255,255,.82);border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(33,58,47,.07)}.dark .intro-card,.dark .question-card,.dark .chart-card,.dark .events-card{background:#21352b}.intro-title{display:block;font-size:25px;font-weight:700;margin-bottom:9px}.intro-copy,.section-sub,.privacy,.hint{display:block;color:#71807a;font-size:13px;line-height:1.7}.intro-row{display:flex;justify-content:space-between;margin:18px 0;color:#527059;font-size:11px}.field-row{display:flex;align-items:center;gap:8px;padding:13px 0;border-bottom:1px solid rgba(80,110,90,.12);font-size:14px}.age-input{width:70px;padding:7px 10px;text-align:center;border-radius:10px;border:1px solid #dce8dc;background:#fff;color:#243830}.primary,.secondary,.event-add{border-radius:13px;padding:0 18px;min-height:46px;margin-top:18px;line-height:46px;font-size:14px}.primary{background:#2d5b49;color:#fff}.secondary{background:#edf2eb;color:#355f4f}.small{min-width:130px}.progress-row{display:flex;justify-content:space-between;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-tag{display:block;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-title{display:block;font-size:22px;font-weight:700;line-height:1.45;margin-bottom:18px}.options{display:flex;flex-direction:column;gap:9px}.option{display:flex;align-items:center;gap:10px;padding:13px;border-radius:13px;background:#f1f5ee;color:#405a4b;font-size:14px}.option.selected{background:#dbead8;color:#1e4c39;font-weight:600}.option-dot{width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}.nav-row{display:flex;justify-content:space-between;gap:12px}.nav-row button{flex:1}.result-area{margin-top:28px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.section-title{display:block;font-size:19px;font-weight:700}.theme-toggle,.count{color:#527059;font-size:12px;padding-top:4px}.chart-card{padding:14px 12px 10px}.chart{width:100%;height:190px;display:block}.grid-line{stroke:#dbe5dc;stroke-width:1}.curve-line{fill:none;stroke:#3b7557;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.curve-dot{fill:#f7f6f1;stroke:#3b7557;stroke-width:2}.chart-labels{display:flex;justify-content:space-between;color:#71807a;font-size:11px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.summary-grid view{padding:12px 8px;border-radius:14px;background:#edf2eb}.summary-grid text,.summary-grid strong{display:block}.summary-grid text{font-size:11px;color:#71807a}.summary-grid strong{font-size:14px;color:#2d5b49;margin-top:5px}.events-card{margin-top:14px}.event-row{display:grid;grid-template-columns: .8fr 1fr .8fr 24px;gap:6px;margin:8px 0}.event-row input{min-width:0;padding:9px 5px;text-align:center;border:1px solid #dce8dc;border-radius:9px;font-size:12px}.event-row text{font-size:22px;color:#8c6a62;text-align:center}.event-add{width:100%;background:#f1f5ee;color:#527059;border:1px dashed #b8cdbb;margin-top:8px}.actions{display:flex;gap:10px;margin-top:16px}.actions button{flex:1}.privacy{text-align:center;margin-top:15px;font-size:11px}@media (prefers-color-scheme:dark){.curve-page:not(.dark){background:#17231e;color:#e8efe8}.curve-page:not(.dark) .intro-card,.curve-page:not(.dark) .question-card,.curve-page:not(.dark) .chart-card,.curve-page:not(.dark) .events-card{background:#21352b}}
-</style>
+.generating-mask{position:fixed;z-index:20;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;background:rgba(247,246,241,.97);text-align:center}.dark .generating-mask{background:rgba(23,35,30,.98)}.spinner{width:46px;height:46px;border:3px solid rgba(82,112,89,.2);border-top-color:#527059;border-radius:50%;animation:curveSpin 1s linear infinite}.generating-title{margin-top:22px;font-size:20px;font-weight:700;color:#243830}.generating-sub{margin-top:8px;color:#71807a;font-size:13px}.generating-time{margin-top:24px;color:#8b9489;font-size:11px}@keyframes curveSpin{to{transform:rotate(360deg)}}</style>
