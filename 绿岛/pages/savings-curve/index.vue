@@ -101,8 +101,24 @@ export default {
   computed: {
     visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
-    chartPoints() { return this.curve.length ? this.curve.map((p, i) => (28 + i * 322 / Math.max(1, this.curve.length - 1)).toFixed(1) + ',' + (160 - (p.balance - this.minBalance) / Math.max(1, this.peakBalance - this.minBalance) * 135).toFixed(1)).join(' ') : '' },
-    chartDots() { if (!this.curve.length) return []; const step = Math.max(1, Math.floor(this.curve.length / 5)); return this.curve.filter((p, i) => i % step === 0 || i === this.curve.length - 1).map((p, i) => ({ age: p.age, x: 28 + this.curve.indexOf(p) * 322 / Math.max(1, this.curve.length - 1), y: 160 - (p.balance - this.minBalance) / Math.max(1, this.peakBalance - this.minBalance) * 135 })) },
+    chartPoints() {
+      if (!this.curve.length) return ''
+      const max = Math.max(1, this.peakBalance - this.minBalance)
+      return this.curve.map((point, index) => {
+        const x = 28 + index * 322 / Math.max(1, this.curve.length - 1)
+        const y = 160 - (point.balance - this.minBalance) / max * 135
+        return x.toFixed(1) + ',' + y.toFixed(1)
+      }).join(' ')
+    },
+    chartDots() {
+      if (!this.curve.length) return []
+      const step = Math.max(1, Math.floor(this.curve.length / 5))
+      const max = Math.max(1, this.peakBalance - this.minBalance)
+      return this.curve.filter((point, index) => index % step === 0 || index === this.curve.length - 1).map(point => {
+        const index = this.curve.indexOf(point)
+        return { age: point.age, x: 28 + index * 322 / Math.max(1, this.curve.length - 1), y: 160 - (point.balance - this.minBalance) / max * 135 }
+      })
+    },
     peakBalance() { return this.curve.length ? Math.max(...this.curve.map(p => p.balance)) : 0 },
     minBalance() { return this.curve.length ? Math.min(...this.curve.map(p => p.balance)) : 0 },
     retirementBalance() { return this.curve.length ? this.curve[this.curve.length - 1].balance : 0 },
