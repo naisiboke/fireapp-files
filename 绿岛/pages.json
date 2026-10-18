@@ -134,6 +134,13 @@
       }
     },
     {
+      "path": "pages/savings-curve/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "一生存款曲线"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationStyle": "custom",
