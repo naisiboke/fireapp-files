@@ -55,6 +55,10 @@ export async function exportUserData() { return apiRequest('/v1/me/export') }
 export async function deleteUserData() { return apiRequest('/v1/me/state', { method: 'DELETE' }) }
 export async function requestAccountDeletion() { return apiRequest('/v1/me/deletion', { method: 'POST', data: { reason: 'user_requested' } }) }
 
+export async function askBehaviorAI(payload) {
+  return apiRequest('/v1/ai/chat', { method: 'POST', data: payload, timeout: 30000 })
+}
+
 export async function fetchUserCollection(collection) {
   const payload = await apiRequest('/v1/me/collections/' + encodeURIComponent(collection))
   return payload && payload.items ? payload.items : payload
