@@ -53,12 +53,18 @@ export default {
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
     formatAnswer(value) {
       let text = value.replace(/\*\*/g, '').replace(/__|###?/g, '').replace(/\r/g, '').trim()
-      text = text.replace(/(^|\n)\s*[-•]\s*/g, '$1')
-      text = text.replace(/(\d+)[.)、]\s*/g, '\n$1. ')
-      text = text.replace(/\n{2,}/g, '\n').trim()
-      const sentences = text.split(/(?<=[。！？])/).filter(Boolean).slice(0, 6)
+      text = text.replace(/(^|
+)\s*[-•]\s*/g, '$1')
+      text = text.replace(/(\d+)[.)、]\s*/g, '
+$1. ')
+      text = text.replace(/
+{2,}/g, '
+').trim()
+      const sentences = text.replace(/([。！？])/g, '$1
+').split('
+').filter(Boolean).slice(0, 6)
       text = sentences.join('')
-      return text.length > 420 ? text.slice(0, 420).replace(/[，、；：]?[^一-鿿A-Za-z0-9]?[\s\S]*$/, '') + '…' : text
+      return text.length > 420 ? text.slice(0, 420) + '…' : text
     },
 
     async send() {
