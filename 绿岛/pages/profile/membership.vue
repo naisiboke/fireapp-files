@@ -12,7 +12,7 @@
       <view class="pro-head"><text class="pro-name">FIRE PRO</text><text class="pro-badge">¥9 / 月</text></view>
       <text class="pro-desc">为认真规划自由生活的人准备</text><view class="price"><text class="price-num">¥9</text><text class="price-unit"> / 月</text></view>
       <view class="benefit" v-for="item in benefits" :key="item"><text class="check">✓</text><text>{{ item }}</text></view>
-      <button class="notify" @tap="notify">订阅功能开放时提醒我</button>
+      <button class="notify" @tap="upgrade">立即升级</button>
     </view>
 
     <view class="free-card">
@@ -23,7 +23,7 @@
       <text class="free-item">✓ 登录后跨设备同步数据</text>
     </view>
 
-    <text class="note">行为建议 AI 只提供记录、消费和生活习惯建议，不提供金融服务、投资建议或理财推荐。订阅支付功能即将开放。</text>
+    <text class="note">行为建议 AI 只提供记录、消费和生活习惯建议，不提供金融服务、投资建议或理财推荐。会员支付功能正在接入。</text>
   </view>
 </template>
 
@@ -43,7 +43,7 @@ export default {
   },
   methods: {
     close() { uni.navigateBack() },
-    notify() { uni.showToast({ title: '已记录，开放后会在应用内提醒', icon: 'none' }) },
+    upgrade() {\n      if (uni.getStorageSync('fire_login_status') !== true) {\n        uni.showToast({ title: '请先登录后升级', icon: 'none' })\n        setTimeout(() => uni.reLaunch({ url: '/pages/login/login?redirect=/pages/profile/membership' }), 350)\n        return\n      }\n      uni.showModal({ title: '立即升级 FIRE PRO', content: '会员价格为 9 元/月。支付功能正在接入，开放后可完成订阅。', showCancel: false, confirmText: '知道了' })\n    },
   },
 }
 </script>
