@@ -146,6 +146,20 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "FIRE PRO"
       }
+    },
+    {
+      "path": "pages/ai/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "问 AI"
+      }
+    },
+    {
+      "path": "pages/music/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "音乐"
+      }
     }
   ],
   "tabBar": {
