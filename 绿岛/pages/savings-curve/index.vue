@@ -34,7 +34,7 @@
     <view v-else>
       <view class="progress-row"><text>第 {{ questionIndex + 1 }} / {{ visibleQuestions.length }} 题</text><text>{{ Math.round((questionIndex + 1) / visibleQuestions.length * 100) }}%</text></view>
       <view class="question-card" v-if="currentQuestion">
-        <text class="question-tag">{{ currentQuestion.tag }}</text>
+        <text class="question-tag">{{ currentQuestion.stage || currentQuestion.category }}</text>
         <text class="question-title">{{ currentQuestion.text }}</text>
         <view class="options">
           <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" :class="{ selected: answers[currentQuestion.id] === option.value }" @tap="choose(option.value)">
