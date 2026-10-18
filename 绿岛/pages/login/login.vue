@@ -18,9 +18,12 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { state, persist } from '@/store/index.js'
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
-const mode=ref('email'), email=ref(''), phone=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref('')
+const mode=ref('email'), email=ref(''), phone=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref(''), redirect=ref('')
 let noticeTimer=null, countdownTimer=null, verificationInfo=null
-onMounted(()=>{if(uni.getStorageSync('fire_login_status')===true) uni.reLaunch({url:'/pages/index/index'})})
+onMounted(()=>{
+ const pages=getCurrentPages(); const current=pages[pages.length-1]; const options=(current&&current.options)||{}; redirect.value=options.redirect||'';
+ if(uni.getStorageSync('fire_login_status')===true) uni.reLaunch({url:redirect.value||'/pages/index/index'})
+})
 onBeforeUnmount(()=>{clearTimeout(noticeTimer);clearInterval(countdownTimer)})
 watch(mode,()=>{code.value='';verificationInfo=null;countdown.value=0})
 function toast(message){notice.value=message;uni.showToast({title:message,icon:'none',duration:2200});clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.value='',2200)}
@@ -44,7 +47,7 @@ async function login(){
  if(!code.value.trim())return toast('请输入验证码')
  if(!verificationInfo)return toast('请先获取验证码')
  loading.value=true
- try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);uni.removeStorageSync('fire_guest_mode');state.started=true;persist();uni.reLaunch({url:'/pages/index/index'})}
+ try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);uni.removeStorageSync('fire_guest_mode');state.started=true;persist();uni.reLaunch({url:redirect.value||'/pages/index/index'})}
  catch(error){toast(error.message||'登录失败，请重试')}
  finally{loading.value=false}
 }
