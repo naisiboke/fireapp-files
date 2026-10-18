@@ -20,13 +20,17 @@ function tokenSubject(token) {
 }
 function clientId() {
   try {
-    const subject = tokenSubject(accessToken())
-    if (subject) return 'fire-user-' + subject
+    // 保留已有设备身份，避免更新 App 后丢失同一浏览器里的资料。
     let value = uni.getStorageSync('fire_client_id')
-    if (!value) {
-      value = 'fire-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12)
+    if (value) return String(value)
+    const subject = tokenSubject(accessToken())
+    if (subject) {
+      value = 'fire-user-' + subject
       uni.setStorageSync('fire_client_id', value)
+      return value
     }
+    value = 'fire-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12)
+    uni.setStorageSync('fire_client_id', value)
     return String(value)
   } catch (e) { return '' }
 }
