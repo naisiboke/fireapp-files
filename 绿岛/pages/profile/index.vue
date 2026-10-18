@@ -75,7 +75,8 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
-import { state } from '@/store/index.js'\nimport { getAvatarURL } from '@/utils/cloudbase-auth.js'
+import { state } from '@/store/index.js'
+import { getAvatarURL } from '@/utils/cloudbase-auth.js'
 
 const ICONS = {
   assets:
