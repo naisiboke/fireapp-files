@@ -15,9 +15,9 @@
 /* 颜色变量 */
 
 /* 行为相关颜色 */
-$uni-color-primary: #447e70;
-$uni-color-success: #527059;
-$uni-color-warning: #b9824c;
+$uni-color-primary: #527059;
+$uni-color-success: #5d806a;
+$uni-color-warning: #a8784b;
 $uni-color-error: #ad5e52;
 
 /* 文字基本颜色 */
@@ -28,13 +28,13 @@ $uni-text-color-placeholder: #8b9489;
 $uni-text-color-disable:#c0c0c0;
 
 /* 背景颜色 */
-$uni-bg-color:#f8f9f5;
-$uni-bg-color-grey:#f1f1e8;
-$uni-bg-color-hover:#e5eee4;//点击状态颜色
+$uni-bg-color:#f7f6f1;
+$uni-bg-color-grey:#eef1eb;
+$uni-bg-color-hover:#e7eee6;//点击状态颜色
 $uni-bg-color-mask:rgba(0, 0, 0, 0.4);//遮罩颜色
 
 /* 边框颜色 */
-$uni-border-color:#e1e7de;
+$uni-border-color:#e2e8df;
 
 /* 尺寸变量 */
 
@@ -84,12 +84,12 @@ $uni-font-size-paragraph:15px;
   --button-radius: 12px;
   --button-radius-sm: 9px;
   --button-radius-pill: 999px;
-  --button-primary: #173d35;
-  --button-primary-hover: #214d43;
-  --button-secondary: #e5eee4;
+  --button-primary: #294f40;
+  --button-primary-hover: #355f4f;
+  --button-secondary: #e8efe8;
   --button-outline: #4f8068;
   --button-danger: #a35d4e;
-  --button-shadow: 0 1px 2px rgba(23,61,53,.08);
+  --button-shadow: 0 3px 12px rgba(33,58,47,.08);
   --button-focus: 0 0 0 3px rgba(79,128,104,.18);
   --button-pressed: .98;
 }
