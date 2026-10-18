@@ -3,16 +3,6 @@
 
     <view class="home-masthead">
       <view class="masthead-bg" :style="mastheadBgStyle"></view>
-      <view v-if="state.privacySettings.guardianAnimation !== false" class="guardian-scene" aria-hidden="true">
-        <text class="guardian-word">{{ guardianWord }}</text>
-        <view class="guardian-island"></view>
-        <view class="guardian-person">
-          <view class="guardian-head"></view>
-          <view class="guardian-body"></view>
-          <view class="guardian-arm"></view>
-          <view class="guardian-sword"></view>
-        </view>
-      </view>
       <view class="masthead-fade"></view>
 
       <view class="masthead-title">
