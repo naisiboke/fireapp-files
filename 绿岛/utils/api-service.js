@@ -13,7 +13,7 @@ function tokenSubject(token) {
     const part = String(token || '').split('.')[1]
     if (!part) return ''
     const encoded = part.replace(/-/g, '+').replace(/_/g, '/')
-    const json = decodeURIComponent(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=').split('').map(char => '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2)).join(''))
+    const json = decodeURIComponent(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=').split('').map(char => '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2)).join('')))
     const payload = JSON.parse(json)
     return String(payload.sub || payload.openid || payload.user_id || payload.uid || '')
   } catch (e) { return '' }
