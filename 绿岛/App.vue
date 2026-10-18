@@ -1,7 +1,7 @@
 <script>
 import { bootstrap, hydrateFromServer, persist } from './store/index.js'
 
-const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register'])
+const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register', 'pages/guide/index'])
 
 export default {
   onLaunch() {
