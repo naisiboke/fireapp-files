@@ -40,6 +40,7 @@
 export default {
   data() {
     return {
+      showUpgradeModal: false,
       benefits: [
         '高级目标规划和多方案对比',
         '更完整的财务趋势与年度报告',
@@ -52,6 +53,7 @@ export default {
   },
   methods: {
     close() { uni.navigateBack() },
+    closeUpgrade() { this.showUpgradeModal = false },
     upgrade() {
       if (uni.getStorageSync('fire_login_status') !== true) {
         uni.showToast({ title: '请先登录后升级', icon: 'none' })
