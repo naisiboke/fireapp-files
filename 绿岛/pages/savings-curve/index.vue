@@ -221,13 +221,17 @@ export default {
     },
     addEvent() { this.customEvents.push({ label: '买房', age: this.age + 5, amount: -100000, duration: 1 }) },
     removeEvent(index) { this.customEvents.splice(index, 1); this.recalculate() },
-    saveDraft(showToast = true) {
+    async saveDraft(showToast = true) {
       const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, questionIndex: this.questionIndex, completedCount: Object.keys(this.answers).length, events: this.customEvents, updatedAt: Date.now() }
       uni.setStorageSync('fire_savings_curve_draft_v1', draft)
       state.savingsCurveDraft = draft
       persist()
-      syncStateToServer()
-      if (showToast) uni.showToast({ title: '草稿已保存', icon: 'success' })
+      const result = await syncStateToServer()
+      if (!showToast) return result
+      if (result && result.synced) uni.showToast({ title: '草稿已保存', icon: 'success' })
+      else if (result && result.configured === false) uni.showToast({ title: '已保存本机，云端未配置', icon: 'none' })
+      else uni.showToast({ title: '云端保存失败，请重试', icon: 'none' })
+      return result
     },
     loadDraft() {
       const draft = uni.getStorageSync('fire_savings_curve_draft_v1')
