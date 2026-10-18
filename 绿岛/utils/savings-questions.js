@@ -42,20 +42,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "100 元",
-        "value": 100
-      },
-      {
         "label": "300 元",
         "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
-      },
-      {
         "label": "1,000 元",
         "value": 1000
+      },
+      {
+        "label": "2,000 元",
+        "value": 2000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -162,20 +162,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
         "label": "100 元",
         "value": 100
       },
       {
-        "label": "200 元",
-        "value": 200
+        "label": "300 元",
+        "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000 元",
+        "value": 1000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -192,10 +192,6 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
         "label": "100 元",
         "value": 100
       },
@@ -204,8 +200,12 @@ export const SAVINGS_QUESTIONS = [
         "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000 元",
+        "value": 1000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -290,12 +290,12 @@ export const SAVINGS_QUESTIONS = [
         "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
-      },
-      {
         "label": "1,000 元",
         "value": 1000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -372,20 +372,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
-        "label": "100 元",
-        "value": 100
-      },
-      {
         "label": "300 元",
         "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000 元",
+        "value": 1000
+      },
+      {
+        "label": "2,000 元",
+        "value": 2000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -402,20 +402,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
         "label": "100 元",
         "value": 100
       },
       {
-        "label": "200 元",
-        "value": 200
+        "label": "300 元",
+        "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000 元",
+        "value": 1000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -492,20 +492,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
         "label": "100 元",
         "value": 100
       },
       {
-        "label": "200 元",
-        "value": 200
+        "label": "300 元",
+        "value": 300
       },
       {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000 元",
+        "value": 1000
+      },
+      {
+        "label": "3,000 元",
+        "value": 3000
       }
     ]
   },
@@ -1212,20 +1212,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "500 元",
-        "value": 500
-      },
-      {
-        "label": "1,000 元",
-        "value": 1000
-      },
-      {
-        "label": "3,000 元",
-        "value": 3000
+        "label": "2,000 元",
+        "value": 2000
       },
       {
         "label": "5,000 元",
         "value": 5000
+      },
+      {
+        "label": "10,000 元",
+        "value": 10000
+      },
+      {
+        "label": "30,000 元",
+        "value": 30000
       }
     ]
   },
