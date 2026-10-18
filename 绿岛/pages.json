@@ -139,6 +139,13 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "个人资料"
       }
+    },
+    {
+      "path": "pages/profile/membership",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "FIRE PRO"
+      }
     }
   ],
   "tabBar": {
