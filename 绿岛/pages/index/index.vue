@@ -4,7 +4,7 @@
     <view class="home-masthead">
       <view class="masthead-bg" :style="mastheadBgStyle"></view>
       <view v-if="state.privacySettings.guardianAnimation !== false" class="guardian-scene" aria-hidden="true">
-        <text v-for="(word, index) in guardianWords" :key="word" class="guardian-word" :class="'word-' + index">{{ word }}</text>
+        <text class="guardian-word">{{ guardianWord }}</text>
         <view class="guardian-island"></view>
         <view class="guardian-person">
           <view class="guardian-head"></view>
@@ -166,11 +166,14 @@ export default {
       pageHideHandler: null,
       pageVisible: false,
       guardianWords: ['35岁危机', '负债', '房贷', '收入停滞', '养老压力'],
+      guardianWordIndex: 0,
+      guardianTimer: null,
     }
   },
 
   computed: {
-    todayText() {
+    guardianWord() { return this.guardianWords[this.guardianWordIndex] || this.guardianWords[0] },
+        todayText() {
       return new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
     },
     mastheadBgStyle() {
@@ -280,6 +283,18 @@ export default {
   },
 
   methods: {
+    startGuardian() {
+      if (this.guardianTimer || this.state.privacySettings.guardianAnimation === false) return
+      this.guardianTimer = setInterval(() => {
+        this.guardianWordIndex = (this.guardianWordIndex + 1) % this.guardianWords.length
+      }, 4800)
+    },
+    stopGuardian() {
+      if (this.guardianTimer) {
+        clearInterval(this.guardianTimer)
+        this.guardianTimer = null
+      }
+    },
     clearCountdownTasks() {
       if (this.timer) {
         clearInterval(this.timer)
@@ -464,7 +479,8 @@ export default {
 .wishlist-home-name { display:block; color:#243830; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .wishlist-home-sub { display:block; margin-top:4px; color:#718074; font-size:11px; }
 .wishlist-home-arrow { color:#718074; font-size:22px; }
-\n.section { margin-top: 28px; }
+
+.section { margin-top: 28px; }
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .section-title { font-size: 18px; font-weight: 700; color: #143e37; }
 .section-count { font-size: 14px; color: #527059; }
@@ -479,6 +495,6 @@ export default {
 .task-reward.done { color: #527059; font-weight: 600; }
 .safe-note { display: block; text-align: center; font-size: 11px; color: #8b9489; margin: 40px 0 8px; letter-spacing: 1px; }
 
-.guardian-scene{position:absolute;z-index:2;left:0;right:0;top:80px;height:260px;overflow:hidden;pointer-events:none}.guardian-island{position:absolute;left:50%;bottom:5px;width:210px;height:58px;transform:translateX(-50%);border-radius:50% 50% 42% 42%;background:linear-gradient(180deg,#6e9b73,#2d6048);box-shadow:0 10px 0 rgba(13,43,36,.18),0 0 24px rgba(132,186,130,.35)}.guardian-island:before{content:'';position:absolute;left:24px;right:24px;top:10px;height:9px;border-radius:50%;background:rgba(180,221,161,.42)}.guardian-person{position:absolute;left:50%;bottom:38px;width:58px;height:125px;transform:translateX(-50%);animation:guardianBreathe 2.4s ease-in-out infinite}.guardian-head{position:absolute;left:20px;top:0;width:25px;height:25px;border-radius:50%;background:#f2e5ce;border:2px solid #173d35}.guardian-body{position:absolute;left:27px;top:27px;width:7px;height:62px;border-radius:6px;background:#f2e5ce;border:2px solid #173d35}.guardian-arm{position:absolute;left:28px;top:40px;width:45px;height:7px;border-radius:6px;background:#f2e5ce;border:2px solid #173d35;transform:rotate(-18deg);transform-origin:left center}.guardian-sword{position:absolute;left:64px;top:24px;width:7px;height:76px;border-radius:5px;background:linear-gradient(90deg,#d7f4dc,#fff,#8bb99a);border:1px solid #173d35;transform:rotate(38deg);transform-origin:bottom center;animation:swordGuard 3.2s ease-in-out infinite}.guardian-sword:after{content:'';position:absolute;left:-8px;bottom:-8px;width:22px;height:6px;border-radius:5px;background:#c99655;transform:rotate(-38deg)}.guardian-word{position:absolute;z-index:2;left:50%;top:28px;color:#ff6b63;font-size:14px;font-weight:700;white-space:nowrap;text-shadow:0 2px 5px rgba(80,15,20,.25);opacity:0;animation:pressureFly 8s cubic-bezier(.22,.61,.36,1) infinite}.word-0{animation-delay:0s}.word-1{animation-delay:1.6s}.word-2{animation-delay:3.2s}.word-3{animation-delay:4.8s}.word-4{animation-delay:6.4s}@keyframes pressureFly{0%{opacity:0;transform:translate(-50%,20px) scale(.25)}18%{opacity:.78}55%{opacity:1;transform:translate(-50%,78px) scale(1.15)}69%{opacity:1;transform:translate(-50%,112px) scale(1.3) rotate(-7deg)}78%{opacity:0;transform:translate(-50%,112px) scale(1.8) rotate(14deg)}100%{opacity:0;transform:translate(-50%,112px) scale(1.8)}}@keyframes swordGuard{0%,58%{transform:rotate(38deg)}66%{transform:rotate(-42deg)}76%{transform:rotate(28deg)}100%{transform:rotate(38deg)}}@keyframes guardianBreathe{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}@media(prefers-reduced-motion:reduce){.guardian-word,.guardian-person,.guardian-sword{animation:none}.guardian-word{display:none}}
+.guardian-scene{position:absolute;z-index:2;left:0;right:0;top:80px;height:260px;overflow:hidden;pointer-events:none}.guardian-island{position:absolute;left:50%;bottom:5px;width:210px;height:58px;transform:translateX(-50%);border-radius:50% 50% 42% 42%;background:linear-gradient(180deg,#6e9b73,#2d6048);box-shadow:0 10px 0 rgba(13,43,36,.18),0 0 24px rgba(132,186,130,.35)}.guardian-island:before{content:'';position:absolute;left:24px;right:24px;top:10px;height:9px;border-radius:50%;background:rgba(180,221,161,.42)}.guardian-person{position:absolute;left:50%;bottom:38px;width:58px;height:125px;transform:translateX(-50%);animation:guardianBreathe 2.4s ease-in-out infinite}.guardian-head{position:absolute;left:20px;top:0;width:25px;height:25px;border-radius:50%;background:#f2e5ce;border:2px solid #173d35}.guardian-body{position:absolute;left:27px;top:27px;width:7px;height:62px;border-radius:6px;background:#f2e5ce;border:2px solid #173d35}.guardian-arm{position:absolute;left:28px;top:40px;width:45px;height:7px;border-radius:6px;background:#f2e5ce;border:2px solid #173d35;transform:rotate(-18deg);transform-origin:left center}.guardian-sword{position:absolute;left:64px;top:24px;width:7px;height:76px;border-radius:5px;background:linear-gradient(90deg,#d7f4dc,#fff,#8bb99a);border:1px solid #173d35;transform:rotate(38deg);transform-origin:bottom center;animation:swordGuard 3.2s ease-in-out infinite}.guardian-sword:after{content:'';position:absolute;left:-8px;bottom:-8px;width:22px;height:6px;border-radius:5px;background:#c99655;transform:rotate(-38deg)} .guardian-word{position:absolute;z-index:2;left:50%;top:28px;color:#ff6b63;font-size:14px;font-weight:700;white-space:nowrap;text-shadow:0 2px 5px rgba(80,15,20,.25);opacity:0;animation:pressureFly 4.8s cubic-bezier(.22,.61,.36,1) infinite}@keyframes pressureFly{0%{opacity:0;transform:translate(-50%,20px) scale(.25)}18%{opacity:.78}55%{opacity:1;transform:translate(-50%,78px) scale(1.15)}69%{opacity:1;transform:translate(-50%,112px) scale(1.3) rotate(-7deg)}78%{opacity:0;transform:translate(-50%,112px) scale(1.8) rotate(14deg)}100%{opacity:0;transform:translate(-50%,112px) scale(1.8)}}@keyframes swordGuard{0%,58%{transform:rotate(38deg)}66%{transform:rotate(-42deg)}76%{transform:rotate(28deg)}100%{transform:rotate(38deg)}}@keyframes guardianBreathe{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}@media(prefers-reduced-motion:reduce){.guardian-word,.guardian-person,.guardian-sword{animation:none}.guardian-word{display:none}}
 
 </style>
