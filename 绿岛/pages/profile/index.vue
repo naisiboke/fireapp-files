@@ -143,12 +143,7 @@ export default {
       uni.navigateTo({ url: '/pages/profile/edit' })
     },
     openPro() {
-      uni.showModal({
-        title: 'FIRE PRO',
-        content: 'Pro 会员权益即将上线，敬请期待。',
-        showCancel: false,
-        confirmText: '知道了',
-      })
+      uni.navigateTo({ url: '/pages/profile/membership' })
     },
     comingSoon(name) {
       uni.showToast({ title: name + ' 开发中', icon: 'none' })
