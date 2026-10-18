@@ -41,7 +41,7 @@
     <view v-else-if="started && !profileStep && !draftPanel && !historyPanel">
       <view class="progress-row"><text>第 {{ questionIndex + 1 }} / {{ visibleQuestions.length }} 题</text><text>{{ Math.round((questionIndex + 1) / visibleQuestions.length * 100) }}%</text></view>
       <view class="question-card" v-if="currentQuestion">
-        <text class="question-tag">{{ currentQuestion.stage || currentQuestion.category }}</text>
+        <text class="question-tag">{{ stageLabel(currentQuestion.stage || currentQuestion.category) }}</text>
         <text class="question-title">{{ currentQuestion.text }}</text>
         <view class="options">
           <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" :class="{ selected: answers[currentQuestion.id] === option.value }" @tap="choose(option.value)">
@@ -146,6 +146,7 @@ export default {
   },
   methods: {
     close() { uni.navigateBack() },
+    stageLabel(value) { return { youth: '成长阶段', young: '青年阶段', middle: '家庭阶段', later: '后期规划', basic: '基础信息' }[value] || value },
     start() { this.started = true; this.profileStep = true; this.age = ''; this.lifeExpectancy = '' },
     beginQuestions() {
       const age = Number(this.age)
