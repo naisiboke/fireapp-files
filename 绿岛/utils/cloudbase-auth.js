@@ -23,3 +23,16 @@ export async function saveAuthToken() {
   }
   throw new Error('登录令牌获取失败，请重试')
 }
+export async function uploadAvatar(filePath) {
+  if (!filePath) throw new Error('未选择头像')
+  const cloudPath = 'avatars/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.jpg'
+  const result = await app.uploadFile({ cloudPath, filePath })
+  return result && (result.fileID || result.fileId || cloudPath)
+}
+
+export async function getAvatarURL(fileID) {
+  if (!fileID) return ''
+  const result = await app.getTempFileURL({ fileList: [fileID] })
+  const item = result && result.fileList && result.fileList[0]
+  return item && (item.tempFileURL || item.tempFileUrl || '')
+}
