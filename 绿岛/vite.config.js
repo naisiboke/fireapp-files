@@ -29,6 +29,7 @@ export default defineConfig({
       scss: {},
     },
   },
+  // App 端打包时避免动态依赖被拆分，兼容 HBuilderX 的 IIFE 输出。
   build: {
     rollupOptions: {
       output: {
