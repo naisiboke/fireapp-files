@@ -51,6 +51,16 @@ export default {
       this.scrollToLast()
     },
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
+    formatAnswer(value) {
+      let text = value.replace(/\*\*/g, '').replace(/__|###?/g, '').replace(/\r/g, '').trim()
+      text = text.replace(/(^|\n)\s*[-•]\s*/g, '$1')
+      text = text.replace(/(\d+)[.)、]\s*/g, '\n$1. ')
+      text = text.replace(/\n{2,}/g, '\n').trim()
+      const sentences = text.split(/(?<=[。！？])/).filter(Boolean).slice(0, 6)
+      text = sentences.join('')
+      return text.length > 420 ? text.slice(0, 420).replace(/[，、；：]?[^一-鿿A-Za-z0-9]?[\s\S]*$/, '') + '…' : text
+    },
+
     async send() {
       const question = this.question.trim()
       if (!question || this.loading) return
@@ -58,11 +68,14 @@ export default {
       this.messages.push({ role: 'user', text: question })
       this.scrollToLast()
       this.loading = true
+      const startedAt = Date.now()
       try {
         const result = await askBehaviorAI({ question, countdown: this.countdownText() })
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
-        this.messages.push({ role: 'assistant', text: String(answer) })
+        const elapsed = Date.now() - startedAt
+        if (elapsed < 1200) await new Promise(resolve => setTimeout(resolve, 1200 - elapsed))
+        this.messages.push({ role: 'assistant', text: this.formatAnswer(String(answer)) })
       } catch (error) {
         this.messages.push({ role: 'assistant', text: error.message || 'AI 暂时无法回答，请稍后再试' })
       } finally { this.loading = false; this.scrollToLast() }
