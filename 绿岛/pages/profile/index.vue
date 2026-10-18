@@ -131,10 +131,7 @@ export default {
     goPage(url) {
       uni.navigateTo({ url: url })
     },
-    goOnboarding() {
-      uni.showToast({ title: '个人资料编辑开发中', icon: 'none' })
-    },
-    openPro() {
+        goOnboarding() {\n      uni.navigateTo({ url: '/pages/profile/edit' })\n    },\n    openPro() {
       uni.showModal({
         title: 'FIRE PRO',
         content: 'Pro 会员权益即将上线，敬请期待。',
