@@ -156,9 +156,26 @@ export default {
   methods: {
     close() { uni.navigateBack() },
     start() { this.age = Math.max(8, Math.min(90, Number(this.age) || 28)); this.lifeExpectancy = Math.max(this.age + 1, Math.min(110, Number(this.lifeExpectancy) || 85)); this.started = true },
-    choose(value) { if (this.currentQuestion) this.answers[this.currentQuestion.id] = value },
+    choose(value) {
+      if (!this.currentQuestion) return
+      this.answers[this.currentQuestion.id] = value
+      this.saveDraft(false)
+    },
     previous() { if (this.questionIndex > 0) this.questionIndex-- },
-    next() { if (this.questionIndex < this.visibleQuestions.length - 1) { this.questionIndex++; return } this.recalculate() },
+    next() {
+      if (!this.currentQuestion) return
+      const answered = Object.prototype.hasOwnProperty.call(this.answers, this.currentQuestion.id)
+      if (!answered) {
+        uni.showToast({ title: '请先选择一个答案', icon: 'none' })
+        return
+      }
+      if (this.questionIndex < this.visibleQuestions.length - 1) {
+        this.questionIndex++
+        this.saveDraft(false)
+        return
+      }
+      this.recalculate()
+    },
     value(type, fallback) { const q = this.questions.find(x => x.type === type); return q && this.answers[q.id] !== undefined ? Number(this.answers[q.id]) : fallback },
     recalculate() {
       if (this.generating) return
@@ -169,7 +186,7 @@ export default {
         const startSavings = this.value('balance', 3000)
         const income = this.value('income', 8000)
         const saveRate = this.value('rate', 0.3)
-        const expense = Math.max(0, this.value('money', 3000) * 0.45)
+        const expense = Math.max(0, this.value('expense', 3000))
         const growth = this.value('ratePercent', 0.035)
         const inflation = 0.025
         const years = Math.max(1, this.lifeExpectancy - this.age)
@@ -205,13 +222,13 @@ export default {
     },
     addEvent() { this.customEvents.push({ label: '买房', age: this.age + 5, amount: -100000, duration: 1 }) },
     removeEvent(index) { this.customEvents.splice(index, 1); this.recalculate() },
-    saveDraft() {
+    saveDraft(showToast = true) {
       const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, questionIndex: this.questionIndex, events: this.customEvents, updatedAt: Date.now() }
       uni.setStorageSync('fire_savings_curve_draft_v1', draft)
       state.savingsCurveDraft = draft
       persist()
       syncStateToServer()
-      uni.showToast({ title: '草稿已保存', icon: 'success' })
+      if (showToast) uni.showToast({ title: '草稿已保存', icon: 'success' })
     },
     loadDraft() {
       const draft = uni.getStorageSync('fire_savings_curve_draft_v1')
