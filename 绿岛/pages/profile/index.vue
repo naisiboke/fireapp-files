@@ -10,7 +10,8 @@
     <!-- 用户卡片 -->
     <view class="user-card" @tap="goOnboarding">
       <view class="avatar">
-        <text class="avatar-text">{{ avatarLetter }}</text>
+        <image v-if="avatarUrl" class="avatar-image" :src="avatarUrl" mode="aspectFill" />
+        <text v-else class="avatar-text">{{ avatarLetter }}</text>
       </view>
       <view class="user-copy">
         <text class="user-name">{{ profileName }}</text>
@@ -74,7 +75,7 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
-import { state } from '@/store/index.js'
+import { state } from '@/store/index.js'\nimport { getAvatarURL } from '@/utils/cloudbase-auth.js'
 
 const ICONS = {
   assets:
@@ -119,6 +120,11 @@ export default {
     completedCount() {
       return (state.completed || []).length
     },
+  },
+
+  onShow() {
+    const fileID = state.profile && state.profile.avatarFileID
+    if (fileID) getAvatarURL(fileID).then(url => { if (url) this.avatarUrl = url }).catch(() => {})
   },
 
   methods: {
@@ -195,7 +201,7 @@ export default {
   justify-content: center;
   flex-shrink: 0;
 }
-.avatar-text {
+.avatar-image { width: 100%; height: 100%; border-radius: 50%; }\n.avatar-text {
   color: #d7e5bb;
   font-size: 22px;
   font-weight: 300;
