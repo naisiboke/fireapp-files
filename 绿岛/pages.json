@@ -148,6 +148,13 @@
       }
     },
     {
+      "path": "pages/guide/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "新手指南"
+      }
+    },
+    {
       "path": "pages/ai/index",
       "style": {
         "navigationStyle": "custom",
