@@ -29,6 +29,13 @@ export default defineConfig({
       scss: {},
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
