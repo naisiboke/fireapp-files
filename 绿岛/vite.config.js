@@ -18,7 +18,35 @@ if (!uniFactory) {
 }
 
 export default defineConfig({
-  plugins: [uniFactory()],
+  plugins: [
+    uniFactory(),
+    {
+      name: 'fire-app-inline-dynamic-imports',
+      apply: 'build',
+      enforce: 'post',
+      configResolved(config) {
+        const platform = String(process.env.UNI_PLATFORM || '').toLowerCase()
+        const isApp = platform === 'app'
+          || platform === 'app-plus'
+          || platform.startsWith('app-')
+          || !platform
+        if (!isApp) return
+        if (!config.build.rollupOptions) config.build.rollupOptions = {}
+        const output = config.build.rollupOptions.output
+        const patch = (item) => {
+          const next = item && typeof item === 'object' ? { ...item } : {}
+          next.inlineDynamicImports = true
+          if ('manualChunks' in next) delete next.manualChunks
+          return next
+        }
+        if (Array.isArray(output)) {
+          config.build.rollupOptions.output = output.map(patch)
+        } else {
+          config.build.rollupOptions.output = patch(output)
+        }
+      },
+    },
+  ],
   resolve: {
     alias: {
       '@': projectRoot,
@@ -33,9 +61,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        format: 'es',
         inlineDynamicImports: true,
-        codeSplitting: false,
       },
     },
   },
