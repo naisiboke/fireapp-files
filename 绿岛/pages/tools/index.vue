@@ -59,6 +59,8 @@ const TOOL_CATALOG = [
   { route: 'hero', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
   { route: 'reading-library', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
   { route: 'time-ledger', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪' },
+  { route: 'ai', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
+  { route: 'music', url: '/pages/music/index', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围' },
 ]
 
 function svgUri(svg) {
