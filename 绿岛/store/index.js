@@ -3,6 +3,7 @@ import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
 import { isApiConfigured, fetchUserState, saveUserState } from '../utils/api-service.js'
+import { validateNickname } from '../utils/nickname.js'
 
 export const STATE_VERSION = 3
 export const WISHLIST_KEY = 'fire_wishlist_v1'
@@ -59,6 +60,8 @@ function applySaved(saved) {
     // 保留未知字段、阅读对象及所有记录，仅为缺失字段补默认值。
     Object.assign(state, defaults, saved)
     state.finance = { ...defaults.finance, ...(saved.finance || {}) }
+    state.profile = { ...defaults.profile, ...(saved.profile || {}) }
+    if (!validateNickname(state.profile.name).ok) state.profile.name = defaults.profile.name
     for (const key of ['assets','expense','income','monthlyDeposit','retirementExpense','rate','withdrawal','goal']) {
       const value = state.finance[key]
       if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) state.finance[key] = Number(value)
@@ -127,7 +130,10 @@ export function refreshFinance() {
     for (const key of ['freedomPlan', 'goalPlan', 'goalDraft']) {
       if (Object.prototype.hasOwnProperty.call(saved, key)) state[key] = saved[key]
     }
-    if (saved.profile) state.profile = { ...state.profile, ...saved.profile }
+    if (saved.profile) {
+      state.profile = { ...state.profile, ...saved.profile }
+      if (!validateNickname(state.profile.name).ok) state.profile.name = '自由的旅人'
+    }
   }
   if (ensureFreedomPlan()) persistNow()
 }
