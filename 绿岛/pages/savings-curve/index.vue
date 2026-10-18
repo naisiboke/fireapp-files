@@ -19,7 +19,9 @@
         <input v-model.number="lifeExpectancy" type="number" class="age-input" />
         <text>岁</text>
       </view>
-      <button class="primary" @tap="start">开始回答</button>
+      <button class="primary" @tap="start">开始测算</button>
+      <view class="entry-links"><text @tap="loadDraft">查看我的草稿</text><text @tap="loadHistory">查看历史测算</text></view>
+      <text v-if="historyCount" class="entry-hint">已有 {{ historyCount }} 次测算记录</text>
     </view>
 
     <view v-if="generating" class="generating-mask">
@@ -44,11 +46,11 @@
 
       <view v-if="showResult" class="result-area">
         <view class="section-head"><view><text class="section-title">你的存款曲线</text><text class="section-sub">从 {{ age }} 岁推算到 {{ lifeExpectancy }} 岁</text></view><text class="theme-toggle" @tap="darkMode = !darkMode">{{ darkMode ? '浅色' : '深色' }}</text></view>
-        <view class="chart-card">
+        <view class="chart-card" v-if="curve.length">
           <svg class="chart" viewBox="0 0 360 190" preserveAspectRatio="none">
             <line v-for="y in [25,70,115,160]" :key="y" x1="28" :y1="y" x2="350" :y2="y" class="grid-line" />
-            <polyline :points="chartPoints" class="curve-line" />
-            <circle v-for="p in chartDots" :key="p.age" :cx="p.x" :cy="p.y" r="3.5" class="curve-dot" />
+            <polyline :points="animatedChartPoints" class="curve-line" />
+            <circle v-for="p in animatedChartDots" :key="p.age" :cx="p.x" :cy="p.y" r="3.5" class="curve-dot" />
           </svg>
           <view class="chart-labels"><text>{{ age }}岁</text><text>{{ lifeExpectancy }}岁</text></view>
         </view>
@@ -57,6 +59,7 @@
         <view class="events-card">
           <view class="section-head"><view><text class="section-title">自定义人生事件</text><text class="section-sub">最多添加 5 个，实时影响曲线</text></view><text class="count">{{ customEvents.length }}/5</text></view>
           <view v-for="(event, i) in customEvents" :key="i" class="event-row">
+            <input v-model="event.label" placeholder="事件" />
             <input v-model.number="event.age" type="number" placeholder="年龄" />
             <input v-model.number="event.amount" type="number" placeholder="金额" />
             <input v-model.number="event.duration" type="number" placeholder="年限" />
@@ -76,49 +79,46 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
+import { persist, syncStateToServer } from '@/store/index.js'
 
 const OPTION_SETS = {
-  money: [{ label: '没有 / 0 元', value: 0 }, { label: '1 千以内', value: 500 }, { label: '1–5 千', value: 3000 }, { label: '5 千–2 万', value: 12000 }, { label: '2 万以上', value: 30000 }],
-  income: [{ label: '没有收入', value: 0 }, { label: '每月 3 千以内', value: 2500 }, { label: '每月 3–8 千', value: 5500 }, { label: '每月 8 千–2 万', value: 14000 }, { label: '每月 2 万以上', value: 25000 }],
-  rate: [{ label: '几乎不存', value: 0.05 }, { label: '存下两成', value: 0.2 }, { label: '存下一半', value: 0.5 }, { label: '存下七成', value: 0.7 }, { label: '大部分都存', value: 0.9 }],
-  years: [{ label: '还没有计划', value: 0 }, { label: '1–3 年', value: 2 }, { label: '4–8 年', value: 6 }, { label: '9–15 年', value: 12 }, { label: '15 年以上', value: 20 }],
-  ratePercent: [{ label: '0%', value: 0 }, { label: '1–2%', value: 0.015 }, { label: '3–4%', value: 0.035 }, { label: '5–7%', value: 0.06 }, { label: '8%以上', value: 0.08 }],
+  money: [{ label: '0 元', value: 0 }, { label: '500 元', value: 500 }, { label: '2,000 元', value: 2000 }, { label: '5,000 元', value: 5000 }, { label: '10,000 元', value: 10000 }],
+  balance: [{ label: '0 元', value: 0 }, { label: '1,000 元', value: 1000 }, { label: '5,000 元', value: 5000 }, { label: '20,000 元', value: 20000 }, { label: '100,000 元以上', value: 100000 }],
+  expense: [{ label: '0 元', value: 0 }, { label: '每月 2,000 元', value: 2000 }, { label: '每月 5,000 元', value: 5000 }, { label: '每月 10,000 元', value: 10000 }, { label: '每月 30,000 元', value: 30000 }],
+  income: [{ label: '0 元', value: 0 }, { label: '每月 2,000 元', value: 2000 }, { label: '每月 5,000 元', value: 5000 }, { label: '每月 10,000 元', value: 10000 }, { label: '每月 50,000 元', value: 50000 }],
+  rate: [{ label: '存下 5%', value: 0.05 }, { label: '存下 20%', value: 0.2 }, { label: '存下 40%', value: 0.4 }, { label: '存下 60%', value: 0.6 }, { label: '存下 80%', value: 0.8 }],
+  years: [{ label: '没有计划', value: 0 }, { label: '1 年', value: 1 }, { label: '3 年', value: 3 }, { label: '5 年', value: 5 }, { label: '10 年以上', value: 10 }],
+  ratePercent: [{ label: '0%', value: 0 }, { label: '2%', value: 0.02 }, { label: '4%', value: 0.04 }, { label: '6%', value: 0.06 }, { label: '8%', value: 0.08 }],
 }
 
 function makeQuestions() {
   const questions = []
   const youth = ['每年压岁钱大约有多少？', '每月零花钱大约有多少？', '你愿意把多少零花钱存起来？', '教育金或兴趣班每年大约花多少？', '你希望成年前存下多少钱？', '每年收到的礼物和红包大约多少？', '你每年用于学习的支出是多少？', '你愿意为兴趣爱好存多久？', '家庭希望为你准备多少教育金？', '你想为第一个目标存多少钱？']
-  const adult = ['你目前的存款大约是多少？', '你每月到手收入大约是多少？', '每月收入中你能存下多少？', '你每月固定生活支出大约多少？', '你计划几年后买房？', '首付预算大约是多少？', '你计划几年后结婚？', '婚礼和彩礼预算大约多少？', '你计划几年后要孩子？', '孩子每年教育支出大约多少？', '你希望几年内还清房贷？', '父母医疗储备目标是多少？', '你希望退休时存下多少钱？', '你预计收入每年增长多少？', '你愿意承担多大投资波动？', '你每年旅行和娱乐支出多少？', '你每年保险支出多少？', '你希望每年给自己留多少自由支出？', '你是否有长期副业收入？', '你愿意为学习提升投入多少？']
+  const adult = ['你目前的存款大约是多少？', '你每月到手收入大约是多少？', '每月收入中你能存下多少？', '你每月固定生活支出大约多少？', '你计划几年后买房？', '买房首付预算大约是多少？', '你计划几年后结婚？', '婚礼和彩礼预算大约多少？', '你计划几年后要孩子？', '孩子每年教育支出大约多少？', '你希望几年内还清房贷？', '父母医疗储备目标是多少？', '你希望退休时存下多少钱？', '你预计收入每年增长多少？', '你每年买车和养车大约花多少？', '你每年旅行和娱乐支出多少？', '你每年保险支出多少？', '你希望每年给自己留多少自由支出？', '你是否有长期副业收入？', '你愿意为学习提升投入多少？']
   const later = ['房贷还剩多少年？', '子女教育金还缺多少？', '父母养老储备还缺多少？', '退休后每月希望花多少？', '你预计还会工作多少年？', '未来十年每年能存多少？', '你希望留下多少应急金？', '你是否计划换房？', '你是否计划帮助子女买房？', '你希望给家庭留下多少资产？']
+  const chooseType = (text) => {
+    if (text.includes('收入') || text.includes('副业')) return 'income'
+    if (text.includes('存款') || text.includes('教育金') || text.includes('储备目标') || text.includes('留下多少资产')) return 'balance'
+    if (text.includes('比例')) return 'rate'
+    if (text.includes('几年') || text.includes('年后') || text.includes('年限')) return 'years'
+    if (text.includes('增长')) return 'ratePercent'
+    if (text.includes('支出') || text.includes('预算') || text.includes('首付') || text.includes('彩礼') || text.includes('买车') || text.includes('养车')) return 'expense'
+    return 'money'
+  }
   for (let i = 0; i < 100; i++) {
     let text = '基础财务问题'
-    let type = 'money'
     let tag = '基础情况'
-    if (i < 10) {
-      text = youth[i]
-      tag = '成长阶段'
-      if (i === 2) type = 'rate'
-    } else if (i < 80) {
-      text = adult[(i - 10) % adult.length]
-      tag = i < 35 ? '青年阶段' : (i < 60 ? '家庭阶段' : '长期规划')
-      if ([1, 19, 34, 48, 63, 77].indexOf(i) >= 0) type = 'income'
-      else if ([2, 13, 33, 54, 68].indexOf(i) >= 0) type = 'rate'
-      else if ([4, 10, 22, 44, 55, 70].indexOf(i) >= 0) type = 'years'
-      else if ([14, 28, 42, 66].indexOf(i) >= 0) type = 'ratePercent'
-    } else {
-      text = later[(i - 80) % later.length]
-      tag = '中后期规划'
-      if ([84, 85, 88].indexOf(i) >= 0) type = 'years'
-      else if (i === 83) type = 'income'
-    }
-    questions.push({ id: 'q' + (i + 1), text: text, tag: tag, type: type, options: OPTION_SETS[type] })
+    if (i < 10) { text = youth[i]; tag = '成长阶段' }
+    else if (i < 80) { text = adult[(i - 10) % adult.length]; tag = i < 35 ? '青年阶段' : (i < 60 ? '家庭阶段' : '长期规划') }
+    else { text = later[(i - 80) % later.length]; tag = '中后期规划' }
+    questions.push({ id: 'q' + (i + 1), text: text, tag: tag, type: chooseType(text), options: OPTION_SETS[chooseType(text)] })
   }
   return questions
 }
 
 export default {
   components: { BottomTabs },
-  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, customEvents: [], questions: makeQuestions(), curve: [] } },
+  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: makeQuestions(), curve: [], historyCount: 0 } },
   computed: {
     visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
@@ -194,5 +194,5 @@ export default {
 </script>
 
 <style>
-.curve-page{min-height:100vh;padding:calc(22px + env(safe-area-inset-top)) 18px 120px;background:#f7f6f1;color:#243830;box-sizing:border-box}.dark{background:#17231e;color:#e8efe8}.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.eyebrow{display:block;font-size:12px;color:#6c8c77;margin-bottom:5px}.title{display:block;font-size:23px;font-weight:700}.close{font-size:30px;line-height:1;color:#355f4f;padding:0 6px}.intro-card,.question-card,.chart-card,.events-card{background:rgba(255,255,255,.82);border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(33,58,47,.07)}.dark .intro-card,.dark .question-card,.dark .chart-card,.dark .events-card{background:#21352b}.intro-title{display:block;font-size:25px;font-weight:700;margin-bottom:9px}.intro-copy,.section-sub,.privacy,.hint{display:block;color:#71807a;font-size:13px;line-height:1.7}.intro-row{display:flex;justify-content:space-between;margin:18px 0;color:#527059;font-size:11px}.field-row{display:flex;align-items:center;gap:8px;padding:13px 0;border-bottom:1px solid rgba(80,110,90,.12);font-size:14px}.age-input{width:70px;padding:7px 10px;text-align:center;border-radius:10px;border:1px solid #dce8dc;background:#fff;color:#243830}.primary,.secondary,.event-add{border-radius:13px;padding:0 18px;min-height:46px;margin-top:18px;line-height:46px;font-size:14px}.primary{background:#2d5b49;color:#fff}.secondary{background:#edf2eb;color:#355f4f}.small{min-width:130px}.progress-row{display:flex;justify-content:space-between;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-tag{display:block;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-title{display:block;font-size:22px;font-weight:700;line-height:1.45;margin-bottom:18px}.options{display:flex;flex-direction:column;gap:9px}.option{display:flex;align-items:center;gap:10px;padding:13px;border-radius:13px;background:#f1f5ee;color:#405a4b;font-size:14px}.option.selected{background:#dbead8;color:#1e4c39;font-weight:600}.option-dot{width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}.nav-row{display:flex;justify-content:space-between;gap:12px}.nav-row button{flex:1}.result-area{margin-top:28px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.section-title{display:block;font-size:19px;font-weight:700}.theme-toggle,.count{color:#527059;font-size:12px;padding-top:4px}.chart-card{padding:14px 12px 10px}.chart{width:100%;height:190px;display:block}.grid-line{stroke:#dbe5dc;stroke-width:1}.curve-line{fill:none;stroke:#3b7557;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.curve-dot{fill:#f7f6f1;stroke:#3b7557;stroke-width:2}.chart-labels{display:flex;justify-content:space-between;color:#71807a;font-size:11px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.summary-grid view{padding:12px 8px;border-radius:14px;background:#edf2eb}.summary-grid text,.summary-grid strong{display:block}.summary-grid text{font-size:11px;color:#71807a}.summary-grid strong{font-size:14px;color:#2d5b49;margin-top:5px}.events-card{margin-top:14px}.event-row{display:grid;grid-template-columns: .8fr 1fr .8fr 24px;gap:6px;margin:8px 0}.event-row input{min-width:0;padding:9px 5px;text-align:center;border:1px solid #dce8dc;border-radius:9px;font-size:12px}.event-row text{font-size:22px;color:#8c6a62;text-align:center}.event-add{width:100%;background:#f1f5ee;color:#527059;border:1px dashed #b8cdbb;margin-top:8px}.actions{display:flex;gap:10px;margin-top:16px}.actions button{flex:1}.privacy{text-align:center;margin-top:15px;font-size:11px}@media (prefers-color-scheme:dark){.curve-page:not(.dark){background:#17231e;color:#e8efe8}.curve-page:not(.dark) .intro-card,.curve-page:not(.dark) .question-card,.curve-page:not(.dark) .chart-card,.curve-page:not(.dark) .events-card{background:#21352b}}
+.curve-page{min-height:100vh;padding:calc(22px + env(safe-area-inset-top)) 18px 120px;background:#f7f6f1;color:#243830;box-sizing:border-box}.dark{background:#17231e;color:#e8efe8}.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.eyebrow{display:block;font-size:12px;color:#6c8c77;margin-bottom:5px}.title{display:block;font-size:23px;font-weight:700}.close{font-size:30px;line-height:1;color:#355f4f;padding:0 6px}.intro-card,.question-card,.chart-card,.events-card{background:rgba(255,255,255,.82);border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(33,58,47,.07)}.dark .intro-card,.dark .question-card,.dark .chart-card,.dark .events-card{background:#21352b}.intro-title{display:block;font-size:25px;font-weight:700;margin-bottom:9px}.intro-copy,.section-sub,.privacy,.hint{display:block;color:#71807a;font-size:13px;line-height:1.7}.intro-row{display:flex;justify-content:space-between;margin:18px 0;color:#527059;font-size:11px}.field-row{display:flex;align-items:center;gap:8px;padding:13px 0;border-bottom:1px solid rgba(80,110,90,.12);font-size:14px}.age-input{width:70px;padding:7px 10px;text-align:center;border-radius:10px;border:1px solid #dce8dc;background:#fff;color:#243830}.primary,.secondary,.event-add{border-radius:13px;padding:0 18px;min-height:46px;margin-top:18px;line-height:46px;font-size:14px}.primary{background:#2d5b49;color:#fff}.secondary{background:#edf2eb;color:#355f4f}.small{min-width:130px}.progress-row{display:flex;justify-content:space-between;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-tag{display:block;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-title{display:block;font-size:22px;font-weight:700;line-height:1.45;margin-bottom:18px}.options{display:flex;flex-direction:column;gap:9px}.option{display:flex;align-items:center;gap:10px;padding:13px;border-radius:13px;background:#f1f5ee;color:#405a4b;font-size:14px}.option.selected{background:#dbead8;color:#1e4c39;font-weight:600}.option-dot{width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}.nav-row{display:flex;justify-content:space-between;gap:12px}.nav-row button{flex:1}.result-area{margin-top:28px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.section-title{display:block;font-size:19px;font-weight:700}.theme-toggle,.count{color:#527059;font-size:12px;padding-top:4px}.chart-card{padding:14px 12px 10px}.chart{width:100%;height:190px;display:block}.grid-line{stroke:#dbe5dc;stroke-width:1}.curve-line{fill:none;stroke:#3b7557;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.curve-dot{fill:#f7f6f1;stroke:#3b7557;stroke-width:2}.chart-labels{display:flex;justify-content:space-between;color:#71807a;font-size:11px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.summary-grid view{padding:12px 8px;border-radius:14px;background:#edf2eb}.summary-grid text,.summary-grid strong{display:block}.summary-grid text{font-size:11px;color:#71807a}.summary-grid strong{font-size:14px;color:#2d5b49;margin-top:5px}.events-card{margin-top:14px}.event-row{display:grid;grid-template-columns: 1fr .65fr 1fr .8fr 24px;gap:6px;margin:8px 0}.event-row input{min-width:0;padding:9px 5px;text-align:center;border:1px solid #dce8dc;border-radius:9px;font-size:12px}.event-row text{font-size:22px;color:#8c6a62;text-align:center}.event-add{width:100%;background:#f1f5ee;color:#527059;border:1px dashed #b8cdbb;margin-top:8px}.actions{display:flex;gap:10px;margin-top:16px}.actions button{flex:1}.privacy{text-align:center;margin-top:15px;font-size:11px}@media (prefers-color-scheme:dark){.curve-page:not(.dark){background:#17231e;color:#e8efe8}.curve-page:not(.dark) .intro-card,.curve-page:not(.dark) .question-card,.curve-page:not(.dark) .chart-card,.curve-page:not(.dark) .events-card{background:#21352b}}
 .generating-mask{position:fixed;z-index:20;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;background:rgba(247,246,241,.97);text-align:center}.dark .generating-mask{background:rgba(23,35,30,.98)}.spinner{width:46px;height:46px;border:3px solid rgba(82,112,89,.2);border-top-color:#527059;border-radius:50%;animation:curveSpin 1s linear infinite}.generating-title{margin-top:22px;font-size:20px;font-weight:700;color:#243830}.generating-sub{margin-top:8px;color:#71807a;font-size:13px}.generating-time{margin-top:24px;color:#8b9489;font-size:11px}@keyframes curveSpin{to{transform:rotate(360deg)}}</style>
