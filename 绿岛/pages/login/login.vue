@@ -47,7 +47,7 @@ async function login(){
  if(!code.value.trim())return toast('请输入验证码')
  if(!verificationInfo)return toast('请先获取验证码')
  loading.value=true
- try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);uni.removeStorageSync('fire_guest_mode');state.started=true;persist();uni.reLaunch({url:redirect.value||'/pages/index/index'})}
+ try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);uni.removeStorageSync('fire_guest_mode');state.started=true;persist();const target=redirect.value||'/pages/index/index';const guideDone=uni.getStorageSync('fire_app_guide_done')===true;const destination=guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target);uni.reLaunch({url:destination})}
  catch(error){toast(error.message||'登录失败，请重试')}
  finally{loading.value=false}
 }
