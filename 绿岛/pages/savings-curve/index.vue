@@ -86,7 +86,12 @@ export default {
   components: { BottomTabs },
   data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [] } },
   computed: {
-    visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
+    visibleQuestions() {
+      if (this.age < 18) return this.questions.filter(q => q.stage === 'youth')
+      if (this.age < 40) return this.questions.filter(q => q.stage === 'youth' || q.stage === 'young')
+      if (this.age < 60) return this.questions.filter(q => q.stage !== 'later')
+      return this.questions
+    },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
     animatedCurve() {
       const count = Math.max(1, Math.floor(this.curve.length * this.chartProgress))
