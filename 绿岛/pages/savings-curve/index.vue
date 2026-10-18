@@ -126,21 +126,23 @@ export default {
       const count = Math.max(1, Math.floor(this.curve.length * this.chartProgress))
       return this.curve.slice(0, count)
     },
+    chartDomainMin() { return Math.min(0, this.minBalance) },
+    chartDomainMax() { return Math.max(this.peakBalance, this.curve.length ? this.curve[0].balance : 0, 1) },
     animatedChartPoints() {
       if (!this.animatedCurve.length) return ''
-      const max = Math.max(1, this.peakBalance - this.minBalance)
+      const range = Math.max(1, this.chartDomainMax - this.chartDomainMin)
       return this.animatedCurve.map((point, index) => {
         const x = 28 + index * 322 / Math.max(1, this.curve.length - 1)
-        const y = 160 - (point.balance - this.minBalance) / max * 135
+        const y = 160 - (point.balance - this.chartDomainMin) / range * 135
         return x.toFixed(1) + ',' + y.toFixed(1)
       }).join(' ')
     },
     animatedChartDots() {
       if (!this.animatedCurve.length) return []
-      const max = Math.max(1, this.peakBalance - this.minBalance)
+      const range = Math.max(1, this.chartDomainMax - this.chartDomainMin)
       return this.animatedCurve.filter((point, index) => index % Math.max(1, Math.floor(this.curve.length / 5)) === 0 || index === this.animatedCurve.length - 1).map(point => {
         const index = this.curve.indexOf(point)
-        return { age: point.age, x: 28 + index * 322 / Math.max(1, this.curve.length - 1), y: 160 - (point.balance - this.minBalance) / max * 135 }
+        return { age: point.age, x: 28 + index * 322 / Math.max(1, this.curve.length - 1), y: 160 - (point.balance - this.chartDomainMin) / range * 135 }
       })
     },
     historyCount() {
@@ -172,12 +174,12 @@ export default {
         const inflation = 0.025
         const years = Math.max(1, this.lifeExpectancy - this.age)
         let balance = startSavings
-        const rows = []
-        for (let i = 0; i <= years; i++) {
+        const rows = [{ age: this.age, balance: Math.round(balance) }]
+        for (let i = 1; i <= years; i++) {
           const currentAge = this.age + i
           const eventTotal = this.customEvents.filter(event => Number(event.age) === currentAge).reduce((sum, event) => sum + Number(event.amount || 0), 0)
-          const annualIncome = income * 12 * Math.pow(1 + growth, i)
-          const annualExpense = expense * 12 * Math.pow(1 + inflation, i)
+          const annualIncome = income * 12 * Math.pow(1 + growth, i - 1)
+          const annualExpense = expense * 12 * Math.pow(1 + inflation, i - 1)
           balance = balance * 1.035 + annualIncome * saveRate - annualExpense + eventTotal
           rows.push({ age: currentAge, balance: Math.round(balance) })
         }
@@ -194,9 +196,9 @@ export default {
         this.generating = false
         if (this.chartTimer) clearInterval(this.chartTimer)
         this.chartTimer = setInterval(() => {
-          this.chartProgress = Math.min(1, this.chartProgress + 0.035)
+          this.chartProgress = Math.min(1, this.chartProgress + 0.008)
           if (this.chartProgress >= 1) { clearInterval(this.chartTimer); this.chartTimer = null }
-        }, 100)
+        }, 16)
         this.generationTimer = null
         uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, updatedAt: Date.now() })
       }, 5000)
