@@ -10,7 +10,7 @@
     <view class="tool-grid">
       <view v-for="t in commonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
         <view class="tool-icon" :style="{ background: t.bg }">
-          <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
+          <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>
         <view class="tool-text">
           <text class="tool-name">{{ t.name }}</text>
@@ -24,7 +24,7 @@
     <view class="tool-grid">
       <view v-for="t in uncommonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
         <view class="tool-icon" :style="{ background: t.bg }">
-          <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
+          <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>
         <view class="tool-text">
           <text class="tool-name">{{ t.name }}</text>
@@ -138,7 +138,7 @@ export default {
 }
 .tool-card:active { transform: scale(0.97); }
 .tool-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.tool-icon-img { width: 19px; height: 19px; }.tool-text-icon { color: #426052; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }
+.tool-icon-img { width: 19px; height: 19px; }.tool-text-icon { color: #426052; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }.music-text-icon { font-size: 24px; font-weight: 400; }
 .tool-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .tool-name { display: block; font-size: 14px; font-weight: 500; color: #243830; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-desc { display: block; font-size: 11px; color: #71807a; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
