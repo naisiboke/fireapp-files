@@ -133,14 +133,15 @@
         "navigationBarTitleText": "躺平倒计时"
       }
     }
-  ],
+    },
     {
       "path": "pages/profile/edit",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "个人资料"
       }
-    },
+    }
+  ],
   "tabBar": {
     "custom": false,
     "color": "#839084",
