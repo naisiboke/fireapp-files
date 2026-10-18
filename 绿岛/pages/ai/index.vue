@@ -64,7 +64,7 @@ export default {
       text = sentences.join('。')
       if (text && !/[。！？]$/.test(text)) text += '。'
       return text.length > 420 ? text.slice(0, 420) + '…' : text
-    }
+    },
 
     async send() {
       const question = this.question.trim()
