@@ -132,7 +132,6 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "躺平倒计时"
       }
-    }
     },
     {
       "path": "pages/profile/edit",
