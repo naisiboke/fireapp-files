@@ -45,6 +45,7 @@ import { state, persist } from '@/store/index.js'
 
 const ICONS = {
   calculator: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 7h8M8 11h.5M12 11h.5M16 11h.5M8 15h.5M12 15h.5M16 15h.5M8 19h8',
+  curve: 'M3 18c4-1 5-7 9-5s4 5 9-9M3 21h18',
   hero: 'M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8L12 3z',
   wishlist: 'M7 7V5a5 5 0 0 1 10 0v2M3 7h18v14H3zM8 14l3 3 5-5',
   ledger: 'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
@@ -56,6 +57,7 @@ const ICONS = {
 
 const TOOL_CATALOG = [
   { route: 'calculator', url: '/pages/calculator/index', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
+  { route: 'savings-curve', url: '/pages/savings-curve/index', icon: 'curve', color: '#426052', bg: '#edf2e9', name: '一生存款曲线', desc: '用选择题看见存款变化' },
   { route: 'ledger', url: '/pages/ledger/index', icon: 'ledger', color: '#426052', bg: '#edf2e9', name: '记账', desc: '轻松记下每笔消费' },
   { route: 'wishlist', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
   { route: 'hero', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
