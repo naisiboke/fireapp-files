@@ -261,6 +261,7 @@ export default {
     }
     this.bindVisibilityEvents()
     this.startCountdown()
+    this.startGuardian()
   },
   onShow() {
     this.pageVisible = true
@@ -268,18 +269,22 @@ export default {
     const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
     if (Array.isArray(savedWishlist)) state.items = savedWishlist
     this.startCountdown()
+    this.startGuardian()
   },
   onHide() {
     this.pageVisible = false
     this.stopCountdown()
+    this.stopGuardian()
   },
   onUnload() {
     this.unbindVisibilityEvents()
     this.stopCountdown()
+    this.stopGuardian()
   },
   beforeUnmount() {
     this.unbindVisibilityEvents()
     this.stopCountdown()
+    this.stopGuardian()
   },
 
   methods: {
