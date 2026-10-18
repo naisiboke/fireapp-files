@@ -4,7 +4,7 @@
     <view class="quick-menu" :class="{ open: expanded }">
       <view class="quick-item quick-ledger" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">记</view><text>记账</text></view>
       <view class="quick-item quick-ai" @tap.stop="openQuick('/pages/ai/index')"><view class="quick-icon">AI</view><text>问 AI</text></view>
-      <view class="quick-item quick-music" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♫</view><text>音乐</text></view>
+      <view class="quick-item quick-music" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view><text>音乐</text></view>
     </view>
     <view v-for="t in tabs.slice(0, 2)" :key="t.path" class="tab-item" :class="{ active: t.key === current }" @tap="switchTab(t.path)">
       <image class="tab-icon" :src="iconUri(t.key, t.key === current)" mode="aspectFit" />
