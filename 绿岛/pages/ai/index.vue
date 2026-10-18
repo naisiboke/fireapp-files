@@ -52,20 +52,19 @@ export default {
     },
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
     formatAnswer(value) {
-      let text = value.replace(/\*\*/g, '').replace(/__|###?/g, '').replace(/\r/g, '').trim()
-      text = text.replace(/(^|
-)\s*[-•]\s*/g, '$1')
-      text = text.replace(/(\d+)[.)、]\s*/g, '
-$1. ')
-      text = text.replace(/
-{2,}/g, '
-').trim()
-      const sentences = text.replace(/([。！？])/g, '$1
-').split('
-').filter(Boolean).slice(0, 6)
-      text = sentences.join('')
+      const lineBreak = String.fromCharCode(10)
+      let text = String(value || '').replace(/\*\*/g, '').replace(/__/g, '').trim()
+      text = text.replace(/[0-9]+[.)、][ \t]*/g, lineBreak)
+      text = text.split('•').join('')
+      const sentences = text
+        .split(/[。！？]/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .slice(0, 6)
+      text = sentences.join('。')
+      if (text && !/[。！？]$/.test(text)) text += '。'
       return text.length > 420 ? text.slice(0, 420) + '…' : text
-    },
+    }
 
     async send() {
       const question = this.question.trim()
