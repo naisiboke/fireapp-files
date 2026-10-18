@@ -153,8 +153,8 @@ export default {
     openDraftPanel() { this.draftData = uni.getStorageSync('fire_savings_curve_draft_v1') || null; this.draftPanel = true },
     openHistoryPanel() { const items = uni.getStorageSync('fire_savings_curve_history_v1'); this.historyItems = Array.isArray(items) ? items : []; this.historyPanel = true },
     closePanels() { this.draftPanel = false; this.historyPanel = false },
-    deleteDraft() { uni.removeStorageSync('fire_savings_curve_draft_v1'); this.draftData = null },
-    deleteHistory(index) { this.historyItems.splice(index, 1); uni.setStorageSync('fire_savings_curve_history_v1', this.historyItems) },
+    async deleteDraft() { uni.removeStorageSync('fire_savings_curve_draft_v1'); this.draftData = null; state.savingsCurveDraft = null; persist(); await syncStateToServer(); },
+    async deleteHistory(index) { this.historyItems.splice(index, 1); uni.setStorageSync('fire_savings_curve_history_v1', this.historyItems); state.savingsCurveHistory = this.historyItems; persist(); await syncStateToServer(); },
     formatDate(value) { return value ? new Date(value).toLocaleString('zh-CN') : '' },
     viewHistory(item) { this.age = item.age; this.lifeExpectancy = item.lifeExpectancy; this.answers = item.answers || {}; this.customEvents = item.events || []; this.curve = item.curve || []; this.started = true; this.profileStep = false; this.historyPanel = false; this.showResult = true; this.chartProgress = 1 },
 
