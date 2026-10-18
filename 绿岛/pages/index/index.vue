@@ -180,19 +180,20 @@ export default {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#1e4032"/>
-            <stop offset="0.55" stop-color="#456b56"/>
-            <stop offset="1" stop-color="#6d8c73"/>
+            <stop offset="0" stop-color="#1c4735"/>
+            <stop offset="0.3" stop-color="#4f765d"/>
+            <stop offset="0.68" stop-color="#c4d2bd"/>
+            <stop offset="1" stop-color="#f7f2e8"/>
           </linearGradient>
-          <radialGradient id="sun" cx="0.82" cy="0.18" r="0.35">
-            <stop offset="0" stop-color="#e4eed9" stop-opacity="0.55"/>
-            <stop offset="1" stop-color="#e4eed9" stop-opacity="0"/>
+          <radialGradient id="glow" cx="0.86" cy="0.2" r="0.36">
+            <stop offset="0" stop-color="#dce8c8" stop-opacity="0.55"/>
+            <stop offset="1" stop-color="#dce8c8" stop-opacity="0"/>
           </radialGradient>
         </defs>
         <rect width="800" height="500" fill="url(#sky)"/>
-        <rect width="800" height="500" fill="url(#sun)"/>
-        <path d="M0 380c120-60 200-20 320-70s220-100 480-30v220H0z" fill="#143e37" opacity="0.32"/>
-        <path d="M0 430c150-50 250 0 400-50s250-60 400 0v120H0z" fill="#0d2b24" opacity="0.42"/>
+        <rect width="800" height="500" fill="url(#glow)"/>
+        <path d="M0 365 C150 350 230 398 355 380 C515 357 603 320 800 350 L800 500 L0 500 Z" fill="#dce6d7" opacity="0.34"/>
+        <path d="M0 415 C150 385 260 430 390 420 C545 408 650 370 800 393 L800 500 L0 500 Z" fill="#eef1e6" opacity="0.72"/>
       </svg>`
       return { backgroundImage: `url("${svgUri(svg.trim())}")` }
     },
