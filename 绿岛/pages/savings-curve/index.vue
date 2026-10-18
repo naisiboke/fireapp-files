@@ -96,10 +96,14 @@ export default {
   data() { return { age: '', lifeExpectancy: '', started: false, profileStep: false, draftPanel: false, historyPanel: false, draftData: null, historyItems: [], questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [] } },
   computed: {
     visibleQuestions() {
-      if (this.age < 18) return this.questions.filter(q => q.stage === 'youth')
-      if (this.age < 40) return this.questions.filter(q => q.stage === 'youth' || q.stage === 'young')
-      if (this.age < 60) return this.questions.filter(q => q.stage !== 'later')
-      return this.questions
+      let stages
+      if (this.age < 18) stages = ['youth']
+      else if (this.age < 40) stages = ['young', 'middle']
+      else if (this.age < 60) stages = ['middle', 'later']
+      else stages = ['later']
+      const event = this.questions.find(item => item.id === 'q100')
+      const eligible = this.questions.filter(item => item.id !== 'q100' && stages.indexOf(item.stage) >= 0).slice(0, 49)
+      return event ? eligible.concat(event) : eligible
     },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
     animatedCurve() {
