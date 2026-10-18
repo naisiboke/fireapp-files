@@ -80,45 +80,11 @@
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist, syncStateToServer } from '@/store/index.js'
-
-const OPTION_SETS = {
-  money: [{ label: '0 元', value: 0 }, { label: '500 元', value: 500 }, { label: '2,000 元', value: 2000 }, { label: '5,000 元', value: 5000 }, { label: '10,000 元', value: 10000 }],
-  balance: [{ label: '0 元', value: 0 }, { label: '1,000 元', value: 1000 }, { label: '5,000 元', value: 5000 }, { label: '20,000 元', value: 20000 }, { label: '100,000 元以上', value: 100000 }],
-  expense: [{ label: '0 元', value: 0 }, { label: '每月 2,000 元', value: 2000 }, { label: '每月 5,000 元', value: 5000 }, { label: '每月 10,000 元', value: 10000 }, { label: '每月 30,000 元', value: 30000 }],
-  income: [{ label: '0 元', value: 0 }, { label: '每月 2,000 元', value: 2000 }, { label: '每月 5,000 元', value: 5000 }, { label: '每月 10,000 元', value: 10000 }, { label: '每月 50,000 元', value: 50000 }],
-  rate: [{ label: '存下 5%', value: 0.05 }, { label: '存下 20%', value: 0.2 }, { label: '存下 40%', value: 0.4 }, { label: '存下 60%', value: 0.6 }, { label: '存下 80%', value: 0.8 }],
-  years: [{ label: '没有计划', value: 0 }, { label: '1 年', value: 1 }, { label: '3 年', value: 3 }, { label: '5 年', value: 5 }, { label: '10 年以上', value: 10 }],
-  ratePercent: [{ label: '0%', value: 0 }, { label: '2%', value: 0.02 }, { label: '4%', value: 0.04 }, { label: '6%', value: 0.06 }, { label: '8%', value: 0.08 }],
-}
-
-function makeQuestions() {
-  const questions = []
-  const youth = ['每年压岁钱大约有多少？', '每月零花钱大约有多少？', '你愿意把多少零花钱存起来？', '教育金或兴趣班每年大约花多少？', '你希望成年前存下多少钱？', '每年收到的礼物和红包大约多少？', '你每年用于学习的支出是多少？', '你愿意为兴趣爱好存多久？', '家庭希望为你准备多少教育金？', '你想为第一个目标存多少钱？']
-  const adult = ['你目前的存款大约是多少？', '你每月到手收入大约是多少？', '每月收入中你能存下多少？', '你每月固定生活支出大约多少？', '你计划几年后买房？', '买房首付预算大约是多少？', '你计划几年后结婚？', '婚礼和彩礼预算大约多少？', '你计划几年后要孩子？', '孩子每年教育支出大约多少？', '你希望几年内还清房贷？', '父母医疗储备目标是多少？', '你希望退休时存下多少钱？', '你预计收入每年增长多少？', '你每年买车和养车大约花多少？', '你每年旅行和娱乐支出多少？', '你每年保险支出多少？', '你希望每年给自己留多少自由支出？', '你是否有长期副业收入？', '你愿意为学习提升投入多少？']
-  const later = ['房贷还剩多少年？', '子女教育金还缺多少？', '父母养老储备还缺多少？', '退休后每月希望花多少？', '你预计还会工作多少年？', '未来十年每年能存多少？', '你希望留下多少应急金？', '你是否计划换房？', '你是否计划帮助子女买房？', '你希望给家庭留下多少资产？']
-  const chooseType = (text) => {
-    if (text.includes('收入') || text.includes('副业')) return 'income'
-    if (text.includes('存款') || text.includes('教育金') || text.includes('储备目标') || text.includes('留下多少资产')) return 'balance'
-    if (text.includes('比例')) return 'rate'
-    if (text.includes('几年') || text.includes('年后') || text.includes('年限')) return 'years'
-    if (text.includes('增长')) return 'ratePercent'
-    if (text.includes('支出') || text.includes('预算') || text.includes('首付') || text.includes('彩礼') || text.includes('买车') || text.includes('养车')) return 'expense'
-    return 'money'
-  }
-  for (let i = 0; i < 100; i++) {
-    let text = '基础财务问题'
-    let tag = '基础情况'
-    if (i < 10) { text = youth[i]; tag = '成长阶段' }
-    else if (i < 80) { text = adult[(i - 10) % adult.length]; tag = i < 35 ? '青年阶段' : (i < 60 ? '家庭阶段' : '长期规划') }
-    else { text = later[(i - 80) % later.length]; tag = '中后期规划' }
-    questions.push({ id: 'q' + (i + 1), text: text, tag: tag, type: chooseType(text), options: OPTION_SETS[chooseType(text)] })
-  }
-  return questions
-}
+import { SAVINGS_QUESTIONS } from '@/utils/savings-questions.js'
 
 export default {
   components: { BottomTabs },
-  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: makeQuestions(), curve: [] } },
+  data() { return { age: 28, lifeExpectancy: 85, started: false, questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [] } },
   computed: {
     visibleQuestions() { return this.questions.filter(q => this.age >= 20 || q.tag === '成长阶段' || q.tag === '基础情况') },
     currentQuestion() { return this.visibleQuestions[this.questionIndex] },
@@ -165,7 +131,7 @@ export default {
     next() {
       if (!this.currentQuestion) return
       const answered = Object.prototype.hasOwnProperty.call(this.answers, this.currentQuestion.id)
-      if (!answered) {
+      if (!answered && this.currentQuestion.required !== false) {
         uni.showToast({ title: '请先选择一个答案', icon: 'none' })
         return
       }
@@ -176,7 +142,12 @@ export default {
       }
       this.recalculate()
     },
-    value(type, fallback) { const q = this.questions.find(x => x.type === type); return q && this.answers[q.id] !== undefined ? Number(this.answers[q.id]) : fallback },
+    value(type, fallback) {
+      const aliases = { income: 'income_monthly', expense: 'expense_monthly', rate: 'ratio', ratePercent: 'percent' }
+      const wanted = aliases[type] || type
+      const q = this.questions.find(item => item.type === wanted)
+      return q && this.answers[q.id] !== undefined ? Number(this.answers[q.id]) : fallback
+    },
     recalculate() {
       if (this.generating) return
       this.generating = true
@@ -185,9 +156,9 @@ export default {
       this.generationTimer = setTimeout(() => {
         const startSavings = this.value('balance', 3000)
         const income = this.value('income', 8000)
-        const saveRate = this.value('rate', 0.3)
+        const saveRate = this.value('rate', 30) / 100
         const expense = Math.max(0, this.value('expense', 3000))
-        const growth = this.value('ratePercent', 0.035)
+        const growth = this.value('ratePercent', 3.5) / 100
         const inflation = 0.025
         const years = Math.max(1, this.lifeExpectancy - this.age)
         let balance = startSavings
