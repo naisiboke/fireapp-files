@@ -79,7 +79,7 @@
 
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
-import { persist, syncStateToServer } from '@/store/index.js'
+import { state, persist, syncStateToServer } from '@/store/index.js'
 
 const OPTION_SETS = {
   money: [{ label: '0 元', value: 0 }, { label: '500 元', value: 500 }, { label: '2,000 元', value: 2000 }, { label: '5,000 元', value: 5000 }, { label: '10,000 元', value: 10000 }],
@@ -188,6 +188,7 @@ export default {
         const savedHistory = Array.isArray(history) ? history : []
         savedHistory.push({ age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, curve: rows, updatedAt: Date.now() })
         uni.setStorageSync('fire_savings_curve_history_v1', savedHistory.slice(-10))
+        state.savingsCurveHistory = savedHistory.slice(-10)
         persist()
         syncStateToServer()
         this.generating = false
@@ -205,6 +206,7 @@ export default {
     saveDraft() {
       const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, questionIndex: this.questionIndex, events: this.customEvents, updatedAt: Date.now() }
       uni.setStorageSync('fire_savings_curve_draft_v1', draft)
+      state.savingsCurveDraft = draft
       persist()
       syncStateToServer()
       uni.showToast({ title: '草稿已保存', icon: 'success' })
