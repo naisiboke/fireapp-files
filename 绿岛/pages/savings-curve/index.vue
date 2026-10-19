@@ -45,8 +45,16 @@
         <text class="question-tag">{{ stageLabel(currentQuestion.stage || currentQuestion.category) }}</text>
         <text class="question-title">{{ currentQuestion.text }}</text>
         <view class="options">
-          <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" :class="{ selected: answers[currentQuestion.id] === option.value }" @tap="choose(option.value)">
+          <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" :class="{ selected: answers[currentQuestion.id] === option.value && customAnswers[currentQuestion.id] === undefined }" @tap="choose(option.value)">
             <text class="option-dot">{{ String.fromCharCode(65 + i) }}</text><text>{{ option.label }}</text>
+          </view>
+          <view class="option custom-option" :class="{ selected: customAnswers[currentQuestion.id] !== undefined }" @tap="beginCustom">
+            <text class="option-dot">F</text><text>自定义</text>
+          </view>
+          <view v-if="customEditing === currentQuestion.id" class="custom-input-row">
+            <input class="custom-input" v-model="customDraft" type="number" placeholder="请输入数值" />
+            <text class="custom-unit">{{ unitLabel(currentQuestion) }}</text>
+            <button class="custom-confirm" @tap="confirmCustom">确定</button>
           </view>
         </view>
       </view>
@@ -103,7 +111,7 @@ import { SAVINGS_QUESTIONS } from '@/utils/savings-questions.js'
 
 export default {
   components: { BottomTabs },
-  data() { return { age: '', lifeExpectancy: '', started: false, profileStep: false, draftPanel: false, historyPanel: false, draftData: null, historyItems: [], questionIndex: 0, answers: {}, showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [], aiAnalysis: '', analysisLoading: false } },
+  data() { return { age: '', lifeExpectancy: '', started: false, profileStep: false, draftPanel: false, historyPanel: false, draftData: null, historyItems: [], questionIndex: 0, answers: {}, customAnswers: {}, customEditing: '', customDraft: '', showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [], aiAnalysis: '', analysisLoading: false } },
   computed: {
     visibleQuestions() {
       let stages
@@ -202,7 +210,7 @@ export default {
     answerSummary() {
       return this.questions.filter(item => this.answers[item.id] !== undefined).slice(0, 8).map(item => {
         const option = (item.options || []).find(choice => choice.value === this.answers[item.id])
-        return { id: item.id, text: item.text, label: option ? option.label : String(this.answers[item.id]) }
+        return { id: item.id, text: item.text, label: option ? option.label : this.formatCustomValue(item, this.answers[item.id]) }
       })
     },
     draftTime() { return this.draftData ? this.formatDate(this.draftData.updatedAt) : '' },
@@ -213,6 +221,50 @@ export default {
   methods: {
     close() { uni.navigateBack() },
     stageLabel(value) { return { youth: '成长阶段', young: '青年阶段', middle: '家庭阶段', later: '后期规划', basic: '基础信息' }[value] || value },
+    unitLabel(question) {
+      const type = question && question.type
+      if (type === 'ratio' || type === 'percent') return '%'
+      if (type === 'years') return '年'
+      if (type === 'balance' || type === 'income_monthly' || type === 'expense_monthly' || type === 'amount' || type === 'event') return '元'
+      return ''
+    },
+    formatCustomValue(question, value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return String(value)
+      const unit = this.unitLabel(question)
+      return number.toLocaleString('zh-CN') + (unit ? ' ' + unit : '')
+    },
+    beginCustom() {
+      if (!this.currentQuestion) return
+      this.customEditing = this.currentQuestion.id
+      this.customDraft = this.customAnswers[this.currentQuestion.id] !== undefined ? String(this.customAnswers[this.currentQuestion.id]) : ''
+    },
+    confirmCustom() {
+      if (!this.currentQuestion || this.customEditing !== this.currentQuestion.id) return
+      const value = Number(this.customDraft)
+      if (!Number.isFinite(value)) {
+        uni.showToast({ title: '请输入有效数字', icon: 'none' })
+        return
+      }
+      const type = this.currentQuestion.type
+      if ((type === 'ratio' || type === 'percent') && (value < 0 || value > 100)) {
+        uni.showToast({ title: '百分比需在 0 到 100 之间', icon: 'none' })
+        return
+      }
+      if (type === 'years' && (value < 0 || value > 100)) {
+        uni.showToast({ title: '年数需在 0 到 100 之间', icon: 'none' })
+        return
+      }
+      if (type !== 'event' && type !== 'ratio' && type !== 'percent' && type !== 'years' && value < 0) {
+        uni.showToast({ title: '金额不能小于 0', icon: 'none' })
+        return
+      }
+      this.customAnswers[this.currentQuestion.id] = value
+      this.answers[this.currentQuestion.id] = value
+      this.customEditing = ''
+      this.customDraft = ''
+      this.saveDraft(false)
+    },
     start() { this.started = true; this.profileStep = true; this.age = ''; this.lifeExpectancy = '' },
     beginQuestions() {
       const age = Number(this.age)
@@ -227,11 +279,14 @@ export default {
     async deleteDraft() { uni.removeStorageSync('fire_savings_curve_draft_v1'); this.draftData = null; state.savingsCurveDraft = null; persist(); await syncStateToServer(); },
     async deleteHistory(index) { this.historyItems.splice(index, 1); uni.setStorageSync('fire_savings_curve_history_v1', this.historyItems); state.savingsCurveHistory = this.historyItems; persist(); await syncStateToServer(); },
     formatDate(value) { return value ? new Date(value).toLocaleString('zh-CN') : '' },
-    viewHistory(item) { this.age = item.age; this.lifeExpectancy = item.lifeExpectancy; this.answers = item.answers || {}; this.customEvents = item.events || []; this.curve = item.curve || []; this.started = true; this.profileStep = false; this.historyPanel = false; this.showResult = true; this.chartProgress = 1 },
+    viewHistory(item) { this.age = item.age; this.lifeExpectancy = item.lifeExpectancy; this.answers = item.answers || {}; this.customAnswers = item.customAnswers || {}; this.customEvents = item.events || []; this.curve = item.curve || []; this.started = true; this.profileStep = false; this.historyPanel = false; this.showResult = true; this.chartProgress = 1 },
 
     choose(value) {
       if (!this.currentQuestion) return
       this.answers[this.currentQuestion.id] = value
+      delete this.customAnswers[this.currentQuestion.id]
+      this.customEditing = ''
+      this.customDraft = ''
       this.saveDraft(false)
     },
     previous() { if (this.questionIndex > 0) this.questionIndex-- },
@@ -298,7 +353,7 @@ export default {
         this.showResult = true
         const history = uni.getStorageSync('fire_savings_curve_history_v1')
         const savedHistory = Array.isArray(history) ? history : []
-        savedHistory.push({ age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, curve: rows, updatedAt: Date.now() })
+        savedHistory.push({ age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, customAnswers: this.customAnswers, events: this.customEvents, curve: rows, updatedAt: Date.now() })
         uni.setStorageSync('fire_savings_curve_history_v1', savedHistory.slice(-10))
         state.savingsCurveHistory = savedHistory.slice(-10)
         persist()
@@ -310,13 +365,13 @@ export default {
           if (this.chartProgress >= 1) { clearInterval(this.chartTimer); this.chartTimer = null }
         }, 16)
         this.generationTimer = null
-        uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, events: this.customEvents, updatedAt: Date.now() })
+        uni.setStorageSync('fire_savings_curve_v1', { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, customAnswers: this.customAnswers, events: this.customEvents, updatedAt: Date.now() })
       }, 5000)
     },
     addEvent() { this.customEvents.push({ label: '买房', age: this.age + 5, amount: -100000, duration: 1 }) },
     removeEvent(index) { this.customEvents.splice(index, 1); this.recalculate() },
     async saveDraft(showToast = true) {
-      const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, questionIndex: this.questionIndex, completedCount: Object.keys(this.answers).length, events: this.customEvents, updatedAt: Date.now() }
+      const draft = { age: this.age, lifeExpectancy: this.lifeExpectancy, answers: this.answers, customAnswers: this.customAnswers, questionIndex: this.questionIndex, completedCount: Object.keys(this.answers).length, events: this.customEvents, updatedAt: Date.now() }
       uni.setStorageSync('fire_savings_curve_draft_v1', draft)
       state.savingsCurveDraft = draft
       persist()
@@ -330,13 +385,13 @@ export default {
     loadDraft() {
       const draft = uni.getStorageSync('fire_savings_curve_draft_v1')
       if (!draft) { uni.showToast({ title: '还没有草稿', icon: 'none' }); return }
-      this.age = draft.age; this.lifeExpectancy = draft.lifeExpectancy; this.answers = draft.answers || {}; this.questionIndex = draft.questionIndex || 0; this.customEvents = draft.events || []; this.started = true; this.profileStep = false; this.draftPanel = false
+      this.age = draft.age; this.lifeExpectancy = draft.lifeExpectancy; this.answers = draft.answers || {}; this.customAnswers = draft.customAnswers || {}; this.questionIndex = draft.questionIndex || 0; this.customEvents = draft.events || []; this.started = true; this.profileStep = false; this.draftPanel = false
     },
     loadHistory() {
       const history = uni.getStorageSync('fire_savings_curve_history_v1')
       if (!Array.isArray(history) || !history.length) { uni.showToast({ title: '还没有历史测算', icon: 'none' }); return }
       const latest = history[history.length - 1]
-      this.age = latest.age; this.lifeExpectancy = latest.lifeExpectancy; this.answers = latest.answers || {}; this.customEvents = latest.events || []; this.curve = latest.curve || []; this.started = true; this.showResult = true; this.chartProgress = 1
+      this.age = latest.age; this.lifeExpectancy = latest.lifeExpectancy; this.answers = latest.answers || {}; this.customAnswers = latest.customAnswers || {}; this.customEvents = latest.events || []; this.curve = latest.curve || []; this.started = true; this.showResult = true; this.chartProgress = 1
     },
     save() { this.saveDraft(); this.recalculate() },
     async runAIAnalysis() {
@@ -360,11 +415,12 @@ export default {
   },
   onLoad() {
     const saved = uni.getStorageSync('fire_savings_curve_v1')
-    if (saved) { this.age = saved.age || 28; this.lifeExpectancy = saved.lifeExpectancy || 85; this.answers = saved.answers || {}; this.customEvents = saved.events || [] }
+    if (saved) { this.age = saved.age || 28; this.lifeExpectancy = saved.lifeExpectancy || 85; this.answers = saved.answers || {}; this.customAnswers = saved.customAnswers || {}; this.customEvents = saved.events || [] }
   },
 }
 </script>
 
 <style>
 .curve-page{min-height:100vh;padding:calc(22px + env(safe-area-inset-top)) 18px 120px;background:#f7f6f1;color:#243830;box-sizing:border-box}.dark{background:#17231e;color:#e8efe8}.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.eyebrow{display:block;font-size:12px;color:#6c8c77;margin-bottom:5px}.title{display:block;font-size:23px;font-weight:700}.close{font-size:30px;line-height:1;color:#355f4f;padding:0 6px}.intro-card,.question-card,.chart-card,.events-card{background:rgba(255,255,255,.82);border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(33,58,47,.07)}.dark .intro-card,.dark .question-card,.dark .chart-card,.dark .events-card{background:#21352b}.intro-title{display:block;font-size:25px;font-weight:700;margin-bottom:9px}.intro-copy,.section-sub,.privacy,.hint{display:block;color:#71807a;font-size:13px;line-height:1.7}.intro-row{display:flex;justify-content:space-between;margin:18px 0;color:#527059;font-size:11px}.field-row{display:flex;align-items:center;gap:8px;padding:13px 0;border-bottom:1px solid rgba(80,110,90,.12);font-size:14px}.age-input{width:70px;padding:7px 10px;text-align:center;border-radius:10px;border:1px solid #dce8dc;background:#fff;color:#243830}.primary,.secondary,.event-add{border-radius:13px;padding:0 18px;min-height:46px;margin-top:18px;line-height:46px;font-size:14px}.primary{background:#2d5b49;color:#fff}.secondary{background:#edf2eb;color:#355f4f}.small{min-width:130px}.progress-row{display:flex;justify-content:space-between;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-tag{display:block;color:#6c8c77;font-size:12px;margin-bottom:10px}.question-title{display:block;font-size:22px;font-weight:700;line-height:1.45;margin-bottom:18px}.options{display:flex;flex-direction:column;gap:9px}.option{display:flex;align-items:center;gap:10px;padding:13px;border-radius:13px;background:#f1f5ee;color:#405a4b;font-size:14px}.option.selected{background:#dbead8;color:#1e4c39;font-weight:600}.option-dot{width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px}.nav-row{display:flex;justify-content:space-between;gap:12px}.nav-row button{flex:1}.result-area{margin-top:28px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.section-title{display:block;font-size:19px;font-weight:700}.theme-toggle,.count{color:#527059;font-size:12px;padding-top:4px}.chart-card{padding:14px 12px 10px}.chart{width:100%;height:190px;display:block}.grid-line{stroke:#dbe5dc;stroke-width:1}.curve-line{fill:none;stroke:#3b7557;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.curve-dot{fill:#f7f6f1;stroke:#3b7557;stroke-width:2}.chart-labels{display:flex;justify-content:space-between;color:#71807a;font-size:11px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.summary-grid view{padding:12px 8px;border-radius:14px;background:#edf2eb}.summary-grid text,.summary-grid strong{display:block}.summary-grid text{font-size:11px;color:#71807a}.summary-grid strong{font-size:14px;color:#2d5b49;margin-top:5px}.events-card{margin-top:14px}.event-row{display:grid;grid-template-columns: 1fr .65fr 1fr .8fr 24px;gap:6px;margin:8px 0}.event-row input{min-width:0;padding:9px 5px;text-align:center;border:1px solid #dce8dc;border-radius:9px;font-size:12px}.event-row text{font-size:22px;color:#8c6a62;text-align:center}.event-add{width:100%;background:#f1f5ee;color:#527059;border:1px dashed #b8cdbb;margin-top:8px}.actions{display:flex;gap:10px;margin-top:16px}.actions button{flex:1}.privacy{text-align:center;margin-top:15px;font-size:11px}@media (prefers-color-scheme:dark){.curve-page:not(.dark){background:#17231e;color:#e8efe8}.curve-page:not(.dark) .intro-card,.curve-page:not(.dark) .question-card,.curve-page:not(.dark) .chart-card,.curve-page:not(.dark) .events-card{background:#21352b}}
-.generating-mask{position:fixed;z-index:20;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;background:rgba(247,246,241,.97);text-align:center}.dark .generating-mask{background:rgba(23,35,30,.98)}.spinner{width:46px;height:46px;border:3px solid rgba(82,112,89,.2);border-top-color:#527059;border-radius:50%;animation:curveSpin 1s linear infinite}.generating-title{margin-top:22px;font-size:20px;font-weight:700;color:#243830}.generating-sub{margin-top:8px;color:#71807a;font-size:13px}.generating-time{margin-top:24px;color:#8b9489;font-size:11px}@keyframes curveSpin{to{transform:rotate(360deg)}}.entry-links{display:flex;justify-content:space-between;margin-top:16px;color:#527059;font-size:13px}.entry-hint{display:block;text-align:center;margin-top:10px;color:#8b9489;font-size:11px}.axis-y{display:block;color:#71807a;font-size:10px;margin:0 0 3px 12px}.entry-main{margin-top:24px}.draft-action{margin:0;min-height:46px;font-size:12px;padding:0 8px}.nav-row{align-items:center}.nav-row button{min-width:0}.entry-button{width:100%;min-height:44px;margin-top:10px;background:transparent;color:#527059;border:1px solid rgba(82,112,89,.22);border-radius:13px}.list-panel{min-height:260px}.empty-copy{display:block;text-align:center;color:#71807a;padding:42px 0}.saved-row{padding:14px 0;border-bottom:1px solid rgba(82,112,89,.14);color:#527059;font-size:13px}.saved-row text{display:block;margin-bottom:7px}.saved-row button{width:100%;margin-top:6px}.profile-step .age-input::placeholder{color:#9aa79e;opacity:.7}.answer-summary{margin:14px 0;padding:16px;border-radius:16px;background:rgba(255,255,255,.72);box-shadow:0 4px 16px rgba(33,58,47,.05)}.answer-summary>view{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(82,112,89,.12);font-size:11px;color:#71807a}.answer-summary strong{color:#243830;font-weight:600}.result-note{margin-top:14px;padding:14px 16px;border-left:3px solid #527059;background:#edf2eb;color:#527059}.result-note text{display:block;font-size:12px;line-height:1.7}.result-note text:first-child{font-weight:700}.chart-card{background:#fff;border:1px solid #e3e3e3}.chart{background:#fff;border-radius:10px}.grid-line{stroke:#d7d7d7}.curve-line{stroke:#111;stroke-width:3.2}.curve-dot{fill:#fff;stroke:#111}.draft-action{background:#fff!important;color:#243830!important;border:1px solid #dfe7df!important;margin:0;min-height:46px;line-height:46px}.ai-card{margin-top:14px;padding:18px;border-radius:18px;background:#fff;border:1px solid #e2e8df;box-shadow:0 4px 14px rgba(33,58,47,.05)}.ai-copy{display:block;color:#243830;font-size:13px;line-height:1.75;margin:8px 0}.ai-card .secondary{margin-top:10px;background:#edf2eb!important;color:#243830!important;border:0!important}.answer-summary{background:#fff;border:1px solid #e2e8df;color:#243830}.answer-summary>view{color:#243830;border-bottom-color:#e2e8df}.answer-summary>view text{color:#243830}.answer-summary strong{color:#111;font-weight:700}.result-note{background:#fff;color:#243830;border-left-color:#2d5b49;border-top:1px solid #e2e8df;border-right:1px solid #e2e8df;border-bottom:1px solid #e2e8df;border-radius:12px}.result-note text{color:#243830}.events-card{background:#fff;border:1px solid #e2e8df}.events-card .section-sub,.events-card .hint{color:#52605a}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions button{margin-top:0;min-height:46px}.nav-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}.nav-row button{width:100%!important;min-width:0!important;height:46px;min-height:46px;padding:0 6px;line-height:46px;font-size:12px}.result-chart{background:#050505!important;border:1px solid #202020!important;color:#f4eee2;border-radius:20px;padding:18px 12px 12px}.chart-header{display:flex;justify-content:space-between;align-items:flex-start;padding:0 8px 8px}.chart-total{display:block;font-size:38px;line-height:1.05;font-weight:700;color:#f4eee2;letter-spacing:-1px}.chart-age{display:block;margin-top:8px;color:#c9c0b0;font-size:14px}.chart-caption{color:#988b70;font-size:12px;padding-top:8px}.result-chart .chart{height:230px;background:#050505;border-radius:0}.result-chart .grid-line{stroke:#373737;stroke-width:1;stroke-dasharray:3 5}.chart-baseline{stroke:#8a8173;stroke-width:1;stroke-dasharray:3 4}.result-chart .curve-line{stroke:#f1c66b;stroke-width:2.5;fill:none;filter:drop-shadow(0 0 3px rgba(241,198,107,.35))}.result-chart .curve-line.negative{stroke:#ff6b55;filter:drop-shadow(0 0 3px rgba(255,107,85,.35))}.result-chart .curve-line.positive{stroke:#f1c66b}.result-chart .curve-area{stroke:none}.result-chart .curve-area.positive{fill:rgba(241,198,107,.10)}.result-chart .curve-area.negative{fill:rgba(255,107,85,.16)}.result-chart .curve-dot{fill:#050505;stroke:#f1c66b;stroke-width:2}.event-marker{fill:#e3ab54;font-size:9px;text-anchor:middle}.axis-label{fill:#b9ad9c;font-size:9px;text-anchor:end}.result-chart .chart-labels{color:#b9ad9c}.result-chart .chart-labels text{color:#b9ad9c}</style>
+.generating-mask{position:fixed;z-index:20;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;background:rgba(247,246,241,.97);text-align:center}.dark .generating-mask{background:rgba(23,35,30,.98)}.spinner{width:46px;height:46px;border:3px solid rgba(82,112,89,.2);border-top-color:#527059;border-radius:50%;animation:curveSpin 1s linear infinite}.generating-title{margin-top:22px;font-size:20px;font-weight:700;color:#243830}.generating-sub{margin-top:8px;color:#71807a;font-size:13px}.generating-time{margin-top:24px;color:#8b9489;font-size:11px}@keyframes curveSpin{to{transform:rotate(360deg)}}.entry-links{display:flex;justify-content:space-between;margin-top:16px;color:#527059;font-size:13px}.entry-hint{display:block;text-align:center;margin-top:10px;color:#8b9489;font-size:11px}.axis-y{display:block;color:#71807a;font-size:10px;margin:0 0 3px 12px}.entry-main{margin-top:24px}.draft-action{margin:0;min-height:46px;font-size:12px;padding:0 8px}.nav-row{align-items:center}.nav-row button{min-width:0}.entry-button{width:100%;min-height:44px;margin-top:10px;background:transparent;color:#527059;border:1px solid rgba(82,112,89,.22);border-radius:13px}.list-panel{min-height:260px}.empty-copy{display:block;text-align:center;color:#71807a;padding:42px 0}.saved-row{padding:14px 0;border-bottom:1px solid rgba(82,112,89,.14);color:#527059;font-size:13px}.saved-row text{display:block;margin-bottom:7px}.saved-row button{width:100%;margin-top:6px}.profile-step .age-input::placeholder{color:#9aa79e;opacity:.7}.answer-summary{margin:14px 0;padding:16px;border-radius:16px;background:rgba(255,255,255,.72);box-shadow:0 4px 16px rgba(33,58,47,.05)}.answer-summary>view{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(82,112,89,.12);font-size:11px;color:#71807a}.answer-summary strong{color:#243830;font-weight:600}.result-note{margin-top:14px;padding:14px 16px;border-left:3px solid #527059;background:#edf2eb;color:#527059}.result-note text{display:block;font-size:12px;line-height:1.7}.result-note text:first-child{font-weight:700}.chart-card{background:#fff;border:1px solid #e3e3e3}.chart{background:#fff;border-radius:10px}.grid-line{stroke:#d7d7d7}.curve-line{stroke:#111;stroke-width:3.2}.curve-dot{fill:#fff;stroke:#111}.draft-action{background:#fff!important;color:#243830!important;border:1px solid #dfe7df!important;margin:0;min-height:46px;line-height:46px}.ai-card{margin-top:14px;padding:18px;border-radius:18px;background:#fff;border:1px solid #e2e8df;box-shadow:0 4px 14px rgba(33,58,47,.05)}.ai-copy{display:block;color:#243830;font-size:13px;line-height:1.75;margin:8px 0}.ai-card .secondary{margin-top:10px;background:#edf2eb!important;color:#243830!important;border:0!important}.answer-summary{background:#fff;border:1px solid #e2e8df;color:#243830}.answer-summary>view{color:#243830;border-bottom-color:#e2e8df}.answer-summary>view text{color:#243830}.answer-summary strong{color:#111;font-weight:700}.result-note{background:#fff;color:#243830;border-left-color:#2d5b49;border-top:1px solid #e2e8df;border-right:1px solid #e2e8df;border-bottom:1px solid #e2e8df;border-radius:12px}.result-note text{color:#243830}.events-card{background:#fff;border:1px solid #e2e8df}.events-card .section-sub,.events-card .hint{color:#52605a}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions button{margin-top:0;min-height:46px}.nav-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}.nav-row button{width:100%!important;min-width:0!important;height:46px;min-height:46px;margin-top:0!important;padding:0 6px;line-height:46px;font-size:12px;align-self:stretch}.result-chart{background:#050505!important;border:1px solid #202020!important;color:#f4eee2;border-radius:20px;padding:18px 12px 12px}.chart-header{display:flex;justify-content:space-between;align-items:flex-start;padding:0 8px 8px}.chart-total{display:block;font-size:38px;line-height:1.05;font-weight:700;color:#f4eee2;letter-spacing:-1px}.chart-age{display:block;margin-top:8px;color:#c9c0b0;font-size:14px}.chart-caption{color:#988b70;font-size:12px;padding-top:8px}.result-chart .chart{height:230px;background:#050505;border-radius:0}.result-chart .grid-line{stroke:#373737;stroke-width:1;stroke-dasharray:3 5}.chart-baseline{stroke:#8a8173;stroke-width:1;stroke-dasharray:3 4}.result-chart .curve-line{stroke:#f1c66b;stroke-width:2.5;fill:none;filter:drop-shadow(0 0 3px rgba(241,198,107,.35))}.result-chart .curve-line.negative{stroke:#ff6b55;filter:drop-shadow(0 0 3px rgba(255,107,85,.35))}.result-chart .curve-line.positive{stroke:#f1c66b}.result-chart .curve-area{stroke:none}.result-chart .curve-area.positive{fill:rgba(241,198,107,.10)}.result-chart .curve-area.negative{fill:rgba(255,107,85,.16)}.result-chart .curve-dot{fill:#050505;stroke:#f1c66b;stroke-width:2}.event-marker{fill:#e3ab54;font-size:9px;text-anchor:middle}.axis-label{fill:#b9ad9c;font-size:9px;text-anchor:end}.result-chart .chart-labels{color:#b9ad9c}.result-chart .chart-labels text{color:#b9ad9c}</style>
+.custom-option{border:1px dashed #9bb6a1;background:#f7faf5}.custom-input-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px 12px;border-radius:12px;background:#eef4ec}.custom-input{flex:1;min-width:0;height:38px;padding:0 10px;border:1px solid #cbdcca;border-radius:9px;background:#fff;color:#243830;font-size:14px}.custom-unit{color:#527059;font-size:13px;white-space:nowrap}.custom-confirm{height:38px;min-height:38px;line-height:38px;margin:0;padding:0 14px;border-radius:9px;background:#2d5b49;color:#fff;font-size:13px}.custom-confirm::after{border:none}.custom-option.selected{background:#dbead8;color:#1e4c39;font-weight:600}
