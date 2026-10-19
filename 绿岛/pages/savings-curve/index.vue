@@ -259,7 +259,7 @@ export default {
         uni.showToast({ title: '金额不能小于 0', icon: 'none' })
         return
       }
-      this.customAnswers[this.currentQuestion.id] = value
+      this.customAnswers = Object.assign({}, this.customAnswers, { [this.currentQuestion.id]: value })
       this.answers[this.currentQuestion.id] = value
       this.customEditing = ''
       this.customDraft = ''
@@ -284,7 +284,9 @@ export default {
     choose(value) {
       if (!this.currentQuestion) return
       this.answers[this.currentQuestion.id] = value
-      delete this.customAnswers[this.currentQuestion.id]
+      const nextCustom = Object.assign({}, this.customAnswers)
+      delete nextCustom[this.currentQuestion.id]
+      this.customAnswers = nextCustom
       this.customEditing = ''
       this.customDraft = ''
       this.saveDraft(false)
@@ -307,7 +309,8 @@ export default {
     value(type, fallback) {
       const aliases = { income: 'income_monthly', expense: 'expense_monthly', rate: 'ratio', ratePercent: 'percent' }
       const wanted = aliases[type] || type
-      const q = this.questions.find(item => item.type === wanted)
+      const visible = this.visibleQuestions.filter(item => item.type === wanted)
+      const q = visible.find(item => this.answers[item.id] !== undefined) || visible[0] || this.questions.find(item => item.type === wanted)
       return q && this.answers[q.id] !== undefined ? Number(this.answers[q.id]) : fallback
     },
     recalculate() {
