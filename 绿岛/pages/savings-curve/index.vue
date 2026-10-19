@@ -322,24 +322,38 @@ export default {
         const startSavings = this.value('balance', 3000)
         const income = this.value('income', 8000)
         const saveRate = this.value('rate', 30) / 100
-        const expense = Math.max(0, this.value('expense', 3000))
-        const growth = this.value('ratePercent', 3.5) / 100
-        const inflation = 0.025
+        const baseExpense = this.value('expense', 3000)
+        const fixedMonthlyExpense = answerValue(text => text.includes('房贷还款'), 0) + answerValue(text => text.includes('养车支出'), 0)
+        const expense = Math.max(0, baseExpense + fixedMonthlyExpense)
         const years = Math.max(1, this.lifeExpectancy - this.age)
         const answerValue = (matcher, fallback = 0) => {
-          const question = this.questions.find(item => matcher(item.text))
+          const visible = this.visibleQuestions.find(item => matcher(item.text))
+          const question = visible || this.questions.find(item => matcher(item.text))
           return question && this.answers[question.id] !== undefined ? Number(this.answers[question.id]) : fallback
         }
+        const growth = answerValue(text => text.includes('收入增长率') || text.includes('工资每年固定增长'), this.value('ratePercent', 3.5)) / 100
+        const inflation = answerValue(text => text.includes('通货膨胀率'), 2.5) / 100
+        const returnRate = answerValue(text => text.includes('复利年化收益率'), 3.5) / 100
         const plannedEvents = []
         const addPlanned = (timeMatcher, amountMatcher, label) => {
           const afterYears = answerValue(timeMatcher, 0)
           const amount = answerValue(amountMatcher, 0)
           if (afterYears > 0 && amount > 0) plannedEvents.push({ age: this.age + afterYears, amount: -amount, label })
         }
-        addPlanned(text => text.includes('几年后买房'), text => text.includes('首付'), '买房首付')
-        addPlanned(text => text.includes('几年后买车'), text => text.includes('买车的预算'), '买车')
-        addPlanned(text => text.includes('计划结婚'), text => text.includes('结婚和彩礼'), '结婚')
-        addPlanned(text => text.includes('子女教育金目标'), text => text.includes('子女教育金目标'), '教育金')
+        addPlanned(text => text.includes('攒够首付'), text => text.includes('买房的首付'), '买房')
+        addPlanned(text => text.includes('还清车贷'), text => text.includes('买车的预算'), '买车')
+        const marriageAmount = answerValue(text => text.includes('结婚的一次性'), 0) + answerValue(text => text.includes('彩礼金额'), 0) + answerValue(text => text.includes('婚礼酒席'), 0)
+        if (marriageAmount > 0) plannedEvents.push({ age: this.age + 2, amount: -marriageAmount, label: '结婚' })
+        const educationAmount = answerValue(text => text.includes('子女教育金目标'), 0)
+        if (educationAmount > 0) plannedEvents.push({ age: this.age + 5, amount: -educationAmount, label: '教育金' })
+        const customEventAmount = answerValue(text => text.includes('自定义人生事件'), 0)
+        if (customEventAmount !== 0) plannedEvents.push({ age: this.age + 1, amount: customEventAmount, label: '自定义事件' })
+        const reserveKeywords = ['预算', '支出', '医疗', '旅游', '婚礼', '学习提升', '兴趣班', '体检', '家电家具']
+        const reserveAmount = this.visibleQuestions.filter(question => question.type === 'amount' && reserveKeywords.some(keyword => question.text.includes(keyword)) && !question.text.includes('首付') && !question.text.includes('买车的预算') && !question.text.includes('结婚的一次性') && !question.text.includes('彩礼') && !question.text.includes('医疗准备') && !question.text.includes('教育金目标')).reduce((sum, question) => {
+          const amount = this.answers[question.id] !== undefined ? Number(this.answers[question.id]) : 0
+          if (!amount) return sum
+          return sum + (question.text.includes('每年') ? amount : amount / Math.max(1, Math.min(5, years)))
+        }, 0)
         const plannedAt = age => plannedEvents.filter(event => event.age === age).reduce((sum, event) => sum + event.amount, 0)
         let balance = startSavings
         const rows = [{ age: this.age, balance: Math.round(balance) }]
@@ -347,8 +361,8 @@ export default {
           const currentAge = this.age + i
           const eventTotal = this.customEvents.filter(event => Number(event.age) === currentAge).reduce((sum, event) => sum + Number(event.amount || 0), 0) + plannedAt(currentAge)
           const annualIncome = income * 12 * Math.pow(1 + growth, i - 1)
-          const annualExpense = expense * 12 * Math.pow(1 + inflation, i - 1)
-          balance = balance * 1.035 + annualIncome * saveRate - annualExpense + eventTotal
+          const annualExpense = (expense * 12 + reserveAmount) * Math.pow(1 + inflation, i - 1)
+          balance = balance * (1 + returnRate) + annualIncome * saveRate - annualExpense + eventTotal
           rows.push({ age: currentAge, balance: Math.round(balance) })
         }
         this.curve = rows
