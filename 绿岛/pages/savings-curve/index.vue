@@ -322,15 +322,15 @@ export default {
         const startSavings = this.value('balance', 3000)
         const income = this.value('income', 8000)
         const saveRate = this.value('rate', 30) / 100
-        const baseExpense = this.value('expense', 3000)
-        const fixedMonthlyExpense = answerValue(text => text.includes('房贷还款'), 0) + answerValue(text => text.includes('养车支出'), 0)
-        const expense = Math.max(0, baseExpense + fixedMonthlyExpense)
         const years = Math.max(1, this.lifeExpectancy - this.age)
         const answerValue = (matcher, fallback = 0) => {
           const visible = this.visibleQuestions.find(item => matcher(item.text))
           const question = visible || this.questions.find(item => matcher(item.text))
           return question && this.answers[question.id] !== undefined ? Number(this.answers[question.id]) : fallback
         }
+        const baseExpense = this.value('expense', 3000)
+        const fixedMonthlyExpense = answerValue(text => text.includes('房贷还款'), 0) + answerValue(text => text.includes('养车支出'), 0)
+        const expense = Math.max(0, baseExpense + fixedMonthlyExpense)
         const growth = answerValue(text => text.includes('收入增长率') || text.includes('工资每年固定增长'), this.value('ratePercent', 3.5)) / 100
         const inflation = answerValue(text => text.includes('通货膨胀率'), 2.5) / 100
         const returnRate = answerValue(text => text.includes('复利年化收益率'), 3.5) / 100
