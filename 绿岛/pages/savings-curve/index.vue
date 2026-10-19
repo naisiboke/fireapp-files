@@ -62,11 +62,11 @@
           <svg class="chart" viewBox="0 0 360 230" preserveAspectRatio="none">
             <line v-for="y in [38,78,118,158,198]" :key="y" x1="28" :y1="y" x2="350" :y2="y" class="grid-line" />
             <line x1="28" y1="158" x2="350" y2="158" class="chart-baseline" />
-            <polygon v-for="seg in chartSegments" v-if="seg.coords.length > 2" :key="'area-' + seg.key" :points="seg.area" :class="seg.negative ? 'curve-area negative' : 'curve-area positive'" />
+            <polygon v-for="seg in chartSegments" :key="'area-' + seg.key" :points="seg.area" :class="seg.negative ? 'curve-area negative' : 'curve-area positive'" />
             <polyline v-for="seg in chartSegments" :key="'line-' + seg.key" :points="seg.points" :class="seg.negative ? 'curve-line negative' : 'curve-line positive'" />
-            <text x="2" y="40" class="axis-label">{{ formatCompact(chartDomainMax) }}</text>
+            <text x="26" y="40" class="axis-label">{{ formatCompact(chartDomainMax) }}</text>
             <text x="14" y="162" class="axis-label">0</text>
-            <text v-if="chartDomainMin < 0" x="2" y="198" class="axis-label">{{ formatCompact(chartDomainMin) }}</text>
+            <text v-if="chartDomainMin < 0" x="26" y="198" class="axis-label">{{ formatCompact(chartDomainMin) }}</text>
             <circle v-for="p in animatedChartDots" :key="p.age" :cx="p.x" :cy="p.y" r="3.2" class="curve-dot" />
             <text v-for="marker in eventMarkers" :key="marker.age + marker.label" :x="marker.x" :y="marker.y" class="event-marker">{{ marker.label }}</text>
           </svg>
