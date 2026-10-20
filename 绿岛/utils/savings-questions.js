@@ -2103,7 +2103,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q071",
     "category": "retirement",
     "stage": "middle",
-    "text": "你预计在多少岁退休？",
+    "text": "按你的计划，退休时年龄大约是多少岁？",
     "type": "retirement_age",
     "required": true,
     "options": [
@@ -2163,7 +2163,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q073",
     "category": "retirement",
     "stage": "middle",
-    "text": "你预计退休后每月稳定收入（养老金、租金等）是多少？",
+    "text": "退休后每月可获得的养老金或其他稳定收入是多少？",
     "type": "retirement_income_monthly",
     "required": true,
     "options": [
@@ -2223,7 +2223,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q075",
     "category": "growth",
     "stage": "middle",
-    "text": "你的主动收入预计在多少岁中断？",
+    "text": "如果提前停止工作，你计划从多少岁开始？",
     "type": "retirement_age",
     "required": true,
     "options": [
@@ -2283,7 +2283,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q077",
     "category": "marriage",
     "stage": "middle",
-    "text": "退休前还需要偿还的贷款或负债余额是多少？",
+    "text": "到退休时预计还剩多少贷款或其他负债？",
     "type": "amount",
     "required": true,
     "options": [
@@ -2313,7 +2313,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q078",
     "category": "family",
     "stage": "middle",
-    "text": "你预计未来年收入增长率是多少？",
+    "text": "你预计退休前每年收入增长率是多少？",
     "type": "percent",
     "required": true,
     "options": [
@@ -2343,7 +2343,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q079",
     "category": "expense",
     "stage": "middle",
-    "text": "你预计未来年平均通货膨胀率是多少？",
+    "text": "你预计退休后生活成本每年增长率是多少？",
     "type": "percent",
     "required": true,
     "options": [
