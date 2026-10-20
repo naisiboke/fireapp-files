@@ -1623,8 +1623,38 @@ export const SAVINGS_QUESTIONS = [
     "id": "q055",
     "category": "growth",
     "stage": "young",
-    "text": "你计划每年为个人学习提升支出多少？",
-    "type": "amount",
+    "text": "你预计在多少岁退休？",
+    "type": "retirement_age",
+    "required": true,
+    "options": [
+      {
+        "label": "45 岁",
+        "value": 45
+      },
+      {
+        "label": "50 岁",
+        "value": 50
+      },
+      {
+        "label": "55 岁",
+        "value": 55
+      },
+      {
+        "label": "60 岁",
+        "value": 60
+      },
+      {
+        "label": "65 岁",
+        "value": 65
+      }
+    ]
+  },
+  {
+    "id": "q056",
+    "category": "growth",
+    "stage": "young",
+    "text": "你预计退休后每月稳定收入（养老金、租金等）是多少？",
+    "type": "retirement_income_monthly",
     "required": true,
     "options": [
       {
@@ -1632,12 +1662,8 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "1,000 元",
-        "value": 1000
-      },
-      {
-        "label": "3,000 元",
-        "value": 3000
+        "label": "2,000 元",
+        "value": 2000
       },
       {
         "label": "5,000 元",
@@ -1646,36 +1672,10 @@ export const SAVINGS_QUESTIONS = [
       {
         "label": "10,000 元",
         "value": 10000
-      }
-    ]
-  },
-  {
-    "id": "q056",
-    "category": "growth",
-    "stage": "young",
-    "text": "你愿意将月收入的多大比例用于投资？",
-    "type": "ratio",
-    "required": true,
-    "options": [
-      {
-        "label": "0%",
-        "value": 0
       },
       {
-        "label": "5%",
-        "value": 5
-      },
-      {
-        "label": "10%",
-        "value": 10
-      },
-      {
-        "label": "20%",
-        "value": 20
-      },
-      {
-        "label": "30%",
-        "value": 30
+        "label": "20,000 元",
+        "value": 20000
       }
     ]
   },
@@ -1683,29 +1683,29 @@ export const SAVINGS_QUESTIONS = [
     "id": "q057",
     "category": "children",
     "stage": "young",
-    "text": "你计划每年为子女兴趣班支出多少？",
-    "type": "amount",
+    "text": "你的主动收入预计在多少岁中断？",
+    "type": "retirement_age",
     "required": true,
     "options": [
       {
-        "label": "0 元",
-        "value": 0
+        "label": "45 岁",
+        "value": 45
       },
       {
-        "label": "3,000 元",
-        "value": 3000
+        "label": "50 岁",
+        "value": 50
       },
       {
-        "label": "6,000 元",
-        "value": 6000
+        "label": "55 岁",
+        "value": 55
       },
       {
-        "label": "12,000 元",
-        "value": 12000
+        "label": "60 岁",
+        "value": 60
       },
       {
-        "label": "24,000 元",
-        "value": 24000
+        "label": "65 岁",
+        "value": 65
       }
     ]
   },
@@ -1713,7 +1713,37 @@ export const SAVINGS_QUESTIONS = [
     "id": "q058",
     "category": "marriage",
     "stage": "young",
-    "text": "你计划为婚礼酒席准备的一次性金额是多少？",
+    "text": "主动收入中断后，你每月最低需要支出多少？",
+    "type": "expense_monthly",
+    "required": true,
+    "options": [
+      {
+        "label": "2,000 元",
+        "value": 2000
+      },
+      {
+        "label": "5,000 元",
+        "value": 5000
+      },
+      {
+        "label": "8,000 元",
+        "value": 8000
+      },
+      {
+        "label": "12,000 元",
+        "value": 12000
+      },
+      {
+        "label": "20,000 元",
+        "value": 20000
+      }
+    ]
+  },
+  {
+    "id": "q059",
+    "category": "expense",
+    "stage": "young",
+    "text": "退休前还需要偿还的贷款或负债余额是多少？",
     "type": "amount",
     "required": true,
     "options": [
@@ -1722,50 +1752,20 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "20,000 元",
-        "value": 20000
-      },
-      {
         "label": "50,000 元",
         "value": 50000
       },
       {
-        "label": "100,000 元",
-        "value": 100000
+        "label": "200,000 元",
+        "value": 200000
       },
       {
-        "label": "150,000 元",
-        "value": 150000
-      }
-    ]
-  },
-  {
-    "id": "q059",
-    "category": "expense",
-    "stage": "young",
-    "text": "你每月通讯和网络支出大约是多少？",
-    "type": "expense_monthly",
-    "required": true,
-    "options": [
-      {
-        "label": "0 元",
-        "value": 0
+        "label": "500,000 元",
+        "value": 500000
       },
       {
-        "label": "50 元",
-        "value": 50
-      },
-      {
-        "label": "100 元",
-        "value": 100
-      },
-      {
-        "label": "200 元",
-        "value": 200
-      },
-      {
-        "label": "500 元",
-        "value": 500
+        "label": "1,000,000 元",
+        "value": 1000000
       }
     ]
   },
@@ -2103,7 +2103,37 @@ export const SAVINGS_QUESTIONS = [
     "id": "q071",
     "category": "retirement",
     "stage": "middle",
-    "text": "你计划退休目标存款金额是多少？",
+    "text": "你预计在多少岁退休？",
+    "type": "retirement_age",
+    "required": true,
+    "options": [
+      {
+        "label": "45 岁",
+        "value": 45
+      },
+      {
+        "label": "50 岁",
+        "value": 50
+      },
+      {
+        "label": "55 岁",
+        "value": 55
+      },
+      {
+        "label": "60 岁",
+        "value": 60
+      },
+      {
+        "label": "65 岁",
+        "value": 65
+      }
+    ]
+  },
+  {
+    "id": "q072",
+    "category": "retirement",
+    "stage": "middle",
+    "text": "你希望退休时至少保留多少存款？",
     "type": "amount",
     "required": true,
     "options": [
@@ -2112,42 +2142,64 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
+        "label": "100,000 元",
+        "value": 100000
+      },
+      {
+        "label": "300,000 元",
+        "value": 300000
+      },
+      {
         "label": "500,000 元",
         "value": 500000
       },
       {
         "label": "1,000,000 元",
         "value": 1000000
-      },
-      {
-        "label": "2,000,000 元",
-        "value": 2000000
-      },
-      {
-        "label": "3,000,000 元",
-        "value": 3000000
       }
     ]
   },
   {
-    "id": "q072",
+    "id": "q073",
     "category": "retirement",
     "stage": "middle",
-    "text": "你计划退休后每月支出大约是多少？",
-    "type": "expense_monthly",
+    "text": "你预计退休后每月稳定收入（养老金、租金等）是多少？",
+    "type": "retirement_income_monthly",
     "required": true,
     "options": [
       {
-        "label": "1,000 元",
-        "value": 1000
+        "label": "0 元",
+        "value": 0
       },
       {
         "label": "2,000 元",
         "value": 2000
       },
       {
-        "label": "3,000 元",
-        "value": 3000
+        "label": "5,000 元",
+        "value": 5000
+      },
+      {
+        "label": "10,000 元",
+        "value": 10000
+      },
+      {
+        "label": "20,000 元",
+        "value": 20000
+      }
+    ]
+  },
+  {
+    "id": "q074",
+    "category": "growth",
+    "stage": "middle",
+    "text": "退休后每月计划支出是多少？",
+    "type": "expense_monthly",
+    "required": true,
+    "options": [
+      {
+        "label": "2,000 元",
+        "value": 2000
       },
       {
         "label": "5,000 元",
@@ -2156,42 +2208,110 @@ export const SAVINGS_QUESTIONS = [
       {
         "label": "8,000 元",
         "value": 8000
+      },
+      {
+        "label": "12,000 元",
+        "value": 12000
+      },
+      {
+        "label": "20,000 元",
+        "value": 20000
       }
     ]
   },
   {
-    "id": "q073",
-    "category": "retirement",
+    "id": "q075",
+    "category": "growth",
     "stage": "middle",
-    "text": "距离你计划退休还有多少年？",
-    "type": "years",
+    "text": "你的主动收入预计在多少岁中断？",
+    "type": "retirement_age",
     "required": true,
     "options": [
       {
-        "label": "5 年",
-        "value": 5
+        "label": "45 岁",
+        "value": 45
       },
       {
-        "label": "10 年",
-        "value": 10
+        "label": "50 岁",
+        "value": 50
       },
       {
-        "label": "15 年",
-        "value": 15
+        "label": "55 岁",
+        "value": 55
       },
       {
-        "label": "20 年",
-        "value": 20
+        "label": "60 岁",
+        "value": 60
       },
       {
-        "label": "25 年",
-        "value": 25
+        "label": "65 岁",
+        "value": 65
       }
     ]
   },
   {
-    "id": "q074",
+    "id": "q076",
     "category": "growth",
+    "stage": "middle",
+    "text": "主动收入中断后每月最低需要支出多少？",
+    "type": "expense_monthly",
+    "required": true,
+    "options": [
+      {
+        "label": "2,000 元",
+        "value": 2000
+      },
+      {
+        "label": "5,000 元",
+        "value": 5000
+      },
+      {
+        "label": "8,000 元",
+        "value": 8000
+      },
+      {
+        "label": "12,000 元",
+        "value": 12000
+      },
+      {
+        "label": "20,000 元",
+        "value": 20000
+      }
+    ]
+  },
+  {
+    "id": "q077",
+    "category": "marriage",
+    "stage": "middle",
+    "text": "退休前还需要偿还的贷款或负债余额是多少？",
+    "type": "amount",
+    "required": true,
+    "options": [
+      {
+        "label": "0 元",
+        "value": 0
+      },
+      {
+        "label": "50,000 元",
+        "value": 50000
+      },
+      {
+        "label": "200,000 元",
+        "value": 200000
+      },
+      {
+        "label": "500,000 元",
+        "value": 500000
+      },
+      {
+        "label": "1,000,000 元",
+        "value": 1000000
+      }
+    ]
+  },
+  {
+    "id": "q078",
+    "category": "family",
     "stage": "middle",
     "text": "你预计未来年收入增长率是多少？",
     "type": "percent",
@@ -2200,10 +2320,6 @@ export const SAVINGS_QUESTIONS = [
       {
         "label": "0%",
         "value": 0
-      },
-      {
-        "label": "1%",
-        "value": 1
       },
       {
         "label": "2%",
@@ -2216,12 +2332,16 @@ export const SAVINGS_QUESTIONS = [
       {
         "label": "5%",
         "value": 5
+      },
+      {
+        "label": "8%",
+        "value": 8
       }
     ]
   },
   {
-    "id": "q075",
-    "category": "growth",
+    "id": "q079",
+    "category": "expense",
     "stage": "middle",
     "text": "你预计未来年平均通货膨胀率是多少？",
     "type": "percent",
@@ -2232,10 +2352,6 @@ export const SAVINGS_QUESTIONS = [
         "value": 0
       },
       {
-        "label": "1%",
-        "value": 1
-      },
-      {
         "label": "2%",
         "value": 2
       },
@@ -2244,14 +2360,18 @@ export const SAVINGS_QUESTIONS = [
         "value": 3
       },
       {
-        "label": "4%",
-        "value": 4
+        "label": "5%",
+        "value": 5
+      },
+      {
+        "label": "8%",
+        "value": 8
       }
     ]
   },
   {
-    "id": "q076",
-    "category": "growth",
+    "id": "q080",
+    "category": "retirement",
     "stage": "middle",
     "text": "你预计退休前投资复利年化收益率是多少？",
     "type": "percent",
@@ -2274,128 +2394,8 @@ export const SAVINGS_QUESTIONS = [
         "value": 5
       },
       {
-        "label": "7%",
-        "value": 7
-      }
-    ]
-  },
-  {
-    "id": "q077",
-    "category": "marriage",
-    "stage": "middle",
-    "text": "你计划为子女婚嫁准备的一次性金额是多少？",
-    "type": "amount",
-    "required": true,
-    "options": [
-      {
-        "label": "0 元",
-        "value": 0
-      },
-      {
-        "label": "50,000 元",
-        "value": 50000
-      },
-      {
-        "label": "100,000 元",
-        "value": 100000
-      },
-      {
-        "label": "200,000 元",
-        "value": 200000
-      },
-      {
-        "label": "300,000 元",
-        "value": 300000
-      }
-    ]
-  },
-  {
-    "id": "q078",
-    "category": "family",
-    "stage": "middle",
-    "text": "你每月赡养父母支出大约是多少？",
-    "type": "expense_monthly",
-    "required": true,
-    "options": [
-      {
-        "label": "0 元",
-        "value": 0
-      },
-      {
-        "label": "500 元",
-        "value": 500
-      },
-      {
-        "label": "1,000 元",
-        "value": 1000
-      },
-      {
-        "label": "2,000 元",
-        "value": 2000
-      },
-      {
-        "label": "5,000 元",
-        "value": 5000
-      }
-    ]
-  },
-  {
-    "id": "q079",
-    "category": "expense",
-    "stage": "middle",
-    "text": "你计划每年旅游支出金额是多少？",
-    "type": "amount",
-    "required": true,
-    "options": [
-      {
-        "label": "0 元",
-        "value": 0
-      },
-      {
-        "label": "5,000 元",
-        "value": 5000
-      },
-      {
-        "label": "10,000 元",
-        "value": 10000
-      },
-      {
-        "label": "20,000 元",
-        "value": 20000
-      },
-      {
-        "label": "30,000 元",
-        "value": 30000
-      }
-    ]
-  },
-  {
-    "id": "q080",
-    "category": "retirement",
-    "stage": "middle",
-    "text": "你希望退休储蓄占当前收入的比例是多少？",
-    "type": "ratio",
-    "required": true,
-    "options": [
-      {
-        "label": "0%",
-        "value": 0
-      },
-      {
-        "label": "5%",
-        "value": 5
-      },
-      {
-        "label": "10%",
-        "value": 10
-      },
-      {
-        "label": "20%",
-        "value": 20
-      },
-      {
-        "label": "30%",
-        "value": 30
+        "label": "8%",
+        "value": 8
       }
     ]
   },
