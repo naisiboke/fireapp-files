@@ -116,8 +116,8 @@ export default {
     visibleQuestions() {
       let stages
       if (this.age < 18) stages = ['youth']
-      else if (this.age < 40) stages = ['young', 'middle']
-      else if (this.age < 60) stages = ['middle', 'later']
+      else if (this.age < 40) stages = ['young']
+      else if (this.age < 60) stages = ['middle']
       else stages = ['later']
       const event = this.questions.find(item => item.id === 'q100')
       const eligible = this.questions.filter(item => item.id !== 'q100' && stages.indexOf(item.stage) >= 0).slice(0, 49)
@@ -225,7 +225,8 @@ export default {
       const type = question && question.type
       if (type === 'ratio' || type === 'percent') return '%'
       if (type === 'years') return '年'
-      if (type === 'balance' || type === 'income_monthly' || type === 'expense_monthly' || type === 'amount' || type === 'event') return '元'
+      if (type === 'retirement_age') return '岁'
+      if (type === 'balance' || type === 'income_monthly' || type === 'retirement_income_monthly' || type === 'expense_monthly' || type === 'amount' || type === 'event') return '元'
       return ''
     },
     formatCustomValue(question, value) {
