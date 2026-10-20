@@ -262,6 +262,10 @@ export default {
         uni.showToast({ title: '年数需在 0 到 100 之间', icon: 'none' })
         return
       }
+      if (type === 'retirement_age' && (value < 18 || value > 100)) {
+        uni.showToast({ title: '退休年龄需在 18 到 100 岁之间', icon: 'none' })
+        return
+      }
       if (type !== 'event' && type !== 'ratio' && type !== 'percent' && type !== 'years' && value < 0) {
         uni.showToast({ title: '金额不能小于 0', icon: 'none' })
         return
