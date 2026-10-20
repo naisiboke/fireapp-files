@@ -208,7 +208,13 @@ export default {
       return Array.isArray(history) ? history.length : 0
     },
     answerSummary() {
-      return this.questions.filter(item => this.answers[item.id] !== undefined).slice(0, 8).map(item => {
+      const answered = this.visibleQuestions.filter(item => this.answers[item.id] !== undefined)
+      const key = answered.filter(item => /退休|收入中断|稳定收入/.test(item.text))
+      const selected = []
+      answered.slice(0, 6).concat(key).forEach(item => {
+        if (!selected.some(existing => existing.id === item.id)) selected.push(item)
+      })
+      return selected.slice(0, 12).map(item => {
         const option = (item.options || []).find(choice => choice.value === this.answers[item.id])
         return { id: item.id, text: item.text, label: option ? option.label : this.formatCustomValue(item, this.answers[item.id]) }
       })
@@ -335,6 +341,9 @@ export default {
         const growth = answerValue(text => text.includes('收入增长率') || text.includes('工资每年固定增长'), this.value('ratePercent', 3.5)) / 100
         const inflation = answerValue(text => text.includes('通货膨胀率'), 2.5) / 100
         const returnRate = answerValue(text => text.includes('复利年化收益率'), 3.5) / 100
+        const retirementAge = answerValue(text => text.includes('预计在多少岁退休'), this.lifeExpectancy + 1)
+        const incomeCutoffAge = answerValue(text => text.includes('主动收入预计在多少岁中断'), retirementAge)
+        const retirementIncome = answerValue(text => text.includes('退休后每月稳定收入'), 0)
         const plannedEvents = []
         const addPlanned = (timeMatcher, amountMatcher, label) => {
           const afterYears = answerValue(timeMatcher, 0)
@@ -361,7 +370,8 @@ export default {
         for (let i = 1; i <= years; i++) {
           const currentAge = this.age + i
           const eventTotal = this.customEvents.filter(event => Number(event.age) === currentAge).reduce((sum, event) => sum + Number(event.amount || 0), 0) + plannedAt(currentAge)
-          const annualIncome = income * 12 * Math.pow(1 + growth, i - 1)
+          const activeIncome = currentAge >= incomeCutoffAge ? retirementIncome : income * Math.pow(1 + growth, i - 1)
+          const annualIncome = activeIncome * 12
           const annualExpense = (expense * 12 + reserveAmount) * Math.pow(1 + inflation, i - 1)
           balance = balance * (1 + returnRate) + annualIncome * saveRate - annualExpense + eventTotal
           rows.push({ age: currentAge, balance: Math.round(balance) })
