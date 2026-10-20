@@ -1803,7 +1803,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q061",
     "category": "basic",
     "stage": "middle",
-    "text": "你目前的存款大约是多少？",
+    "text": "你目前可动用的现金和存款大约是多少？",
     "type": "balance",
     "required": true,
     "options": [
@@ -1833,7 +1833,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q062",
     "category": "income",
     "stage": "middle",
-    "text": "你目前的月收入大约是多少？",
+    "text": "你目前每月稳定收入（工资、养老金等）大约是多少？",
     "type": "income_monthly",
     "required": true,
     "options": [
@@ -1863,7 +1863,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q063",
     "category": "expense",
     "stage": "middle",
-    "text": "你每月总支出大约是多少？",
+    "text": "你目前每月固定生活支出大约是多少？",
     "type": "expense_monthly",
     "required": true,
     "options": [
@@ -1893,7 +1893,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q064",
     "category": "saving",
     "stage": "middle",
-    "text": "你每月收入中用于储蓄的比例是多少？",
+    "text": "你目前每月收入中用于储蓄的比例是多少？",
     "type": "ratio",
     "required": true,
     "options": [
@@ -2403,7 +2403,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q081",
     "category": "basic",
     "stage": "later",
-    "text": "你目前的存款大约是多少？",
+    "text": "你进入退休阶段后可用的存款余额大约是多少？",
     "type": "balance",
     "required": true,
     "options": [
@@ -2463,7 +2463,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q083",
     "category": "expense",
     "stage": "later",
-    "text": "你每月总支出大约是多少？",
+    "text": "你退休后每月总支出大约是多少？",
     "type": "expense_monthly",
     "required": true,
     "options": [
@@ -2493,7 +2493,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q084",
     "category": "saving",
     "stage": "later",
-    "text": "你每月收入中用于储蓄的比例是多少？",
+    "text": "你退休后每月收入中还能储蓄的比例是多少？",
     "type": "ratio",
     "required": true,
     "options": [
@@ -2733,7 +2733,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q092",
     "category": "growth",
     "stage": "later",
-    "text": "你预计未来年平均通货膨胀率是多少？",
+    "text": "你退休后的长期生活成本年增长率预计是多少？",
     "type": "percent",
     "required": true,
     "options": [
@@ -2853,7 +2853,7 @@ export const SAVINGS_QUESTIONS = [
     "id": "q096",
     "category": "expense",
     "stage": "later",
-    "text": "你每月餐饮支出大约是多少？",
+    "text": "你退休后每月餐饮支出大约是多少？",
     "type": "expense_monthly",
     "required": true,
     "options": [
