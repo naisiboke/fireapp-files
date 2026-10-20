@@ -209,7 +209,7 @@ export default {
     },
     answerSummary() {
       const answered = this.visibleQuestions.filter(item => this.answers[item.id] !== undefined)
-      const key = answered.filter(item => /退休|收入中断|稳定收入/.test(item.text))
+      const key = answered.filter(item => /退休|收入中断|稳定收入|停止工作/.test(item.text))
       const selected = []
       answered.slice(0, 6).concat(key).forEach(item => {
         if (!selected.some(existing => existing.id === item.id)) selected.push(item)
@@ -339,11 +339,11 @@ export default {
         const fixedMonthlyExpense = answerValue(text => text.includes('房贷还款'), 0) + answerValue(text => text.includes('养车支出'), 0)
         const expense = Math.max(0, baseExpense + fixedMonthlyExpense)
         const growth = answerValue(text => text.includes('收入增长率') || text.includes('工资每年固定增长'), this.value('ratePercent', 3.5)) / 100
-        const inflation = answerValue(text => text.includes('通货膨胀率'), 2.5) / 100
+        const inflation = answerValue(text => text.includes('通货膨胀率') || text.includes('生活成本每年增长率'), 2.5) / 100
         const returnRate = answerValue(text => text.includes('复利年化收益率'), 3.5) / 100
-        const retirementAge = answerValue(text => text.includes('预计在多少岁退休'), this.lifeExpectancy + 1)
-        const incomeCutoffAge = answerValue(text => text.includes('主动收入预计在多少岁中断'), retirementAge)
-        const retirementIncome = answerValue(text => text.includes('退休后每月稳定收入'), 0)
+        const retirementAge = answerValue(text => text.includes('预计在多少岁退休') || text.includes('退休时年龄'), this.lifeExpectancy + 1)
+        const incomeCutoffAge = answerValue(text => text.includes('主动收入预计在多少岁中断') || text.includes('停止工作'), retirementAge)
+        const retirementIncome = answerValue(text => text.includes('退休后每月') && text.includes('稳定收入'), 0)
         const plannedEvents = []
         const addPlanned = (timeMatcher, amountMatcher, label) => {
           const afterYears = answerValue(timeMatcher, 0)
