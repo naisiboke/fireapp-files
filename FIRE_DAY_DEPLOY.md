@@ -20,6 +20,7 @@
 
 - `https://fireday.cn`
 - `https://www.fireday.cn`
+- `https://id0yg2.kicp.fun`（当前测试站点）
 
 并确认邮箱验证码登录已开启。网页不会伪造保存成功：登录后会读取 `/v1/me/state`，修改数据后写入 `/v1/me/state`；读取或保存失败会显示错误。
 
