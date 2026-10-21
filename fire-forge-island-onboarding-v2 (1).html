@@ -2893,10 +2893,7 @@ window.__fireOriginalRender=render;
     try{
       let auth,access;
       try{auth=await getAuth()}catch(error){throw new Error('登录服务加载失败，请刷新页面后重试。')}
-      try{await auth.signInWithEmail({email,verificationCode:code,verificationInfo})}catch(error){throw new Error(error&&error.message||'验证码无效或已过期，请重新获取。')}
-      try{access=await auth.getAccessToken()}catch(error){throw new Error('登录令牌获取失败，请重试。')}
-      if(!access||!access.accessToken)throw new Error('登录令牌获取失败，请重试。');
-      localStorage.setItem('fire_access_token',access.accessToken);localStorage.setItem('fire_login_status','true');
+      let loginState;try{loginState=await auth.signInWithEmail({email,verificationCode:code,verificationInfo})}catch(error){throw new Error(error&&error.message||'验证码无效或已过期，请重新获取。')}\n      try{access=await auth.getAccessToken()}catch(error){throw new Error('登录令牌获取失败，请重试。')}\n      const accessToken=typeof access==='string'?access:(access&&access.accessToken)||(loginState&&loginState.accessToken);\n      if(!accessToken)throw new Error('登录令牌获取失败，请重试。');\n      localStorage.setItem('fire_access_token',accessToken);localStorage.setItem('fire_login_status','true');
       hideGate();if(typeof window.__fireOriginalRender==='function')window.__fireOriginalRender();
       try{await loadRemote();setNotice('')}catch(error){
         setNotice('登录成功，但云端数据暂时无法读取。请检查 CORS 白名单后刷新，当前页面仍可继续使用。');
