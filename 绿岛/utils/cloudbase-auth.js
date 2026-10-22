@@ -42,7 +42,7 @@ async function getAuth() {
       env: 'ziyoukedu-d0gyrczqk4de53b87',
       region: 'ap-shanghai',
     })
-    auth = app.auth()
+    auth = app.auth({ persistence: 'none' })
     return auth
   } catch (error) {
     const message = error && error.message ? error.message : '云端登录服务初始化失败'
