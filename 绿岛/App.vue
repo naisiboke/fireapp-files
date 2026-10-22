@@ -8,18 +8,7 @@ export default {
     bootstrap()
     // 配置云端 API 后以服务端数据为正式来源；未配置时保持本地过渡缓存。
     hydrateFromServer()
-    // 每次冷启动先进入唯一启动页，避免上次停留在分享页时被直接恢复。
-    const pages = getCurrentPages()
-    const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
-    if (route !== 'pages/launch/index' && !getApp().__fireLaunchRedirecting) {
-      getApp().__fireLaunchRedirecting = true
-      setTimeout(() => {
-        uni.reLaunch({
-          url: '/pages/launch/index',
-          complete: () => { getApp().__fireLaunchRedirecting = false },
-        })
-      }, 0)
-    }
+    // 首个页面已经由 pages.json 指定为启动页，不再在 App.onLaunch 中二次 reLaunch，避免 H5 首屏空白。
   },
   onShow() {
     const pages = getCurrentPages()
