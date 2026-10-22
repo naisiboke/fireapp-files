@@ -32,7 +32,7 @@ function toast(message){notice.value=message;uni.showToast({title:message,icon:'
 function switchMode(next){mode.value=next}
 function fillAdmin(){mode.value='email';email.value=ADMIN_TEST_EMAIL;toast('已填入测试邮箱，请获取验证码')}
 function register(){uni.navigateTo({url:'/pages/register/register'})}
-function account(){return (mode.value==='email'?email.value:phone.value).trim()}
+function account(){const value=(mode.value==='email'?email.value:phone.value).trim();return mode.value==='email'?value.toLowerCase():value}
 async function sendCode(){
  if(sending.value||countdown.value>0)return
  const value=account()
@@ -51,7 +51,7 @@ async function login(){
  if(!verificationInfo)return toast('请先获取验证码')
  loading.value=true
  try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);uni.removeStorageSync('fire_guest_mode');state.started=true;persist();const target=redirect.value||'/pages/index/index';const guideDone=uni.getStorageSync('fire_app_guide_done')===true;const destination=guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target);uni.reLaunch({url:destination})}
- catch(error){toast(error.message||'登录失败，请重试')}
+ catch(error){const detail=error&& (error.message||error.errMsg||error.error_description||error.error);toast(detail||'登录失败，请重新获取验证码后重试');console.error('[email-login]',error)}
  finally{loading.value=false}
 }
 </script>
