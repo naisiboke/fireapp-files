@@ -171,14 +171,18 @@ export async function signInWithCode(mode, value, verificationCode, verification
   return client.signInWithEmail({ verificationInfo, verificationCode, email: value })
 }
 
-export async function saveAuthToken() {
-  const result = await (await getAuth()).getAccessToken()
-  const token = typeof result === 'string' ? result : result && result.accessToken
+export async function saveAuthToken(loginState = null) {
+  let result = null
+  try { result = await (await getAuth()).getAccessToken() } catch (error) {}
+  const token = typeof result === 'string'
+    ? result
+    : (result && (result.accessToken || result.access_token))
+      || (loginState && (loginState.accessToken || loginState.access_token))
   if (token) {
     uni.setStorageSync('fire_access_token', token)
     return token
   }
-  throw new Error('登录令牌获取失败，请重试')
+  throw new Error('验证码已验证，但登录令牌获取失败，请重新获取验证码后重试')
 }
 
 export async function getMediaURL(fileID) {
