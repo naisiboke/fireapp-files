@@ -9,26 +9,48 @@ function ensureBrowserStorage() {
     try { root.window = root } catch (e) {}
   }
   const host = root.window || root
-  if (host.localStorage) {
-    if (!root.localStorage) {
-      try { root.localStorage = host.localStorage } catch (e) {}
-    }
+  let existing = null
+  try { existing = host.localStorage } catch (e) {}
+  if (existing) {
+    try { root.localStorage = existing } catch (e) {}
     return
   }
-  const memory = Object.create(null)
+  const prefix = '__fire_cloudbase_'
   const local = {
-    getItem(key) { return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null },
-    setItem(key, value) { memory[String(key)] = String(value) },
-    removeItem(key) { delete memory[String(key)] },
-    clear() { Object.keys(memory).forEach(key => delete memory[key]) },
-    key(index) { const keys = Object.keys(memory); return keys[index] || null },
+    getItem(key) {
+      try {
+        const value = uni.getStorageSync(prefix + String(key))
+        return value === '' || value === null || value === undefined ? null : String(value)
+      } catch (e) { return null }
+    },
+    setItem(key, value) {
+      try { uni.setStorageSync(prefix + String(key), String(value)) } catch (e) {}
+    },
+    removeItem(key) {
+      try { uni.removeStorageSync(prefix + String(key)) } catch (e) {}
+    },
+    clear() {
+      try {
+        const info = uni.getStorageInfoSync()
+        ;(info.keys || []).filter(key => String(key).indexOf(prefix) === 0).forEach(key => uni.removeStorageSync(key))
+      } catch (e) {}
+    },
+    key(index) {
+      try {
+        const info = uni.getStorageInfoSync()
+        const keys = (info.keys || []).filter(key => String(key).indexOf(prefix) === 0)
+        return keys[index] ? String(keys[index]).slice(prefix.length) : null
+      } catch (e) { return null }
+    },
   }
-  try { Object.defineProperty(local, 'length', { get: () => Object.keys(memory).length }) } catch (e) {}
+  try { Object.defineProperty(local, 'length', { get: () => { try { return (uni.getStorageInfoSync().keys || []).filter(key => String(key).indexOf(prefix) === 0).length } catch (e) { return 0 } } }) } catch (e) {}
   try { Object.defineProperty(host, 'localStorage', { value: local, configurable: true, writable: true }) } catch (e) {
     try { host.localStorage = local } catch (ignore) {}
   }
-  try { root.localStorage = host.localStorage || local } catch (e) {}
+  try { Object.defineProperty(host, 'sessionStorage', { value: local, configurable: true, writable: true }) } catch (e) {}
+  try { root.localStorage = host.localStorage || local; root.sessionStorage = host.sessionStorage || local } catch (e) {}
 }
+
 
 async function getAuth() {
   if (auth) return auth
