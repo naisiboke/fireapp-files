@@ -52,10 +52,95 @@ function ensureBrowserStorage() {
 }
 
 
+function ensureRuntimeGlobals() {
+  if (typeof globalThis === 'undefined') return
+  const root = globalThis
+  if (typeof root.window === 'undefined') {
+    try { root.window = root } catch (e) {}
+  }
+  if (typeof root.URL === 'undefined') {
+    class URLSearchParamsCompat {
+      constructor(value = '') {
+        this.value = String(value).replace(/^\?/, '')
+      }
+      get(name) {
+        const item = this.value.split('&').find(part => part.split('=')[0] === String(name))
+        return item ? decodeURIComponent((item.split('=')[1] || '').replace(/\+/g, ' ')) : null
+      }
+      has(name) { return this.get(name) !== null }
+      toString() { return this.value }
+    }
+    class URLCompat {
+      constructor(value, base = '') {
+        let text = String(value || '')
+        if (base && !/^[a-z][a-z\d+.-]*:\/\//i.test(text)) {
+          text = String(base).replace(/\/$/, '') + (text.startsWith('/') ? text : '/' + text)
+        }
+        const match = text.match(/^([a-z][a-z\d+.-]*:)?\/\/([^/?#]+)([^?#]*)?(\?[^#]*)?(#.*)?$/i)
+        this.protocol = match ? (match[1] || 'http:') : ''
+        this.host = match ? match[2] : ''
+        this.hostname = this.host.split(':')[0]
+        this.port = this.host.includes(':') ? this.host.split(':').pop() : ''
+        this.pathname = match ? (match[3] || '/') : text
+        this.search = match ? (match[4] || '') : ''
+        this.hash = match ? (match[5] || '') : ''
+        this.origin = this.protocol && this.host ? this.protocol + '//' + this.host : ''
+        this.href = this.origin + this.pathname + this.search + this.hash
+        this.searchParams = new URLSearchParamsCompat(this.search)
+      }
+      toString() { return this.href }
+    }
+    try { root.URL = URLCompat; root.URLSearchParams = URLSearchParamsCompat } catch (e) {}
+    try { root.window.URL = root.URL; root.window.URLSearchParams = root.URLSearchParams } catch (e) {}
+  }
+  if (typeof root.fetch !== 'function' && typeof uni !== 'undefined' && uni.request) {
+    class HeadersCompat {
+      constructor(init = {}) { this.map = {}; Object.keys(init || {}).forEach(key => { this.map[String(key).toLowerCase()] = String(init[key]) }) }
+      get(key) { return this.map[String(key).toLowerCase()] || null }
+      set(key, value) { this.map[String(key).toLowerCase()] = String(value) }
+      has(key) { return Object.prototype.hasOwnProperty.call(this.map, String(key).toLowerCase()) }
+      forEach(callback) { Object.keys(this.map).forEach(key => callback(this.map[key], key, this)) }
+    }
+    root.fetch = (input, options = {}) => {
+      const url = typeof input === 'string' ? input : input && input.url
+      if (!url) return Promise.reject(new Error('URL is not defined'))
+      const headers = {}
+      const sourceHeaders = options.headers || {}
+      if (typeof sourceHeaders.forEach === 'function') sourceHeaders.forEach((value, key) => { headers[key] = value })
+      else Object.assign(headers, sourceHeaders)
+      return new Promise((resolve, reject) => {
+        uni.request({
+          url,
+          method: String(options.method || 'GET').toUpperCase(),
+          header: headers,
+          data: options.body,
+          timeout: 15000,
+          success(response) {
+            const raw = response.data
+            const responseHeaders = new HeadersCompat(response.header || {})
+            resolve({
+              status: Number(response.statusCode || 0),
+              ok: Number(response.statusCode || 0) >= 200 && Number(response.statusCode || 0) < 300,
+              statusText: '',
+              headers: responseHeaders,
+              json: () => Promise.resolve(typeof raw === 'string' ? JSON.parse(raw) : raw),
+              text: () => Promise.resolve(typeof raw === 'string' ? raw : JSON.stringify(raw == null ? '' : raw)),
+              clone() { return this },
+            })
+          },
+          fail: reject,
+        })
+      })
+    }
+    try { root.window.fetch = root.fetch } catch (e) {}
+  }
+}
+
 async function getAuth() {
   if (auth) return auth
   try {
     ensureBrowserStorage()
+    ensureRuntimeGlobals()
     if (!cloudbaseModule) {
       const module = await import('@cloudbase/js-sdk')
       cloudbaseModule = module.default || module
