@@ -11,12 +11,19 @@
 <script>
 export default {
   data() {
-    return { redirecting: false, status: '正在打开绿岛…' }
+    return { redirecting: false, routeTimer: null, status: '正在打开绿岛…' }
   },
-  onLoad() {
-    setTimeout(() => this.routeByState(), 80)
-  },
+  onLoad() { this.scheduleRoute() },
+  onReady() { this.scheduleRoute() },
+  onShow() { this.scheduleRoute() },
   methods: {
+    scheduleRoute() {
+      if (this.redirecting || this.routeTimer) return
+      this.routeTimer = setTimeout(() => {
+        this.routeTimer = null
+        this.routeByState()
+      }, 80)
+    },
     routeByState() {
       if (this.redirecting) return
       this.redirecting = true
