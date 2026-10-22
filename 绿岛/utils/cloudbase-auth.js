@@ -177,7 +177,7 @@ export async function saveAuthToken(loginState = null) {
   const token = typeof result === 'string'
     ? result
     : (result && (result.accessToken || result.access_token))
-      || (loginState && (loginState.accessToken || loginState.access_token))
+      || (loginState && (loginState.accessToken || loginState.access_token || (loginState.loginState && loginState.loginState.accessToken)))
   if (token) {
     uni.setStorageSync('fire_access_token', token)
     return token
