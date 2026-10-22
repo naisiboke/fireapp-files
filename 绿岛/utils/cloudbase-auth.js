@@ -2,9 +2,38 @@ let cloudbaseModule = null
 let app = null
 let auth = null
 
+function ensureBrowserStorage() {
+  if (typeof globalThis === 'undefined') return
+  const root = globalThis
+  if (typeof root.window === 'undefined') {
+    try { root.window = root } catch (e) {}
+  }
+  const host = root.window || root
+  if (host.localStorage) {
+    if (!root.localStorage) {
+      try { root.localStorage = host.localStorage } catch (e) {}
+    }
+    return
+  }
+  const memory = Object.create(null)
+  const local = {
+    getItem(key) { return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null },
+    setItem(key, value) { memory[String(key)] = String(value) },
+    removeItem(key) { delete memory[String(key)] },
+    clear() { Object.keys(memory).forEach(key => delete memory[key]) },
+    key(index) { const keys = Object.keys(memory); return keys[index] || null },
+  }
+  try { Object.defineProperty(local, 'length', { get: () => Object.keys(memory).length }) } catch (e) {}
+  try { Object.defineProperty(host, 'localStorage', { value: local, configurable: true, writable: true }) } catch (e) {
+    try { host.localStorage = local } catch (ignore) {}
+  }
+  try { root.localStorage = host.localStorage || local } catch (e) {}
+}
+
 async function getAuth() {
   if (auth) return auth
   try {
+    ensureBrowserStorage()
     if (!cloudbaseModule) {
       const module = await import('@cloudbase/js-sdk')
       cloudbaseModule = module.default || module
