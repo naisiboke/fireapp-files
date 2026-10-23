@@ -12,24 +12,13 @@
       </view>
     </view>
 
-    <!-- 演示开关 -->
-    <view class="debug-row">
-      <text class="debug-label">演示开关</text>
-      <view class="debug-btn" :class="{ active: isMember }" @tap="isMember = !isMember">
-        <text class="debug-text" :class="{ active: isMember }">{{ isMember ? '会员' : '非会员' }}</text>
-      </view>
-      <view class="debug-btn" :class="{ active: hasUGC }" @tap="hasUGC = !hasUGC">
-        <text class="debug-text" :class="{ active: hasUGC }">{{ hasUGC ? '有 UGC' : '无 UGC' }}</text>
-      </view>
-    </view>
-
     <!-- Tab -->
     <view class="tabs">
       <view class="tab" :class="{ active: tab === 'settled' }" @tap="setTab('settled')">
         <text class="tab-text" :class="{ active: tab === 'settled' }">已上岸 7</text>
       </view>
       <view class="tab" :class="{ active: tab === 'doing' }" @tap="setTab('doing')">
-        <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ hasUGC ? allUGC.length : 0 }}</text>
+        <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ allUGC.length }}</text>
       </view>
     </view>
 
@@ -374,6 +363,8 @@
 import BottomTabs from '@/components/BottomTabs.vue'
 import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
+import { state } from '@/store/index.js'
+import { isMembershipActive } from '@/utils/membership.js'
 
 const EMPTY_DRAFT = () => ({
   tags: [],
@@ -387,9 +378,7 @@ export default {
   data() {
     return {
       POST_TAGS: COMMUNITY_POST_TAGS,
-      isMember: false,
-      hasUGC: true,
-      tab: 'settled',
+            tab: 'settled',
       expanded: {},
       favExpanded: {},
       favorites: [],
@@ -405,10 +394,9 @@ export default {
   },
 
   computed: {
+    isMember() { return isMembershipActive(state) },
     allPosts() {
-      return this.tab === 'settled'
-        ? COMMUNITY_OFFICIAL
-        : (this.hasUGC ? this.allUGC : [])
+      return this.tab === 'settled' ? COMMUNITY_OFFICIAL : this.allUGC
     },
     visiblePosts() {
       return this.allPosts.slice(0, this.communityLoaded)
@@ -534,7 +522,7 @@ export default {
     },
 
     openUpgrade() {
-      this.modal = 'upgrade'
+      uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=community' })
     },
 
     openFavorites() {
