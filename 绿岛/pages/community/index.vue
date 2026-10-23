@@ -688,14 +688,6 @@ export default {
 }
 .fav-entry-text { font-size: 13px; color: #243830; white-space: nowrap; }
 
-/* 演示开关 */
-.debug-row { display: flex; gap: 8px; align-items: center; padding: 8px 0 12px; flex-wrap: wrap; }
-.debug-label { font-size: 12px; color: #64748b; }
-.debug-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid #dce4d7; background: #f7f9f4; }
-.debug-btn.active { background: #243830; border-color: #243830; }
-.debug-text { font-size: 12px; color: #52605a; }
-.debug-text.active { color: #fff; }
-
 /* Tab */
 .tabs { display: flex; gap: 6px; padding: 6px; border-radius: 12px; background: #dde7d8; margin-bottom: 16px; }
 .tab { flex: 1; padding: 12px 8px; border-radius: 9px; text-align: center; }
