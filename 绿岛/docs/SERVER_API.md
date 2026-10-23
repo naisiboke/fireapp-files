@@ -13,6 +13,8 @@
 | GET | `/v1/me/export` | 导出用户可读的数据副本 |
 | DELETE | `/v1/me/state` | 删除账户数据（不等同于注销账户） |
 | POST | `/v1/me/deletion` | 提交账号注销申请并返回处理状态 |
+| GET | `/v1/me/membership` | 读取 Fire生活通用会员状态 |
+| POST | `/v1/me/membership/checkout` | 创建 ¥9/月通用会员订阅订单并返回支付地址 |
 | GET | `/v1/me/collections/:name` | 读取社区收藏、UGC 草稿和其他独立集合 |
 | PUT | `/v1/me/collections/:name` | 保存社区收藏、UGC 草稿和其他独立集合 |
 
@@ -27,3 +29,6 @@
 ## 配置
 
 在登录服务完成后，把业务 API 地址写入 `uni.setStorageSync('fire_api_base_url', 'https://your-api.example.com')`，把登录令牌写入 `fire_access_token`。请将占位地址和联系邮箱替换为真实配置后再面向用户发布。
+## 通用会员
+
+会员计划固定为 `fire-life-monthly`，价格为人民币 9 元/月。会员状态建议返回 `{ "active": true, "status": "active", "plan": "fire-life-monthly", "expiresAt": 0 }`；支付完成后必须由服务端确认并更新状态，客户端不会自行伪造开通结果。AI、社区发帖/套用配置和 FIRE 深度诊断统一读取该会员状态。
