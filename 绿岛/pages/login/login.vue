@@ -1,7 +1,7 @@
 <template>
   <view class="login-page"><view class="login-shell">
-    <text class="brand">绿岛</text><view class="avatar"><text>岛</text></view>
-    <view class="intro"><text class="title">欢迎回到绿岛</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
+    <text class="brand">Fire生活</text><view class="avatar"><text>岛</text></view>
+    <view class="intro"><text class="title">欢迎回到Fire生活</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
     <view class="mode-tabs" role="tablist"><view class="mode-tab" :class="{active:mode==='email'}" role="tab" :aria-selected="mode==='email'" @tap="switchMode('email')">邮箱登录</view><view class="mode-tab" :class="{active:mode==='phone'}" role="tab" :aria-selected="mode==='phone'" @tap="switchMode('phone')">手机号登录</view></view>
     <view class="form" aria-live="polite">
       <view class="field"><input v-if="mode==='email'" v-model="email" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/><input v-else v-model="phone" class="input" type="number" maxlength="11" aria-label="手机号" placeholder="请输入手机号" placeholder-class="placeholder"/></view>
@@ -11,7 +11,7 @@
     </view>
     <view class="other"><view class="divider"><view></view><text>其他方式登录</text><view></view></view><view class="social-row"><button class="social wechat fire-button-outline" @tap="toast('微信登录暂未接入')">◉ 微信登录</button><button class="social qq fire-button-outline" @tap="toast('QQ 登录暂未接入')">◆ QQ 登录</button></view></view>
     <view class="register-entry"><text>还没有账号？</text><text class="register-link" @tap="register">立即注册</text></view>
-    <view class="required-note">登录后才能进入绿岛，数据会安全同步到你的账号</view><button v-if="isDev" class="test-login" @tap="fillAdmin">测试管理员邮箱</button><text class="sr-status" aria-live="polite">{{notice}}</text>
+    <view class="required-note">登录后才能进入Fire生活，数据会安全同步到你的账号</view><button v-if="isDev" class="test-login" @tap="fillAdmin">测试管理员邮箱</button><text class="sr-status" aria-live="polite">{{notice}}</text>
   </view></view>
 </template>
 <script setup>
