@@ -8,9 +8,9 @@
 
     <view class="tool-controls">
       <view class="tool-search"><text class="search-icon">⌕</text><input v-model="query" placeholder="搜索工具" placeholder-class="search-placeholder" confirm-type="search" /></view>
-      <scroll-view class="category-scroll" scroll-x>
+      <view class="category-list" aria-label="工具分类">
         <view v-for="category in categories" :key="category" class="category-chip" :class="{ active: activeCategory === category }" @tap="activeCategory = category">{{ category }}</view>
-      </scroll-view>
+      </view>
     </view>
 
     <text v-if="commonTools.length" class="group-title">常用功能</text>
@@ -137,7 +137,7 @@ export default {
 .tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) both; }
 .tool-card:nth-child(2) { animation-delay: .06s; }.tool-card:nth-child(3) { animation-delay: .12s; }.tool-card:nth-child(4) { animation-delay: .18s; }.tool-card:nth-child(5) { animation-delay: .24s; }.tool-card:nth-child(6) { animation-delay: .3s; }
 .tool-card:active { transform: translateX(3px) scale(.99); transition: transform .12s ease; }
-.tool-controls{margin:18px 0 24px}.tool-search{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;background:#fff;border:1px solid #dfe7dd;border-radius:13px;box-sizing:border-box}.search-icon{font-size:22px;color:#527059;line-height:1}.tool-search input{flex:1;height:42px;color:#243830;font-size:14px;background:transparent}.search-placeholder{color:#9aa99d}.category-scroll{white-space:nowrap;margin-top:12px;width:100%}.category-chip{display:inline-flex;align-items:center;justify-content:center;min-width:58px;height:32px;padding:0 13px;margin-right:8px;border-radius:999px;background:#e5eee4;color:#71807a;font-size:12px}.category-chip.active{background:#315f4a;color:#fff;font-weight:600}.tools-empty{padding:54px 16px;text-align:center;color:#71807a;font-size:14px}
+.tool-controls{margin:18px 0 24px}.tool-search{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;background:#fff;border:1px solid #dfe7dd;border-radius:13px;box-sizing:border-box}.search-icon{font-size:22px;color:#527059;line-height:1}.tool-search input{flex:1;height:42px;color:#243830;font-size:14px;background:transparent}.search-placeholder{color:#9aa99d}.category-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;width:100%;box-sizing:border-box}.category-chip{display:flex;align-items:center;justify-content:center;min-width:58px;height:36px;padding:0 14px;border-radius:999px;background:#e5eee4;color:#71807a;font-size:12px;white-space:nowrap;box-sizing:border-box;touch-action:manipulation}.category-chip:active{transform:scale(.97)}.category-chip.active{background:#315f4a;color:#fff;font-weight:600}.tools-empty{padding:54px 16px;text-align:center;color:#71807a;font-size:14px}
 .tools-head { margin-bottom: 24px; }
 .tools-h1 { display: block; font-size: 28px; font-weight: 700; color: #143e37; letter-spacing: 0.5px; }
 .tools-sub { display: block; font-size: 13px; color: #71807a; margin-top: 8px; }
