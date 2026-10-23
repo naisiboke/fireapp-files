@@ -126,6 +126,7 @@ export default {
       draft: EMPTY_DRAFT(),
       today: LocalDay(),
       keyboardCollapsed: false,
+      categorySeed: Date.now(),
       errorText: '',
       keys: [
         { value: '7', label: '7' },
@@ -149,8 +150,21 @@ export default {
 
   computed: {
     categories() {
-      try { return LedgerCategories(state, this.draft.type) }
-      catch (e) { return [] }
+      try {
+        const list = LedgerCategories(state, this.draft.type)
+        if (list.length <= 8) return list
+        const fixed = list.slice(0, 8)
+        const rest = list.slice(8).slice().sort((a, b) => {
+          const score = item => {
+            const text = String(this.categorySeed) + ':' + item.id
+            let hash = 2166136261
+            for (let i = 0; i < text.length; i += 1) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619)
+            return hash >>> 0
+          }
+          return score(a) - score(b)
+        })
+        return fixed.concat(rest)
+      } catch (e) { return [] }
     },
     currentCategory() {
       const id = this.draft.category
@@ -196,6 +210,7 @@ export default {
         note: '',
         necessity: null,
       }
+      this.categorySeed = Date.now()
       this.keyboardCollapsed = false
       this.errorText = ''
     },
