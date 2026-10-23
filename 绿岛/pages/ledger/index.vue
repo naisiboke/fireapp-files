@@ -585,10 +585,14 @@ export default {
 
 .safe-note {
   display: block;
-  font-size: 11px;
-  color: #8b9489;
+  font-size: 12px;
+  font-weight: 500;
+  color: #294f3d;
   line-height: 1.8;
   margin-top: 20px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #dce8d4;
   white-space: pre-line;
 }
 
