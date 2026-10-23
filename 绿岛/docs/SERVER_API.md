@@ -1,4 +1,4 @@
-# FIRE 绿岛云端 API 对接清单
+# FIRE Fire生活云端 API 对接清单
 
 当前前端已经统一通过 `utils/api-service.js` 访问云端。仓库中目前没有可用的业务 API 地址，所以必须先配置 `fire_api_base_url`，前端不会在未配置时伪造“保存成功”。本地 storage 只作为登录凭证、临时缓存和离线过渡缓存。
 
