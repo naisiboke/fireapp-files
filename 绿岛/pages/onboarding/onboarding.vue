@@ -15,8 +15,8 @@
 
     <view class="hope-layer">
       <view class="green-beacon"></view>
-      <text class="hope-title">在喧嚣中，抓住你的绿岛。</text>
-      <button class="enter-button fire-button-primary" @tap="enter">踏上绿岛</button>
+      <text class="hope-title">在喧嚣中，抓住你的Fire生活。</text>
+      <button class="enter-button fire-button-primary" @tap="enter">踏上Fire生活</button>
     </view>
 
     <view v-if="revealing" class="reveal-layer" :style="revealStyle"></view>
