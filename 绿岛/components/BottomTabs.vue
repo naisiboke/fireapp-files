@@ -2,9 +2,9 @@
   <view class="bottom-tabs">
     <view v-if="expanded" class="menu-mask" @tap="toggleMenu"></view>
     <view class="quick-menu" :class="{ open: expanded }">
-      <view class="quick-item quick-ledger" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">记</view><text>记账</text></view>
-      <view class="quick-item quick-ai" @tap.stop="openQuick('/pages/ai/index')"><view class="quick-icon">AI</view><text>问 AI</text></view>
-      <view class="quick-item quick-music" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view><text>音乐</text></view>
+      <view class="quick-item quick-ledger" aria-label="记账" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">¥</view></view>
+      <view class="quick-item quick-ai" aria-label="问 AI" @tap.stop="openQuick('/pages/ai/index')"><view class="quick-icon">AI</view></view>
+      <view class="quick-item quick-music" aria-label="音乐" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view></view>
     </view>
     <view v-for="t in tabs.slice(0, 2)" :key="t.path" class="tab-item" :class="{ active: t.key === current }" :aria-label="t.label" @tap="switchTab(t.path)">
       <image class="tab-icon" :src="iconUri(t.key, t.key === current)" mode="aspectFit" />
@@ -17,6 +17,9 @@
 </template>
 
 <script>
+import { state } from '@/store/index.js'
+import { LocalDay } from '@/utils/engine.js'
+
 const TAB_ICONS = {
   home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
   tools: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
@@ -40,7 +43,16 @@ export default {
   },
   methods: {
     toggleMenu() { this.expanded = !this.expanded },
-    openQuick(url) { this.expanded = false; uni.navigateTo({ url }) },
+    openQuick(url) {
+      this.expanded = false
+      let target = url
+      if (url === '/pages/ledger/index') {
+        const month = LocalDay().slice(0, 7)
+        const budget = (state.monthlyTargets && state.monthlyTargets[month]) || {}
+        if (Number.isSafeInteger(budget.expense) && budget.expense > 0 && Number.isSafeInteger(budget.income) && budget.income > 0) target = '/pages/ledger/edit'
+      }
+      uni.navigateTo({ url: target })
+    },
     switchTab(path) {
       if (this._navigating) return
       this.expanded = false
