@@ -50,6 +50,7 @@
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist } from '@/store/index.js'
+import { LocalDay } from '@/utils/engine.js'
 
 const ICONS = {
   calculator: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 7h8M8 11h.5M12 11h.5M16 11h.5M8 15h.5M12 15h.5M16 15h.5M8 19h8',
@@ -123,8 +124,15 @@ export default {
       u.lastUsed = Date.now()
       state.toolUsage[t.route] = u
       persist()
-      if (t.url) uni.navigateTo({ url: t.url })
-      else uni.showToast({ title: t.name + ' 开发中', icon: 'none' })
+      if (t.url) {
+        let target = t.url
+        if (t.route === 'ledger') {
+          const month = LocalDay().slice(0, 7)
+          const budget = (state.monthlyTargets && state.monthlyTargets[month]) || {}
+          if (Number.isSafeInteger(budget.expense) && budget.expense > 0 && Number.isSafeInteger(budget.income) && budget.income > 0) target = '/pages/ledger/edit'
+        }
+        uni.navigateTo({ url: target })
+      } else uni.showToast({ title: t.name + ' 开发中', icon: 'none' })
     },
   },
 }
