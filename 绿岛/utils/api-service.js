@@ -58,6 +58,13 @@ export async function requestAccountDeletion() { return apiRequest('/v1/me/delet
 export async function askBehaviorAI(payload) {
   return apiRequest('/v1/ai/chat', { method: 'POST', data: payload, timeout: 30000 })
 }
+export async function fetchMembership() {
+  const payload = await apiRequest('/v1/me/membership')
+  return payload && payload.membership ? payload.membership : payload
+}
+export async function createMembershipCheckout() {
+  return apiRequest('/v1/me/membership/checkout', { method: 'POST', data: { plan: 'fire-life-monthly', price: 9 } })
+}
 
 export async function fetchUserCollection(collection) {
   const payload = await apiRequest('/v1/me/collections/' + encodeURIComponent(collection))
