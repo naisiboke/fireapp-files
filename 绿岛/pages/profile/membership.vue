@@ -12,7 +12,7 @@
       <view class="pro-head"><text class="pro-name">FIRE PRO</text><text class="pro-badge">¥9 / 月</text></view>
       <text class="pro-desc">为认真规划自由生活的人准备</text><view class="price"><text class="price-num">¥9</text><text class="price-unit"> / 月</text></view>
       <view class="benefit" v-for="item in benefits" :key="item"><text class="check">✓</text><text>{{ item }}</text></view>
-      <button class="notify" @tap="upgrade">立即升级</button>
+      <button class="notify" @tap="upgrade" @click="upgrade">立即升级</button>
     </view>
 
     <view class="free-card">
@@ -50,6 +50,9 @@ export default {
         '优先体验新功能',
       ],
     }
+  },
+  onLoad(options) {
+    if (options && String(options.upgrade) === '1') this.showUpgradeModal = true
   },
   methods: {
     close() { uni.navigateBack() },
