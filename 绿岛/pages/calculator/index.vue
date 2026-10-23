@@ -101,6 +101,7 @@ import { onLoad, onShow, onHide, onUnload, onBackPress } from '@dcloudio/uni-app
 import { state, refreshFinance, persistNow } from '@/store/index.js'
 import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts } from '@/utils/engine.js'
 import { validateFireForm, validateGoalForm, hasValidFinance, freedomResult, createFreedomPlan } from '@/utils/finance-plan.js'
+import { isMembershipActive } from '@/utils/membership.js'
 
 const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false)
 const fire = reactive({assets:'',monthlyDeposit:'',retirementExpense:'',rate:'4',withdrawal:'4'})
@@ -140,11 +141,7 @@ const depositRatio = computed(() => {
   return Number.isFinite(deposit) && expense > 0 ? deposit / expense * 100 : null
 })
 const conservative = computed(() => FireEngine({...state.finance,rate:Math.max(-50,state.finance.rate - 2)}))
-const isProMember = computed(() => {
-  const profile = state.profile || {}
-  const membership = state.membership || {}
-  return state.proMember === true || profile.pro === true || membership.pro === true || uni.getStorageSync('fire_pro_member') === true
-})
+const isProMember = computed(() => isMembershipActive(state))
 const diagnosisSections = computed(() => {
   if (!isProMember.value || !fireResult.value) return []
   const r = fireResult.value
