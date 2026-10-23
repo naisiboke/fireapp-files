@@ -2442,7 +2442,7 @@ function IslandOnboardingView(){
   const angle=(i*7%17)-8,delay=(i%15)*.07,background=i%5===0&&!core;
   return `<span class="island-floating-word${core?' island-core-word':''}${background?' island-background-word':''}" style="--word-x:${left}px;--word-y:${top}%;--word-size:${size};--word-angle:${angle}deg;--word-delay:${delay}s;--word-alpha:${.72+(i%4)*.07};--word-drift:${(i%7-3)*3}px">${escapeText(text)}</span>`;
  }).join('');
- return `<section class="island-onboarding" aria-labelledby="island-title"><div class="island-anxiety-field island-floating-field" aria-hidden="true">${words}</div><button class="island-skip" data-action="skip">跳过引导</button><div class="island-hope"><span class="island-beacon" aria-hidden="true"></span><p id="island-title" class="island-title">在喧嚣中，抓住你的绿岛。</p><button class="island-start-button" data-action="island-start">踏上绿岛</button></div><p class="island-sr-status" role="status" aria-live="polite">正在穿过现实的噪声，稍后抵达绿岛</p></section>`;
+ return `<section class="island-onboarding" aria-labelledby="island-title"><div class="island-anxiety-field island-floating-field" aria-hidden="true">${words}</div><button class="island-skip" data-action="skip">跳过引导</button><div class="island-hope"><span class="island-beacon" aria-hidden="true"></span><p id="island-title" class="island-title">在喧嚣中，抓住你的Fire生活。</p><button class="island-start-button" data-action="island-start">踏上Fire生活</button></div><p class="island-sr-status" role="status" aria-live="polite">正在穿过现实的噪声，稍后抵达Fire生活</p></section>`;
 }
 
 let islandRevealBusy=false;
