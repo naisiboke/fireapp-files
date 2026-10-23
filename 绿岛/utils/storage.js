@@ -4,6 +4,11 @@ const LEGACY_STATE_KEYS = [
   'fire-forge-preview-v1',
   'fire_state_v1',
   'firelife_state_v1',
+  'fire_state',
+  'firelife_state',
+  'fire_life_state',
+  'green_island_state',
+  'green_island_data',
 ]
 
 function decode(value) {
