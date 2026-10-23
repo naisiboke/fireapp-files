@@ -589,7 +589,7 @@ export default {
     },
 
     openPost() {
-      if (!this.isMember) return uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=community' })
+      // 社区加号始终用于添加个人经历，会员仅控制高级内容和套用配置。
       uni.navigateTo({ url: '/pages/community/share?from=community' })
     },
 
