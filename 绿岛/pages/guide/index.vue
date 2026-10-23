@@ -1,7 +1,7 @@
 <template>
   <view class="guide-page">
     <view class="progress"><view class="progress-fill" :style="{ width: ((step + 1) / steps.length * 100) + '%' }"></view></view>
-    <view class="guide-top"><text class="brand">绿岛新手指南</text><text class="counter">{{ step + 1 }} / {{ steps.length }}</text></view>
+    <view class="guide-top"><text class="brand">Fire生活新手指南</text><text class="counter">{{ step + 1 }} / {{ steps.length }}</text></view>
     <view class="guide-main">
       <view class="guide-icon">{{ current.icon }}</view>
       <text class="guide-title">{{ current.title }}</text>
