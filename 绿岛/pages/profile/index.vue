@@ -73,6 +73,7 @@
 <script>
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
+import { isMembershipActive, membershipText } from '@/utils/membership.js'
 
 const ICONS = {
   assets:
@@ -116,6 +117,8 @@ export default {
     completedCount() {
       return (state.completed || []).length
     },
+    isMember() { return isMembershipActive(state) },
+    membershipStatus() { return membershipText(state) },
   },
 
   methods: {
