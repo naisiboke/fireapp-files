@@ -2,7 +2,7 @@
   <view class="settings-page">
     <view class="head"><text class="title">设置</text><view class="close" role="button" aria-label="关闭" @tap="close">×</view></view>
     <text class="h1">把数据和选择，<br>交给你自己</text>
-    <text class="lead">FIRE 绿岛会优先使用已配置的云端服务；本设备仅保留登录凭证、临时缓存和离线过渡数据。</text>
+    <text class="lead">FIRE Fire生活会优先使用已配置的云端服务；本设备仅保留登录凭证、临时缓存和离线过渡数据。</text>
     <view class="card sound-card"><view class="sound-copy"><text class="card-title">操作提示音</text><text class="card-sub">记账和拔草完成时，轻轻提醒一下</text></view><view class="switch" :class="{ on: state.soundEnabled }" role="switch" :aria-checked="state.soundEnabled" @tap="toggleSound"><view class="switch-thumb"></view></view></view>
     <view class="card privacy-card"><text class="card-title">隐私设置</text><text class="card-p">你可以随时查看数据如何保存、使用和删除。每个开关的修改会尝试同步到云端。</text>
       <view class="setting-row" @tap="toggleCloudSync"><view class="row-copy"><text class="row-title">云端同步</text><text class="row-sub">服务器可用时同步你的 FIRE 数据</text></view><view class="mini-switch" :class="{ on: state.privacySettings.cloudSync }"><view class="mini-thumb"></view></view></view>
