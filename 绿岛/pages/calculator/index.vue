@@ -39,6 +39,12 @@
     <view v-if="errors.length" class="error-panel" role="alert" aria-live="polite"><text v-for="message in errors" :key="message">{{ message }}</text></view>
     <button class="primary" :disabled="saving" @click="calculate">{{ saving ? '保存中…' : mode === 'fire' ? '计算并保存自由日' : '计算目标日' }}</button>
 
+    <view v-if="saving" class="calculation-loading" role="status" aria-live="polite">
+      <view class="loading-spinner"></view>
+      <text class="loading-title">正在计算</text>
+      <text class="loading-copy">正在整理你的资金计划…</text>
+    </view>
+
     <view v-if="result" class="result-panel">
       <text class="result-label">{{ mode === 'fire' ? '我的自由计划' : goal.name }}</text>
       <template v-if="result.date">
@@ -190,12 +196,13 @@ function back() {
 }
 function goHome() { uni.reLaunch({url:'/pages/index/index'}) }
 
-function calculate() {
+async function calculate() {
   if (saving.value) return
   const parsed = mode.value === 'fire' ? validateFireForm(fire) : validateGoalForm(goal)
   errors.value = parsed.errors
   if (errors.value.length) return
   saving.value = true
+  await new Promise(resolve => setTimeout(resolve, 650))
   if (mode.value === 'fire') {
     const oldFinance = state.finance, oldProfile = state.profile, oldPlan = state.freedomPlan, oldEntered = state.financeEntered
     state.finance = {...state.finance,...parsed.finance}
@@ -272,6 +279,7 @@ onBackPress(event => {
 </script>
 
 <style lang="scss" scoped>
+.calculation-loading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(243,244,242,.94);backdrop-filter:blur(8px)}.loading-spinner{width:42px;height:42px;border:3px solid #dce8dc;border-top-color:#315f4a;border-radius:50%;animation:calculator-spin .8s linear infinite}.loading-title{margin-top:18px;color:#243830;font-size:18px;font-weight:600}.loading-copy{margin-top:8px;color:#7b8b7e;font-size:13px}@keyframes calculator-spin{to{transform:rotate(360deg)}}
 .calculator-page { min-height:100vh; box-sizing:border-box; padding:calc(24px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom)); background:#f3f4f2; color:#243830; }
 .page-head { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
 .back,.head-space { width:44px; min-height:44px; flex-shrink:0; }
