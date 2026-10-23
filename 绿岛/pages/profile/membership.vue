@@ -3,7 +3,7 @@
     <view class="head"><text class="title">FIRE PRO</text><text class="close" @tap="close">×</text></view>
 
     <view class="hero">
-      <text class="kicker">FIRE 绿岛</text>
+      <text class="kicker">FIRE Fire生活</text>
       <text class="hero-title">把长期计划，交给更好的自己</text>
       <text class="hero-sub">Pro 会员将解锁更完整的规划工具和成长记录。</text>
     </view>
