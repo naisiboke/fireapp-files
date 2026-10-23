@@ -6,8 +6,15 @@
       <text class="tools-sub">规划、行动、消费，都从这里开始</text>
     </view>
 
-    <text class="group-title">常用功能</text>
-    <view class="tool-grid">
+    <view class="tool-controls">
+      <view class="tool-search"><text class="search-icon">⌕</text><input v-model="query" placeholder="搜索工具" placeholder-class="search-placeholder" confirm-type="search" /></view>
+      <scroll-view class="category-scroll" scroll-x>
+        <view v-for="category in categories" :key="category" class="category-chip" :class="{ active: activeCategory === category }" @tap="activeCategory = category">{{ category }}</view>
+      </scroll-view>
+    </view>
+
+    <text v-if="commonTools.length" class="group-title">常用功能</text>
+    <view v-if="commonTools.length" class="tool-grid">
       <view v-for="t in commonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
         <view class="tool-icon" :style="{ background: t.bg }">
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
@@ -20,8 +27,8 @@
       </view>
     </view>
 
-    <text class="group-title second">更多工具</text>
-    <view class="tool-grid">
+    <text v-if="uncommonTools.length" class="group-title second">更多工具</text>
+    <view v-if="uncommonTools.length" class="tool-grid">
       <view v-for="t in uncommonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
         <view class="tool-icon" :style="{ background: t.bg }">
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
@@ -34,6 +41,7 @@
       </view>
     </view>
 
+    <view v-if="!commonTools.length && !uncommonTools.length" class="tools-empty">没有找到匹配的工具</view>
     <text class="safe-note">更多工具正在开发</text>
     <BottomTabs current="tools" />
   </view>
@@ -56,15 +64,15 @@ const ICONS = {
 }
 
 const TOOL_CATALOG = [
-  { route: 'calculator', url: '/pages/calculator/index', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
-  { route: 'savings-curve', url: '/pages/savings-curve/index', icon: 'curve', color: '#426052', bg: '#edf2e9', name: '一生存款曲线', desc: '用选择题看见存款变化' },
-  { route: 'ledger', url: '/pages/ledger/index', icon: 'ledger', color: '#426052', bg: '#edf2e9', name: '记账', desc: '轻松记下每笔消费' },
-  { route: 'wishlist', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
-  { route: 'hero', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
-  { route: 'reading-library', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
-  { route: 'time-ledger', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪' },
-  { route: 'ai', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
-  { route: 'music', url: '/pages/music/index', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围' },
+  { route: 'calculator', category: '财务', url: '/pages/calculator/index', icon: 'calculator', color: '#426052', bg: '#edf2e9', name: '躺平倒计时', desc: '计算你的自由日' },
+  { route: 'savings-curve', category: '财务', url: '/pages/savings-curve/index', icon: 'curve', color: '#426052', bg: '#edf2e9', name: '一生存款曲线', desc: '用选择题看见存款变化' },
+  { route: 'ledger', category: '财务', url: '/pages/ledger/index', icon: 'ledger', color: '#426052', bg: '#edf2e9', name: '记账', desc: '轻松记下每笔消费' },
+  { route: 'wishlist', category: '生活', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
+  { route: 'hero', category: '成长', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
+  { route: 'reading-library', category: '成长', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
+  { route: 'time-ledger', category: '效率', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪' },
+  { route: 'ai', category: '效率', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
+  { route: 'music', category: '内容', url: '/pages/music/index', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围' },
 ]
 
 function svgUri(svg) {
@@ -73,7 +81,7 @@ function svgUri(svg) {
 
 export default {
   components: { BottomTabs },
-  data() { return { state } },
+  data() { return { state, query: '', activeCategory: '全部' } },
   computed: {
     sortedTools() {
       const usage = state.toolUsage || {}
@@ -88,8 +96,19 @@ export default {
         return a.index - b.index
       }).map(function (x) { return x.tool })
     },
-    commonTools() { return this.sortedTools.slice(0, 4) },
-    uncommonTools() { return this.sortedTools.slice(4) },
+    categories() {
+      return ['全部'].concat(Array.from(new Set(TOOL_CATALOG.map(function (tool) { return tool.category }))))
+    },
+    filteredTools() {
+      const query = String(this.query || '').trim().toLowerCase()
+      return this.sortedTools.filter(function (tool) {
+        const categoryMatch = this.activeCategory === '全部' || tool.category === this.activeCategory
+        const textMatch = !query || (tool.name + ' ' + tool.desc).toLowerCase().includes(query)
+        return categoryMatch && textMatch
+      }, this)
+    },
+    commonTools() { return this.filteredTools.slice(0, 4) },
+    uncommonTools() { return this.filteredTools.slice(4) },
   },
   methods: {
     iconUri(key, color) {
@@ -118,6 +137,7 @@ export default {
 .tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) both; }
 .tool-card:nth-child(2) { animation-delay: .06s; }.tool-card:nth-child(3) { animation-delay: .12s; }.tool-card:nth-child(4) { animation-delay: .18s; }.tool-card:nth-child(5) { animation-delay: .24s; }.tool-card:nth-child(6) { animation-delay: .3s; }
 .tool-card:active { transform: translateX(3px) scale(.99); transition: transform .12s ease; }
+.tool-controls{margin:18px 0 24px}.tool-search{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;background:#fff;border:1px solid #dfe7dd;border-radius:13px;box-sizing:border-box}.search-icon{font-size:22px;color:#527059;line-height:1}.tool-search input{flex:1;height:42px;color:#243830;font-size:14px;background:transparent}.search-placeholder{color:#9aa99d}.category-scroll{white-space:nowrap;margin-top:12px;width:100%}.category-chip{display:inline-flex;align-items:center;justify-content:center;min-width:58px;height:32px;padding:0 13px;margin-right:8px;border-radius:999px;background:#e5eee4;color:#71807a;font-size:12px}.category-chip.active{background:#315f4a;color:#fff;font-weight:600}.tools-empty{padding:54px 16px;text-align:center;color:#71807a;font-size:14px}
 .tools-head { margin-bottom: 24px; }
 .tools-h1 { display: block; font-size: 28px; font-weight: 700; color: #143e37; letter-spacing: 0.5px; }
 .tools-sub { display: block; font-size: 13px; color: #71807a; margin-top: 8px; }
