@@ -26,6 +26,10 @@
 - 服务端必须以当前登录用户为主键，不能信任客户端传入的用户 ID。
 - 服务端应记录版本或更新时间，避免多设备覆盖较新的数据。
 
+## 本地构建
+
+在 HBuilderX 运行或打包前，进入 `绿岛` 项目目录执行一次 `npm install`，安装 `@cloudbase/js-sdk`。如果未安装，项目仍可编译，但登录时会提示缺少该依赖。
+
 ## 配置
 
 在登录服务完成后，把业务 API 地址写入 `uni.setStorageSync('fire_api_base_url', 'https://your-api.example.com')`，把登录令牌写入 `fire_access_token`。请将占位地址和联系邮箱替换为真实配置后再面向用户发布。
