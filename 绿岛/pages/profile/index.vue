@@ -25,7 +25,7 @@
         <text class="pro-desc">{{ isMember ? membershipStatus : '¥9 / 月 · AI 无限使用 · 社区 · 深度分析' }}</text>
       </view>
       <view class="pro-btn" @tap="openPro">
-        <text class="pro-btn-text">立即升级</text>
+        <text class="pro-btn-text">{{ isMember ? '查看权益' : '立即开通' }}</text>
       </view>
     </view>
 
