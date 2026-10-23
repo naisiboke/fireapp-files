@@ -20,9 +20,9 @@
     <!-- Pro 卡片 -->
     <view class="pro-card">
       <view class="pro-copy">
-        <text class="pro-kicker">FIRE PRO</text>
-        <text class="pro-title">升级 Pro 会员</text>
-        <text class="pro-desc">解锁全部高级工具与数据能力</text>
+        <text class="pro-kicker">FIRE生活会员</text>
+        <text class="pro-title">{{ isMember ? 'Fire生活通用会员' : '开通通用会员' }}</text>
+        <text class="pro-desc">{{ isMember ? membershipStatus : '¥9 / 月 · AI 无限使用 · 社区 · 深度分析' }}</text>
       </view>
       <view class="pro-btn" @tap="openPro">
         <text class="pro-btn-text">立即升级</text>
