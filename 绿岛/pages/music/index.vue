@@ -10,7 +10,7 @@
         <view class="cover-light"></view>
         <view class="cover-island"><view class="cover-sun"></view><view class="cover-house"></view></view>
         <text class="cover-name">{{ currentTrack.name }}</text>
-        <text class="cover-sub">原创音乐 · 绿岛</text>
+        <text class="cover-sub">原创音乐 · Fire生活</text>
         <button class="big-play" @tap="togglePlay"><view v-if="playing" class="pause-symbol"><i></i><i></i></view><text v-else class="play-symbol">▶</text></button>
         <view class="cover-caption">给今天留一点安静</view>
         <view class="progress"><view class="progress-fill" :style="{ width: progress + '%' }"></view></view>
@@ -21,7 +21,7 @@
 
       <view class="mini-player">
         <view class="mini-cover"><text>♫</text></view>
-        <view class="mini-copy"><text>{{ currentTrack.name }}</text><text>原创音乐 · 绿岛</text></view>
+        <view class="mini-copy"><text>{{ currentTrack.name }}</text><text>原创音乐 · Fire生活</text></view>
         <button class="mini-button" @tap="previous">‹</button><button class="mini-button main" @tap="togglePlay"><view v-if="playing" class="pause-symbol small"><i></i><i></i></view><text v-else class="play-symbol small">▶</text></button><button class="mini-button" @tap="next">›</button>
       </view>
 
@@ -40,7 +40,7 @@ const FILES = [
 
 export default {
   data() { return { tracks: [], currentIndex: 0, playing: false, loading: true, error: '', currentTime: 0, duration: 0, audio: null } },
-  computed: { currentTrack() { return this.tracks[this.currentIndex] || { name: '绿岛音乐' } }, progress() { return this.duration ? Math.min(100, this.currentTime / this.duration * 100) : 0 } },
+  computed: { currentTrack() { return this.tracks[this.currentIndex] || { name: 'Fire生活音乐' } }, progress() { return this.duration ? Math.min(100, this.currentTime / this.duration * 100) : 0 } },
   async onLoad() {
     try {
       const urls = await Promise.all(FILES.map(file => getMediaURL(file.id)))
