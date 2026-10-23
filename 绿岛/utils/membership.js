@@ -11,7 +11,8 @@ export function membershipState(source) {
   const membership = source && source.membership && typeof source.membership === 'object'
     ? source.membership
     : {}
-  const expiresAt = Number(membership.expiresAt || membership.expireAt || 0)
+  const rawExpiresAt = Number(membership.expiresAt || membership.expireAt || 0)
+  const expiresAt = rawExpiresAt > 0 && rawExpiresAt < 1000000000000 ? rawExpiresAt * 1000 : rawExpiresAt
   const active = membership.active === true || membership.status === 'active' || membership.pro === true
   const valid = active && (!expiresAt || expiresAt > Date.now())
   return {
