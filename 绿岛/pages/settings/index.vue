@@ -13,6 +13,12 @@
       <text class="member-action">{{ isMember ? '查看' : '开通' }} ›</text>
     </view>
 
+    <view class="redeem-card">
+      <view class="redeem-head"><view><text class="redeem-title">会员兑换码</text><text class="redeem-sub">输入兑换码开通 Fire生活通用会员</text></view><text class="redeem-price">¥9 / 月</text></view>
+      <view class="redeem-row"><input v-model="redeemCode" class="redeem-input" maxlength="32" placeholder="请输入兑换码" placeholder-class="redeem-placeholder" /><view class="redeem-button" :class="{ disabled: redeeming }" @tap="redeemMembership"><text>{{ redeeming ? '验证中…' : '兑换' }}</text></view></view>
+      <text class="redeem-hint">会员包含 AI 无限使用、社区和 FIRE 深度分析</text>
+    </view>
+
     <text class="section-title">通用</text>
     <view class="group">
       <view class="row" @tap="toggleSound"><view class="row-icon">◌</view><view class="row-copy"><text class="row-title">操作提示音</text><text class="row-sub">记账和拔草完成时提醒</text></view><view class="switch" :class="{ on: state.soundEnabled }"><view class="thumb"></view></view></view>
@@ -42,7 +48,7 @@ import { isApiConfigured, savePrivacySettings, exportUserData, deleteUserData, r
 import { isMembershipActive, membershipText } from '@/utils/membership.js'
 
 export default {
-  data() { return { state, closing: false } },
+  data() { return { state, closing: false, redeemCode: '', redeeming: false } },
   computed: {
     profileName() { return (state.profile && state.profile.name) || '自由的旅人' },
     avatarLetter() { return this.profileName.slice(0, 1) },
@@ -59,6 +65,30 @@ export default {
     close() { if (this.closing) return; this.closing = true; uni.reLaunch({ url: '/pages/profile/index', complete: () => { this.closing = false } }) },
     openProfile() { uni.navigateTo({ url: '/pages/profile/edit' }) },
     openMembership() { uni.navigateTo({ url: '/pages/profile/membership' }) },
+    redeemMembership() {
+      const code = String(this.redeemCode || '').trim()
+      if (!code) return uni.showToast({ title: '请输入兑换码', icon: 'none' })
+      if (this.redeeming) return
+      this.redeeming = true
+      setTimeout(() => {
+        this.redeeming = false
+        if (code !== 'Dpj123123') return uni.showToast({ title: '兑换码无效', icon: 'none' })
+        state.membership = {
+          ...(state.membership || {}),
+          active: true,
+          status: 'active',
+          plan: 'fire-life-monthly',
+          name: 'Fire生活通用会员',
+          price: 9,
+          expiresAt: 0,
+          updatedAt: Date.now(),
+          source: 'redeem',
+        }
+        persist()
+        this.redeemCode = ''
+        uni.showToast({ title: '会员已开通', icon: 'none' })
+      }, 260)
+    },
     openAbout() { uni.showModal({ title: '关于 Fire生活', content: '记录自由计划、消费行动和长期生活选择。', showCancel: false }) },
     toggleSound() { state.soundEnabled = !state.soundEnabled; persist() },
     async updatePrivacy(patch) {
@@ -96,5 +126,5 @@ export default {
 </script>
 
 <style>
-.settings-page{min-height:100vh;padding:calc(72px + env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));background:#f3f4f2;box-sizing:border-box}.head{position:fixed;z-index:30;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:center;justify-content:space-between;background:rgba(243,244,242,.96);border-bottom:1px solid #dfe7dd;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#173d35}.close{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:27px;color:#173d35}.account-card,.member-card,.group,.info-card{border-radius:16px;background:#fff;border:1px solid #e2e9e0;box-shadow:0 4px 14px rgba(36,56,48,.05)}.account-card{display:flex;align-items:center;gap:12px;padding:16px;margin-bottom:12px}.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#d7e9d8;color:#315f4a;font-size:21px;font-weight:700}.account-copy{flex:1;min-width:0}.account-name{display:block;color:#173d35;font-size:16px;font-weight:600}.account-sub{display:block;color:#71807a;font-size:12px;margin-top:5px}.chevron{color:#8b9b8f;font-size:25px}.member-card{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#173d35,#3f765e);color:#fff}.member-kicker{display:block;color:#d7e9d8;font-size:11px;letter-spacing:.12em}.member-title{display:block;color:#fff;font-size:17px;font-weight:700;margin-top:6px}.member-sub{display:block;color:#d7e9d8;font-size:12px;margin-top:5px}.member-action{color:#fff;font-size:14px}.section-title{display:block;color:#71807a;font-size:12px;margin:22px 8px 8px}.group{overflow:hidden}.row{min-height:68px;display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid #eef2ee;box-sizing:border-box}.row:last-child{border-bottom:0}.row-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e8f0e6;color:#315f4a;font-size:16px;flex-shrink:0}.row-icon.danger{background:#f6e8e3;color:#9b5e50}.row-copy{flex:1;min-width:0}.row-title{display:block;color:#243830;font-size:14px}.row-sub{display:block;color:#71807a;font-size:11px;line-height:1.45;margin-top:4px}.danger-text{color:#9b5e50}.switch{width:44px;height:26px;padding:3px;border-radius:18px;background:#cbd4ca;box-sizing:border-box;display:flex;align-items:center}.switch.on{background:#527059}.thumb{width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.16);transition:transform .16s}.switch.on .thumb{transform:translateX(18px)}.info-card{padding:15px;margin-top:8px;color:#52605a;font-size:12px;line-height:1.7}.button{height:48px;margin-top:12px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px}.button.light{background:#e5eee4;color:#173d35}.button.danger{background:#94685c;color:#fff}.version{display:block;text-align:center;color:#8b9489;font-size:11px;margin-top:24px}
+.settings-page{min-height:100vh;padding:calc(72px + env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));background:#f3f4f2;box-sizing:border-box}.head{position:fixed;z-index:30;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:center;justify-content:space-between;background:rgba(243,244,242,.96);border-bottom:1px solid #dfe7dd;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#173d35}.close{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:27px;color:#173d35}.account-card,.member-card,.group,.info-card{border-radius:16px;background:#fff;border:1px solid #e2e9e0;box-shadow:0 4px 14px rgba(36,56,48,.05)}.account-card{display:flex;align-items:center;gap:12px;padding:16px;margin-bottom:12px}.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#d7e9d8;color:#315f4a;font-size:21px;font-weight:700}.account-copy{flex:1;min-width:0}.account-name{display:block;color:#173d35;font-size:16px;font-weight:600}.account-sub{display:block;color:#71807a;font-size:12px;margin-top:5px}.chevron{color:#8b9b8f;font-size:25px}.member-card{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#173d35,#3f765e);color:#fff}.member-kicker{display:block;color:#d7e9d8;font-size:11px;letter-spacing:.12em}.member-title{display:block;color:#fff;font-size:17px;font-weight:700;margin-top:6px}.member-sub{display:block;color:#d7e9d8;font-size:12px;margin-top:5px}.member-action{color:#fff;font-size:14px}.redeem-card{padding:16px 18px;margin-bottom:4px;border-radius:16px;background:#173d35;color:#fff;box-shadow:0 5px 16px rgba(23,61,53,.14)}.redeem-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.redeem-title{display:block;font-size:15px;font-weight:700}.redeem-sub{display:block;margin-top:5px;color:#d7e9d8;font-size:12px}.redeem-price{color:#d7e9d8;font-size:12px;white-space:nowrap}.redeem-row{display:flex;gap:8px;margin-top:14px}.redeem-input{flex:1;min-width:0;height:42px;padding:0 12px;border-radius:10px;background:#fff;color:#173d35;font-size:14px;box-sizing:border-box}.redeem-placeholder{color:#9aa99d}.redeem-button{width:70px;height:42px;border-radius:10px;background:#d7e9d8;color:#173d35;display:flex;align-items:center;justify-content:center;font-size:13px}.redeem-button.disabled{opacity:.6}.redeem-hint{display:block;margin-top:10px;color:#bcd8c0;font-size:11px}.section-title{display:block;color:#71807a;font-size:12px;margin:22px 8px 8px}.group{overflow:hidden}.row{min-height:68px;display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid #eef2ee;box-sizing:border-box}.row:last-child{border-bottom:0}.row-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e8f0e6;color:#315f4a;font-size:16px;flex-shrink:0}.row-icon.danger{background:#f6e8e3;color:#9b5e50}.row-copy{flex:1;min-width:0}.row-title{display:block;color:#243830;font-size:14px}.row-sub{display:block;color:#71807a;font-size:11px;line-height:1.45;margin-top:4px}.danger-text{color:#9b5e50}.switch{width:44px;height:26px;padding:3px;border-radius:18px;background:#cbd4ca;box-sizing:border-box;display:flex;align-items:center}.switch.on{background:#527059}.thumb{width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.16);transition:transform .16s}.switch.on .thumb{transform:translateX(18px)}.info-card{padding:15px;margin-top:8px;color:#52605a;font-size:12px;line-height:1.7}.button{height:48px;margin-top:12px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px}.button.light{background:#e5eee4;color:#173d35}.button.danger{background:#94685c;color:#fff}.version{display:block;text-align:center;color:#8b9489;font-size:11px;margin-top:24px}
 </style>
