@@ -531,6 +531,7 @@ export default {
     },
 
     openApply(post) {
+      if (!this.isMember) return uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=community' })
       this.applyPost = post
       this.applyResult = null
       this.netWorth = CS.netWorth()
@@ -588,6 +589,7 @@ export default {
     },
 
     openPost() {
+      if (!this.isMember) return uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=community' })
       uni.navigateTo({ url: '/pages/community/share?from=community' })
     },
 
