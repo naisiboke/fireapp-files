@@ -430,7 +430,7 @@ export function ReelCalendarParts(deadline, now) {
 export function WishlistSaved(s) {
   let total = 0
   for (const item of (s.items || [])) {
-    if (item.status === 'abandoned' && Number.isFinite(item.amount) && item.amount > 0) {
+    if ((item.status === 'abandoned' || item.status === 'ended') && Number.isFinite(item.amount) && item.amount > 0) {
       total += Math.round(item.amount * 100)
     }
   }
