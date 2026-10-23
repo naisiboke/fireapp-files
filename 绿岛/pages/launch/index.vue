@@ -3,7 +3,7 @@
     <view class="launch-glow"></view>
     <view class="launch-card">
       <view class="launch-mark">岛</view>
-      <text class="launch-title">绿岛</text>
+      <text class="launch-title">Fire生活</text>
       <text class="launch-status">{{ status }}</text>
     </view>
   </view>
@@ -11,7 +11,7 @@
 <script>
 export default {
   data() {
-    return { redirecting: false, routeTimer: null, status: '正在打开绿岛…' }
+    return { redirecting: false, routeTimer: null, status: '正在打开Fire生活…' }
   },
   onLoad() { this.scheduleRoute() },
   onReady() { this.scheduleRoute() },
@@ -45,7 +45,7 @@ export default {
             this.status = '页面加载失败，请重新打开应用'
             console.error('[launch-route-failed]', url, error)
             uni.showModal({
-              title: '绿岛启动失败',
+              title: 'Fire生活启动失败',
               content: '页面资源没有正确加载，请重新安装最新版本。',
               showCancel: false,
             })
