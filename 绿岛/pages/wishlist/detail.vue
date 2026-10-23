@@ -10,8 +10,9 @@
         <view class="info-row"><text>冷静期</text><text>默认 {{ item.days || 7 }} 天</text></view>
       </view>
       <view class="progress-card"><text class="progress-title">{{ coolingFinished ? '冷静期已结束' : '冷静期进行中' }}</text><text class="countdown">{{ coolingFinished ? '可以做出最终决定' : countdownText }}</text><view class="progress-track"><view class="progress-fill" :style="{width:progress+'%'}"></view></view><text class="progress-tip">{{ coolingFinished ? '你已经完成了这次冷静期挑战。' : '先给自己一点时间，再决定是否购买。' }}</text></view>
-      <view v-if="coolingFinished" class="actions"><button class="save fire-button-primary" @tap="finish('abandoned')">挑战成功</button><button class="buy fire-button-outline" @tap="finish('bought')">挑战失败</button></view>
-      <view v-else class="actions"><button class="save" @tap="finish('abandoned')">提前结束，即为省下</button><button class="buy" @tap="finish('bought')">我坚持不住了，已购买</button></view>
+      <view v-if="item.status === 'active' && coolingFinished" class="actions"><button class="save fire-button-primary" @tap="finish('abandoned')">挑战成功，放弃购买</button><button class="buy fire-button-outline" @tap="finish('bought')">挑战失败，已购买</button></view>
+      <view v-if="item.status === 'active' && !coolingFinished" class="actions"><button class="save" @tap="endEarly">提前结束</button><button class="buy" @tap="finish('failed')">放弃挑战（挑战失败）</button></view>
+      <view v-if="item.status !== 'active'" class="actions"><button class="buy" @tap="back">返回列表</button></view>
     </scroll-view>
     <view v-else class="missing"><text>拔草项目不存在或已删除</text><button @tap="back">返回列表</button></view>
   </view>
@@ -27,12 +28,23 @@ const coolingFinished=computed(()=>now.value>=coolingEnd.value)
 const remaining=computed(()=>Math.max(0,coolingEnd.value-now.value))
 const progress=computed(()=>item.value ? Math.min(100,Math.max(0,(1-remaining.value/(Number(item.value.days||7)*86400000))*100)) : 0)
 const countdownText=computed(()=>{const s=Math.ceil(remaining.value/1000);const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;return d+'天 '+String(h).padStart(2,'0')+'时 '+String(m).padStart(2,'0')+'分 '+String(sec).padStart(2,'0')+'秒'})
-const statusLabel=computed(()=>item.value?.status==='active'?'进行中':item.value?.status==='abandoned'?'已放弃':'已购买')
+const statusLabel=computed(()=>{const status=item.value?.status;return status==='active'?'进行中':status==='abandoned'?'已放弃购买':status==='ended'?'已提前结束':status==='failed'?'挑战失败':'已购买'})
 const createdText=computed(()=>item.value?new Date(Number(item.value.created)).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'')
 function money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})}
 function categoryName(v){return categories[v]||'其他'}
 function categoryIcon(v){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[v]||'＋'}
 function back(){uni.navigateBack()}
+function endEarly(){
+  if(!item.value||item.value.status!=='active')return
+  const target=state.items.find(x=>x.id===item.value.id)
+  if(!target)return back()
+  target.status='ended'
+  target.updated=Date.now()
+  target.endedAt=Date.now()
+  persist()
+  uni.showToast({title:'已提前结束冷静期',icon:'success'})
+  setTimeout(()=>uni.navigateBack(),350)
+}
 function finish(status){
   if(!item.value||item.value.status!=='active')return
   const target=state.items.find(x=>x.id===item.value.id)
@@ -40,7 +52,7 @@ function finish(status){
   target.status=status
   target.updated=Date.now()
   persist()
-  const message=status==='abandoned'?(coolingFinished.value?'挑战成功，这笔钱省下了':'已提前放弃，这笔钱真正省下了'):(coolingFinished.value?'挑战失败，已记录购买':'已记录购买，挑战提前结束')
+  const message=status==='abandoned'?'挑战成功，已放弃购买':status==='failed'?'挑战失败，已放弃挑战':'挑战失败，已记录购买'
   uni.showToast({title:message,icon:'success'})
   setTimeout(()=>uni.navigateBack(),350)
 }
