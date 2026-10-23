@@ -32,6 +32,7 @@ const seed = () => ({
     goal: 0,
   },
   profile: { name: '自由的旅人', passive: null, goal: '工作自由' },
+  membership: { active: false, status: 'inactive', plan: 'fire-life-monthly', name: 'Fire生活通用会员', price: 9, expiresAt: 0, updatedAt: 0 },
   items: [],
   completed: [],
   exp: 0,
@@ -61,6 +62,7 @@ function applySaved(saved) {
     Object.assign(state, defaults, saved)
     state.finance = { ...defaults.finance, ...(saved.finance || {}) }
     state.profile = { ...defaults.profile, ...(saved.profile || {}) }
+    state.membership = { ...defaults.membership, ...(saved.membership || {}) }
     if (!validateNickname(state.profile.name).ok) state.profile.name = defaults.profile.name
     for (const key of ['assets','expense','income','monthlyDeposit','retirementExpense','rate','withdrawal','goal']) {
       const value = state.finance[key]
@@ -82,6 +84,7 @@ function applySaved(saved) {
   if (!state.monthlyTargets) state.monthlyTargets = {}
   if (!state.toolUsage) state.toolUsage = {}
   if (typeof state.soundEnabled !== 'boolean') state.soundEnabled = true
+  state.membership = { ...defaults.membership, ...(state.membership || {}) }
   state.privacySettings = { ...defaults.privacySettings, ...(state.privacySettings || {}) }
   state.cloudSync = { status: 'offline', message: '', ...(state.cloudSync || {}) }
   state.stateVersion = STATE_VERSION
