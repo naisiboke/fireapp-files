@@ -35,7 +35,7 @@ import { state, persist, WISHLIST_KEY } from '@/store/index.js'
 import { WishlistSaved } from '@/utils/engine.js'
 export default {
   components:{ BottomTabs },
-  data(){return{state,filter:'active',showAdd:false,form:{name:'',amount:'',category:'other',days:7},formError:'',submitLock:false,focusedField:'',keyboardHeight:0,viewportHeight:0,viewportTop:0,categories:[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}],tabs:[{id:'active',name:'进行中'},{id:'abandoned',name:'已放弃'},{id:'bought',name:'已购买'}]}},
+  data(){return{state,filter:'active',showAdd:false,form:{name:'',amount:'',category:'other',days:7},formError:'',submitLock:false,focusedField:'',keyboardHeight:0,viewportHeight:0,viewportTop:0,categories:[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}],tabs:[{id:'active',name:'进行中'},{id:'ended',name:'已提前结束'},{id:'abandoned',name:'已放弃'},{id:'failed',name:'挑战失败'},{id:'bought',name:'已购买'}]}},
   onLoad(){
     this.keyboardListener = event => { this.keyboardHeight = Math.max(0, Number(event.height) || 0) }
     // #ifndef H5
@@ -94,7 +94,7 @@ export default {
     money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})},
     back(){uni.switchTab({url:'/pages/tools/index'})},
     categoryIcon(c){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[c]||'＋'},
-    statusText(x){if(x.status==='active'){const left=Math.max(0,Math.ceil((Number(x.created||Date.now())+Number(x.days||7)*86400000-Date.now())/86400000));return left?'冷静期剩余 '+left+' 天':'冷静期已结束'}return x.status==='abandoned'?'已放弃购买 · 已计入省下金额':'已购买 · 未计入省下金额'},
+    statusText(x){if(x.status==='active'){const left=Math.max(0,Math.ceil((Number(x.created||Date.now())+Number(x.days||7)*86400000-Date.now())/86400000));return left?'冷静期剩余 '+left+' 天':'冷静期已结束'}if(x.status==='ended')return '已提前结束';if(x.status==='failed')return '放弃挑战 · 挑战失败';return x.status==='abandoned'?'已放弃购买 · 已计入省下金额':'已购买 · 未计入省下金额'},
     addItem(){const name=String(this.form.name||'').trim(),amount=Number(this.form.amount);state.items.push({id:'item-'+Date.now(),name,amount,category:this.form.category,days:this.form.days,created:Date.now(),status:'active',note:''});persist();this.form={name:'',amount:'',category:'other',days:7};this.closeAdd();uni.showToast({title:'消费计划已添加',icon:'success'})},
     open(item){
       if (item.status === 'active') {
