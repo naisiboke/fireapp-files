@@ -25,6 +25,7 @@
         <button class="mini-button" @tap="previous">‹</button><button class="mini-button main" @tap="togglePlay"><view v-if="playing" class="pause-symbol small"><i></i><i></i></view><text v-else class="play-symbol small">▶</text></button><button class="mini-button" @tap="next">›</button>
       </view>
 
+      <view v-if="tracks.length" class="track-list"><text class="list-title">音乐列表</text><view v-for="(track, index) in tracks" :key="track.id" class="track-row" :class="{ selected: index === currentIndex }" @tap="selectTrack(index)"><text class="track-number">{{ index + 1 }}</text><view class="track-copy"><text>{{ track.name }}</text><text>Fire生活原创音乐</text></view><text class="track-state">{{ index === currentIndex && playing ? '播放中' : '播放' }}</text></view></view>
     </view>
   </view>
 </template>
@@ -33,9 +34,9 @@
 import { getMediaURL } from '@/utils/cloudbase-auth.js'
 
 const FILES = [
-  { name: 'Anticipate', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Anticipate.mp3' },
-  { name: 'Fleetingme', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Fleetingme.mp3' },
-  { name: 'Wind Trail', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Wind Trail.mp3' },
+  { name: 'Anticipate', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Anticipate.mp3', url: '' },
+  { name: 'Fleetingme', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Fleetingme.mp3', url: '' },
+  { name: 'Wind Trail', id: 'cloud://ziyoukedu-d0gyrczqk4de53b87.7a69-ziyoukedu-d0gyrczqk4de53b87-1311439378/music/Wind Trail.mp3', url: '' },
 ]
 
 export default {
@@ -43,9 +44,11 @@ export default {
   computed: { currentTrack() { return this.tracks[this.currentIndex] || { name: 'Fire生活音乐' } }, progress() { return this.duration ? Math.min(100, this.currentTime / this.duration * 100) : 0 } },
   async onLoad() {
     try {
-      const urls = await Promise.all(FILES.map(file => getMediaURL(file.id)))
-      this.tracks = FILES.map((file,index) => ({ ...file, url: urls[index] })).filter(file => file.url)
-      if (!this.tracks.length) throw new Error('请确认云存储允许登录用户读取')
+      const results = await Promise.all(FILES.map(async file => {
+        try { return { ...file, url: file.url || await getMediaURL(file.id) } } catch (error) { return { ...file, url: '' } }
+      }))
+      this.tracks = results.filter(file => file.url)
+      if (!this.tracks.length) throw new Error('暂未找到音乐文件，请先将 MP3 上传到 CloudBase 音乐目录')
       this.audio = uni.createInnerAudioContext()
       this.audio.src = this.tracks[0].url
       this.audio.onTimeUpdate(() => { this.currentTime = this.audio.currentTime; this.duration = this.audio.duration || 0 })
