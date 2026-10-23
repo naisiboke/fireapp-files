@@ -1,4 +1,4 @@
-<template><view class="register-page"><text class="back" @tap="back">‹</text><text class="title">注册绿岛账号</text><text class="sub">注册功能即将开放，先探索你的自由计划。</text><view class="button" @tap="back">返回登录</view></view></template>
+<template><view class="register-page"><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">注册功能即将开放，先探索你的自由计划。</text><view class="button" @tap="back">返回登录</view></view></template>
 <script setup>
 function back(){uni.navigateBack()}
 </script>
