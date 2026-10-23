@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite'
 import * as uniModule from '@dcloudio/vite-plugin-uni'
 import path from 'node:path'
+import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url))
+const cloudbasePackagePath = path.resolve(projectRoot, 'node_modules/@cloudbase/js-sdk')
+const cloudbaseAlias = fs.existsSync(cloudbasePackagePath) ? {} : { '@cloudbase/js-sdk': path.resolve(projectRoot, 'utils/cloudbase-sdk-missing.js') }
 
 // HBuilderX bundles the plugin as a namespace in some versions, while npm exposes a default function.
 const uniFactory = [
@@ -50,6 +53,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': projectRoot,
+      ...cloudbaseAlias,
     },
   },
   css: {
