@@ -1,7 +1,7 @@
 <template>
   <view class="privacy-page">
     <view class="head"><text class="title">隐私政策</text><view class="close" role="button" aria-label="关闭" @tap="close">×</view></view>
-    <view class="content"><text class="h2">FIRE 绿岛隐私政策</text><text class="date">版本：v1.0 · 生效日期：2026-10-07 · 最后更新时间：2026-10-07</text>
+    <view class="content"><text class="h2">FIRE Fire生活隐私政策</text><text class="date">版本：v1.0 · 生效日期：2026-10-07 · 最后更新时间：2026-10-07</text>
       <view v-for="section in sections" :key="section.title" class="section"><text class="h3">{{ section.title }}</text><text class="p">{{ section.text }}</text></view>
       <view class="contact-card"><text class="contact-title">联系方式</text><text class="p">当前项目尚未配置真实客服邮箱、公司名称或办公地址。发布前请在应用配置中补充 PRIVACY_CONTACT_EMAIL、PRIVACY_OPERATOR_NAME 和 PRIVACY_OPERATOR_ADDRESS；在配置完成前，请通过应用商店页面或项目维护入口联系我们。</text></view>
     </view>
@@ -10,8 +10,8 @@
 
 <script>
 export default { data() { return { sections: [
-{ title: '一、隐私政策概述', text: 'FIRE 绿岛帮助你记录生活计划、财务目标、消费选择、成长行动、社区内容和阅读状态。本政策说明我们会处理哪些数据、为什么处理、怎样保存以及你可以如何管理。政策内容以当前实际数据流和已配置的云端服务为准。' },
-{ title: '二、适用范围', text: '本政策适用于 FIRE 绿岛移动端、H5 和小程序版本，以及通过本应用访问的页面、工具和云端接口。若某项功能单独提供补充说明，补充说明与本政策一并适用。' },
+{ title: '一、隐私政策概述', text: 'FIRE Fire生活帮助你记录生活计划、财务目标、消费选择、成长行动、社区内容和阅读状态。本政策说明我们会处理哪些数据、为什么处理、怎样保存以及你可以如何管理。政策内容以当前实际数据流和已配置的云端服务为准。' },
+{ title: '二、适用范围', text: '本政策适用于 FIRE Fire生活移动端、H5 和小程序版本，以及通过本应用访问的页面、工具和云端接口。若某项功能单独提供补充说明，补充说明与本政策一并适用。' },
 { title: '三、我们收集的数据类型', text: '数据包括账户和登录信息、个人资料、财务与资产数据、收入和消费记录、躺平倒计时与自由日目标、记账和拔草计划、英雄传成长数据、社区内容与互动、阅读记录和书架、设备和运行日志，以及你主动选择的设置。我们只处理功能所需的数据。' },
 { title: '四、账户和登录信息', text: '当你登录或使用游客模式时，应用会保存登录状态、账户标识、访问令牌和必要的会话信息。登录凭证用于识别你的账户和保护云端数据；不会把密码以可读形式保存。请不要在昵称、帖子或备注中填写身份证号、银行卡号等敏感信息。' },
 { title: '五、财务、资产、收入和消费数据', text: '你填写的资产、收入、消费、储蓄、收益率、提取率和目标等数据用于计算自由日、目标门槛、进度和诊断结果。财务数据是敏感的个人信息，我们会按账户隔离并通过已配置的云端接口保存。前端本地只保留必要的缓存或离线过渡副本。' },
