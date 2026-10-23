@@ -168,7 +168,7 @@ function invalidate(which) {
   else { goalResult.value = null; calculatedGoal.value = null }
 }
 function toggleDiagnosis() { showDiagnosis.value = !showDiagnosis.value; proNotice.value = false }
-function showProPrompt() { proNotice.value = true }
+function showProPrompt() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1' }) }
 function money(value) { return Number(value).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}) }
 function dateText(date) { return date.toLocaleDateString('zh-CN') }
 function stopClock() { if (timer !== null) clearInterval(timer); timer = null }
