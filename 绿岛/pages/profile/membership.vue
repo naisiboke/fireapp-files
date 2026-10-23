@@ -1,6 +1,6 @@
 <template>
   <view class="member-page">
-    <view class="head"><text class="title">FIRE PRO</text><text class="close" @tap="close">×</text></view>
+    <view class="head"><text class="title">通用会员</text><text class="close" @tap="close">×</text></view>
 
     <view class="hero">
       <text class="kicker">FIRE Fire生活</text>
@@ -27,7 +27,7 @@
     <view v-if="showUpgradeModal" class="modal-mask" @tap="closeUpgrade">
       <view class="upgrade-modal" @tap.stop>
         <text class="modal-kicker">FIRE PRO</text>
-        <text class="modal-title">立即升级</text>
+        <text class="modal-title">开通通用会员</text>
         <text class="modal-price">¥9 <text class="modal-unit">/ 月</text></text>
         <text class="modal-copy">支付功能正在接入，开放后可完成订阅。</text>
         <button class="modal-close" @tap="closeUpgrade">知道了</button>
@@ -47,12 +47,12 @@ export default {
       showUpgradeModal: false,
       membershipStatus: '未开通',
       benefits: [
+        'AI 无限使用（以云端权限为准）',
+        '社区完整访问、发帖与收藏',
+        'FIRE 深度诊断与长期分析',
         '高级目标规划和多方案对比',
         '更完整的财务趋势与年度报告',
-        '自定义任务、提醒和成长统计',
-        '更多主题、模板和专属内容',
-        '行为建议 AI：帮助发现消费和习惯模式',
-        '优先体验新功能',
+        '新功能优先体验',
       ],
     }
   },
