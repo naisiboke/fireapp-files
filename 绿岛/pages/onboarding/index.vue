@@ -6,8 +6,8 @@
     <button class="skip" @tap="skip">跳过引导</button>
     <view class="hope">
       <view class="beacon"></view>
-      <text class="hope-title">在喧嚣中，抓住你的绿岛。</text>
-      <button class="start" @tap="enter">踏上绿岛</button>
+      <text class="hope-title">在喧嚣中，抓住你的Fire生活。</text>
+      <button class="start" @tap="enter">踏上Fire生活</button>
     </view>
     <view v-if="revealing" class="reveal"></view>
   </view>
