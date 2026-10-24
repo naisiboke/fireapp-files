@@ -76,8 +76,8 @@
           <text class="metric-label">本月收入 ›</text>
           <text class="metric-value metric-income">{{ financeConfigured ? '¥ ' + formatAmount(incomeTotal / 100) : '待填写' }}</text>
         </view>
-        <view class="metric">
-          <text class="metric-label">拔草已省下</text>
+        <view class="metric" @tap="goWishlist">
+          <text class="metric-label">拔草已省下 ›</text>
           <text class="metric-value">{{ financeConfigured ? '¥ ' + formatAmount(wishlistSaved) : '待填写' }}</text>
         </view>
       </view>
@@ -205,7 +205,7 @@ export default {
     incomeTotal()  { return LedgerSummary(state, undefined, 'income').total },
     wishlistSaved() {
       return (state.items || [])
-        .filter(x => x.status === 'abandoned' && Number(x.amount) > 0)
+        .filter(x => (x.status === 'abandoned' || x.status === 'ended') && Number(x.amount) > 0)
         .reduce((sum, x) => sum + Number(x.amount), 0)
     },
     wishlistCount() {
@@ -389,6 +389,10 @@ export default {
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item) {
+      if (item.status === 'ended') return '已提前结束（挑战成功）'
+      if (item.status === 'abandoned') return '已放弃购买 · 已计入省下金额'
+      if (item.status === 'failed') return '挑战失败'
+      if (item.status === 'bought') return '已购买'
       const left = Math.max(0, Math.ceil((Number(item.created || Date.now()) + Number(item.days || 7) * 86400000 - Date.now()) / 86400000))
       return left ? '冷静期剩余 ' + left + ' 天' : '冷静期已结束'
     },
