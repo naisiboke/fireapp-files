@@ -425,7 +425,8 @@ export default {
   },
   onHide() { uni.showTabBar({ animation: false }) },
 
-  async onLoad() {
+  async onLoad(options) {
+    if (options && options.tab === 'doing') this.tab = 'doing'
     this.favorites = CS.favorites()
     this.allUGC = this.buildUGCList()
     this.netWorth = CS.netWorth()
