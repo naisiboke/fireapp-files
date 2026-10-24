@@ -78,7 +78,7 @@
         </view>
         <view class="metric" @tap="goWishlist">
           <text class="metric-label">拔草已省下 ›</text>
-          <text class="metric-value">{{ financeConfigured ? '¥ ' + formatAmount(wishlistSaved) : '待填写' }}</text>
+          <text class="metric-value">¥ {{ formatAmount(wishlistSaved) }}</text>
         </view>
       </view>
 
