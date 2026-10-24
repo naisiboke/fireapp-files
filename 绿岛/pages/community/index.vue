@@ -640,7 +640,7 @@ export default {
         timeline: this.validTimeline.map(x => ({ year: x.year, desc: x.title })),
         displayName: '3263***',
         createdAt: Date.now(),
-        status: 'pending',
+        status: 'approved',
       }
       const list = CS.ugc()
       list.unshift(post)
@@ -650,8 +650,11 @@ export default {
       }
       CS.clearDraft()
       this.postDraft = EMPTY_DRAFT()
+      this.allUGC = this.buildUGCList()
+      this.tab = 'doing'
+      this.communityLoaded = 10
       this.modal = null
-      uni.showToast({ title: '已提交，审核通过后展示', icon: 'none' })
+      uni.showToast({ title: '经历已提交并显示在社区', icon: 'none' })
     },
 
     formatNumber(n) {
