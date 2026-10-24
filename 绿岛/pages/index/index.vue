@@ -49,6 +49,7 @@
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
+        <text class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text>
 
         <view class="progress"><view class="progress-fill" :style="{ width: fireResult.progress + '%' }"></view></view>
 
@@ -442,7 +443,7 @@ export default {
 .clock-unit { display: inline-flex; align-items: baseline; gap: 3px; }
 .clock-num { font-size: 22px; font-weight: 500; color: #314b38; letter-spacing: 1.3px; font-variant-numeric: tabular-nums; }
 .clock-label { font-size: 16px; color: #314b38; opacity: 0.72; }
-.countdown-target { display: block; font-size: 12px; color: #687760; line-height: 1.7; margin: 0 0 20px; }
+.countdown-target { display: block; font-size: 12px; color: #687760; line-height: 1.7; margin: 0 0 20px; }\n.inflation-note { display:block; margin-top:-14px; margin-bottom:16px; color:#8a958b; font-size:10px; line-height:1.5; }
 .progress { width: 100%; height: 6px; background: #dfe8db; border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; background: #527059; border-radius: 4px; transition: width 0.4s ease; }
 .freedom-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
