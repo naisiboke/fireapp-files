@@ -37,7 +37,7 @@ function publish(){
  const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'approved'}
  const list=CS.ugc();list.unshift(post)
  if(!CS.saveUGC(list)){uni.showToast({title:'保存失败',icon:'none'});return}
- CS.clearDraft();uni.showToast({title:'经历已提交并显示在社区',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index'}),300)
+ CS.clearDraft();uni.showToast({title:'经历已提交并显示在社区',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),300)
 }
 </script>
 <style lang="scss">
