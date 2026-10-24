@@ -78,6 +78,13 @@
       }
     },
     {
+      "path": "pages/community/manage",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我的社区设置"
+      }
+    },
+    {
       "path": "pages/profile/index",
       "style": {
         "navigationStyle": "custom",
