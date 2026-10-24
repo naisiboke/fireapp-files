@@ -12,7 +12,10 @@
       <view class="progress-card"><text class="progress-title">{{ item.status !== 'active' ? statusLabel : (coolingFinished ? '冷静期已结束' : '冷静期进行中') }}</text><text class="countdown">{{ item.status === 'ended' ? '已提前结束（挑战成功）' : item.status === 'failed' ? '挑战失败' : (coolingFinished ? '可以做出最终决定' : countdownText) }}</text><view class="progress-track"><view class="progress-fill" :style="{width:progress+'%'}"></view></view><text class="progress-tip">{{ item.status === 'ended' ? '你主动结束挑战，已成功留住这笔钱。' : item.status === 'failed' ? '这次挑战已结束，可以重新开始。' : (coolingFinished ? '你已经完成了这次冷静期挑战。' : '先给自己一点时间，再决定是否购买。') }}</text></view>
       <view v-if="item.status === 'active' && coolingFinished" class="actions"><button class="save fire-button-primary" @tap="finish('abandoned')">挑战成功，放弃购买</button><button class="buy fire-button-outline" @tap="finish('bought')">挑战失败，已购买</button></view>
       <view v-if="item.status === 'active' && !coolingFinished" class="actions"><button class="save" @tap="endEarly">提前结束</button><button class="buy" @tap="finish('failed')">放弃挑战（挑战失败）</button></view>
-      <view v-if="item.status !== 'active'" class="actions"><button class="buy" @tap="back">返回列表</button></view>
+      <view class="actions">
+        <button v-if="item.status !== 'active'" class="buy" @tap="back">返回列表</button>
+        <button class="danger" @tap="removeItem">删除此计划</button>
+      </view>
     </scroll-view>
     <view v-else class="missing"><text>拔草项目不存在或已删除</text><button @tap="back">返回列表</button></view>
   </view>
@@ -45,6 +48,24 @@ function endEarly(){
   uni.showToast({title:'已提前结束冷静期',icon:'success'})
   setTimeout(()=>uni.navigateBack(),350)
 }
+function removeItem(){
+  if(!item.value) return
+  uni.showModal({
+    title:'删除消费计划',
+    content:'删除后无法恢复，确定要删除吗？',
+    confirmText:'删除',
+    confirmColor:'#a35d4e',
+    success:({confirm})=>{
+      if(!confirm) return
+      const index=state.items.findIndex(x=>x.id===item.value.id)
+      if(index<0){ uni.showToast({title:'项目不存在',icon:'none'}); return }
+      state.items.splice(index,1)
+      persist()
+      uni.showToast({title:'已删除',icon:'none'})
+      setTimeout(()=>uni.navigateBack(),250)
+    },
+  })
+}
 function finish(status){
   if(!item.value||item.value.status!=='active')return
   const target=state.items.find(x=>x.id===item.value.id)
@@ -66,7 +87,7 @@ onMounted(()=>{
 onUnmounted(()=>{if(timer.value)clearInterval(timer.value)})
 </script>
 <style lang="scss">
-.detail-page{min-height:100vh;background:#f8f9f5;color:#173d35;padding-top:env(safe-area-inset-top);box-sizing:border-box}.detail-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e1e7de}.back,.head-space{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px}.title{font-size:20px;font-weight:600}.detail-scroll{height:calc(100vh - 64px - env(safe-area-inset-top));box-sizing:border-box}.hero-card{margin:24px;padding:28px 20px;border-radius:20px;background:#e5eee4;text-align:center}.hero-icon{margin:auto;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;color:#447e70}.name{display:block;margin-top:16px;font-size:25px;font-weight:700}.status{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:14px;background:#d5e6d6;color:#447e70;font-size:12px}.info-card,.progress-card{margin:0 24px 16px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e1e7de}.info-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef1eb;color:#737e76;font-size:13px}.info-row:last-child{border-bottom:0}.info-row .strong{color:#173d35;font-size:18px;font-weight:600}.progress-title{display:block;font-size:15px;font-weight:600}.countdown{display:block;margin-top:10px;color:#447e70;font-size:22px;font-variant-numeric:tabular-nums}.progress-track{height:7px;margin-top:18px;border-radius:5px;background:#edf0e9;overflow:hidden}.progress-fill{height:100%;background:#527059;border-radius:5px}.progress-tip{display:block;margin-top:12px;color:#737e76;font-size:12px}.actions{padding:0 24px calc(32px + env(safe-area-inset-bottom))}.actions button{width:100%;min-height:50px;margin-top:12px;border-radius:13px;font-size:15px}.save{background:#173d35;color:#fff}.buy{background:#fff;color:#527059;border:1px solid #b8cabb}.missing{text-align:center;padding:80px 24px}.missing button{margin-top:20px;background:#173d35;color:#fff}
+.detail-page{min-height:100vh;background:#f8f9f5;color:#173d35;padding-top:env(safe-area-inset-top);box-sizing:border-box}.detail-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e1e7de}.back,.head-space{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px}.title{font-size:20px;font-weight:600}.detail-scroll{height:calc(100vh - 64px - env(safe-area-inset-top));box-sizing:border-box}.hero-card{margin:24px;padding:28px 20px;border-radius:20px;background:#e5eee4;text-align:center}.hero-icon{margin:auto;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;color:#447e70}.name{display:block;margin-top:16px;font-size:25px;font-weight:700}.status{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:14px;background:#d5e6d6;color:#447e70;font-size:12px}.info-card,.progress-card{margin:0 24px 16px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e1e7de}.info-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef1eb;color:#737e76;font-size:13px}.info-row:last-child{border-bottom:0}.info-row .strong{color:#173d35;font-size:18px;font-weight:600}.progress-title{display:block;font-size:15px;font-weight:600}.countdown{display:block;margin-top:10px;color:#447e70;font-size:22px;font-variant-numeric:tabular-nums}.progress-track{height:7px;margin-top:18px;border-radius:5px;background:#edf0e9;overflow:hidden}.progress-fill{height:100%;background:#527059;border-radius:5px}.progress-tip{display:block;margin-top:12px;color:#737e76;font-size:12px}.actions{padding:0 24px calc(32px + env(safe-area-inset-bottom))}.actions button{width:100%;min-height:50px;margin-top:12px;border-radius:13px;font-size:15px}.save{background:#173d35;color:#fff}.buy{background:#fff;color:#527059;border:1px solid #b8cabb}.danger{background:#fff5f2;color:#a35d4e;border:1px solid #efc8be}.missing{text-align:center;padding:80px 24px}.missing button{margin-top:20px;background:#173d35;color:#fff}
 
 .status.ended{background:#d7eadb;color:#2e7255;font-weight:600}
 .status.failed{background:#f5e0da;color:#a35d4e}
