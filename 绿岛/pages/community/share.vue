@@ -24,7 +24,7 @@ const validTimeline=computed(()=>form.timeline.filter(x=>String(x.year).trim()&&
 const ready=computed(()=>form.tags.length>0&&form.title.trim()&&form.content.trim()&&validTimeline.value.length>0)
 function leaveShare(){
  const pages=getCurrentPages()
- if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/community/index'})})
+ if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/community/index?tab=doing'})})
  else uni.reLaunch({url:'/pages/community/index'})
 }
 function close(){CS.saveDraft(form);leaveShare()}
