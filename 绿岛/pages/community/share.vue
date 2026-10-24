@@ -34,10 +34,10 @@ function removeRow(i){if(form.timeline.length>1)form.timeline.splice(i,1)}
 function saveDraft(){CS.saveDraft(form);uni.showToast({title:'草稿已保存',icon:'none'})}
 function publish(){
  if(!ready.value){uni.showToast({title:'请填写完整内容',icon:'none'});return}
- const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'pending'}
+ const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'approved'}
  const list=CS.ugc();list.unshift(post)
  if(!CS.saveUGC(list)){uni.showToast({title:'保存失败',icon:'none'});return}
- CS.clearDraft();uni.showToast({title:'已提交，审核通过后展示',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index'}),300)
+ CS.clearDraft();uni.showToast({title:'经历已提交并显示在社区',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index'}),300)
 }
 </script>
 <style lang="scss">
