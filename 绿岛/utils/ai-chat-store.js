@@ -6,7 +6,7 @@ function write(value){try{uni.setStorageSync(KEY,JSON.stringify(value));return t
 function mergeChats(...sources){
  const map=new Map()
  sources.flat().filter(x=>x&&x.id).forEach(chat=>map.set(String(chat.id),chat))
- return Array.from(map.values()).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0)).slice(0,50)
+ return Array.from(map.values()).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0))
 }
 export async function loadAIChats(fallback=[]){
  const local=mergeChats(Array.isArray(fallback)?fallback:[],read())
