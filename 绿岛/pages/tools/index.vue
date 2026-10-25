@@ -70,6 +70,7 @@ const TOOL_CATALOG = [
   { route: 'ledger', category: '财务', url: '/pages/ledger/index', icon: 'ledger', color: '#426052', bg: '#edf2e9', name: '记账', desc: '轻松记下每笔消费' },
   { route: 'wishlist', category: '生活', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间' },
   { route: 'hero', category: '成长', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
+  { route: 'personality', category: '成长', url: '/pages/personality/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: '人格测试', desc: '大五人格或 MBTI' },
   { route: 'reading-library', category: '成长', url: '/pages/reading-library/index', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知书库', desc: '打开阅读内容' },
   { route: 'time-ledger', category: '效率', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪' },
   { route: 'ai', category: '效率', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
