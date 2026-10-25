@@ -29,7 +29,8 @@
   </view>
 </template>
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { state, persist } from '@/store/index.js'
 import { savePersonalityResult } from '@/utils/personality-store.js'
 const scale=[{value:1,label:'非常不像我'},{value:2,label:'不太像我'},{value:3,label:'一般'},{value:4,label:'比较像我'},{value:5,label:'非常像我'}]
@@ -74,7 +75,7 @@ function finish(){
  persist()
  savePersonalityResult(type.value,data).catch(error=>console.warn('[personality-cloud]',error))
 }
-onMounted(()=>{const pages=getCurrentPages();const current=pages[pages.length-1];onPageLoad(current?.options||{})})
+onLoad((options) => onPageLoad(options || {}))
 function back(){if(started.value){started.value=false;return}uni.navigateBack()}
 function close(){uni.switchTab({url:'/pages/index/index'})}
 </script>
