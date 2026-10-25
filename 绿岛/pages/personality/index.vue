@@ -24,7 +24,7 @@
   </view>
 </template>
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { state, persist } from '@/store/index.js'
 const scale=[{value:1,label:'非常不像我'},{value:2,label:'不太像我'},{value:3,label:'一般'},{value:4,label:'比较像我'},{value:5,label:'非常像我'}]
 const bigTemplates={
@@ -46,6 +46,7 @@ const resultTitle=computed(()=>result.value?.title||'')
 const resultSummary=computed(()=>result.value?.summary||'')
 const resultRows=computed(()=>result.value?.rows||[])
 function start(next){type.value=next;started.value=true;finished.value=false;index.value=0;answers.value=[];result.value=null}
+function onPageLoad(options){if(options && (options.type==='bigfive' || options.type==='mbti')) start(options.type)}
 function answer(value){answers.value[index.value]=value;if(index.value<questions.value.length-1){index.value++;return}finish()}
 function finish(){
  let data
@@ -63,6 +64,7 @@ function finish(){
  result.value=data;finished.value=true;started.value=false
  state.personality={completed:true,type:type.value,result:data,completedAt:Date.now()};persist()
 }
+onMounted(()=>{const pages=getCurrentPages();const current=pages[pages.length-1];onPageLoad(current?.options||{})})
 function back(){if(started.value){started.value=false;return}uni.navigateBack()}
 function close(){uni.switchTab({url:'/pages/index/index'})}
 </script>
