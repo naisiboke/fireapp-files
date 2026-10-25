@@ -69,7 +69,7 @@
       <view class="group-menu">
         <view class="menu-item" @tap="copyContact">
           <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('wechat')" mode="aspectFit" /></view>
-          <view class="menu-copy"><text class="menu-name">联系客服微信</text><text class="menu-sub">naisiboke520 · 实用建议采纳可获 1 个月会员</text></view>
+          <view class="menu-copy"><text class="menu-name">获取 VIP 兑换码</text><text class="menu-sub">微信：naisiboke520 · 添加后领取 VIP 兑换码</text></view>
           <text class="chevron">›</text>
         </view>
       </view>
@@ -172,7 +172,7 @@ export default {
       uni.setClipboardData({
         data: 'naisiboke520',
         success: () => uni.showToast({ title: '微信号已复制', icon: 'none' }),
-        fail: () => uni.showModal({ title: '联系客服微信', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
+        fail: () => uni.showModal({ title: '获取 VIP 兑换码', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
       })
     },
 
