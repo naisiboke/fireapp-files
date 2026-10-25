@@ -68,7 +68,7 @@
       <text class="group-title">反馈问题</text>
       <view class="group-menu">
         <view class="menu-item" @tap="copyContact">
-          <view class="menu-icon"><text class="contact-icon">✉</text></view>
+          <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('wechat')" mode="aspectFit" /></view>
           <view class="menu-copy"><text class="menu-name">联系客服微信</text><text class="menu-sub">naisiboke520 · 实用建议采纳可获 1 个月会员</text></view>
           <text class="chevron">›</text>
         </view>
@@ -110,6 +110,8 @@ const ICONS = {
     'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
   shield:
     'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  wechat:
+    'M12 4C6.5 4 2 7.5 2 12c0 2.2 1.1 4.2 3 5.6L4 21l3.8-1.9c1.3.5 2.7.8 4.2.8 5.5 0 10-3.5 10-7.9S17.5 4 12 4zM8 11h2M14 11h2M8 14h8',
 }
 
 function svgUri(svg) {
