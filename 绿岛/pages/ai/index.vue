@@ -16,7 +16,9 @@
         <text class="requirement-state">{{ personalityReady ? '✓ 已完成' : '任选一个' }}</text>
       </view>
       <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">大五人格 · 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">MBTI · 100题</button></view>
-      <view v-if="financeReady && personalityReady" class="unlock-note">两项资料已完成，正在解锁 AI…</view>
+      <view class="requirement" :class="{ complete: spendingReady }"><view class="requirement-copy"><text class="requirement-title">③ 消费与储蓄数据</text><text class="requirement-sub">{{ spendingReady ? '已完成，可以让 AI 结合你的生活成本分析' : '填写当前资产、每月收入、每月支出和每月存入' }}</text></view><text class="requirement-state">{{ spendingReady ? '✓ 已完成' : '未完成' }}</text></view>
+      <button v-if="!spendingReady" class="setup-button" @tap="goCalculator">去填写消费与储蓄</button>
+      <view v-if="financeReady && personalityReady && spendingReady" class="unlock-note">三项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
       <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">可结合你的生活习惯和人格报告提供建议，也可以讨论伴侣相处与匹配参考；不做绝对判断，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText() }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
@@ -40,7 +42,7 @@ import { isMembershipActive } from '@/utils/membership.js'
 import { loadAIChats, saveAIChats } from '@/utils/ai-chat-store.js'
 
 export default {
-  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
+  data() { return { state, ready: false, financeReady: false, personalityReady: false, spendingReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
   async onLoad() {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
@@ -51,7 +53,7 @@ export default {
   },
   onShow() { this.syncPrerequisites() },
   methods: {
-    syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.ready = this.financeReady && this.personalityReady },
+    syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.spendingReady = Number(f.assets)>=0 && Number(f.income)>0 && Number(f.expense)>0 && Number(f.monthlyDeposit)>0; this.ready = this.financeReady && this.personalityReady && this.spendingReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
     todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
