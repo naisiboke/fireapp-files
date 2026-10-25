@@ -22,9 +22,9 @@
     <text class="section-title">联系客服与反馈</text>
     <view class="contact-card">
       <view class="contact-copy">
-        <text class="contact-title">联系站长反馈问题</text>
+        <text class="contact-title">获取 VIP 兑换码</text>
         <text class="contact-sub">微信号：naisiboke520</text>
-        <text class="contact-reward">反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员</text>
+        <text class="contact-reward">添加微信 naisiboke520，领取 VIP 兑换码</text>
       </view>
       <view class="contact-button" @tap="copyContact"><text>复制微信号</text></view>
     </view>
@@ -105,7 +105,7 @@ export default {
       uni.setClipboardData({
         data: 'naisiboke520',
         success: () => uni.showToast({ title: '微信号已复制', icon: 'none' }),
-        fail: () => uni.showModal({ title: '联系客服微信', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
+        fail: () => uni.showModal({ title: '获取 VIP 兑换码', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
       })
     },
     openAbout() { uni.showModal({ title: '关于 Fire生活', content: '记录自由计划、消费行动和长期生活选择。', showCancel: false }) },
