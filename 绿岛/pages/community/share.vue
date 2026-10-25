@@ -15,7 +15,7 @@
   </view>
 </template>
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { COMMUNITY_POST_TAGS as tags } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
 import { reviewCommunityPost } from '@/utils/community-review.js'
