@@ -1,6 +1,7 @@
 <template>
   <view class="ai-page">
-    <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
+    <view class="head"><view class="head-left"><text class="back" @tap="back">‹</text><text class="history-toggle" @tap="drawerOpen=true">☰</text></view><text class="title">问 AI</text><view class="head-right"><text class="new-chat" @tap="newChat">＋</text><text class="close" @tap="close">×</text></view></view>
+    <view v-if="drawerOpen" class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><text @tap="drawerOpen=false">×</text></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
       <text class="setup-title">完成两项资料，解锁 AI</text>
@@ -24,7 +25,7 @@
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
       </scroll-view>
       <view class="composer">
-        <button class="countdown-button" @tap="sendCountdown">发送我的倒计时</button>
+        <view class="context-actions"><button class="countdown-button" @tap="sendCountdown">发送我的倒计时</button><button class="profile-button" @tap="sendProfile">发送我的个人资料</button></view>
         <view class="input-row"><input v-model="question" class="question" confirm-type="send" placeholder="输入你想聊的习惯" placeholder-class="placeholder" @confirm="send" /><button class="send" :disabled="loading" @tap="send">发送</button></view>
       </view>
     </view>
@@ -36,19 +37,19 @@ import { state, persist } from '@/store/index.js'
 import { hasValidFinance, freedomResult } from '@/utils/finance-plan.js'
 import { askBehaviorAI } from '@/utils/api-service.js'
 import { isMembershipActive } from '@/utils/membership.js'
+import { loadAIChats, saveAIChats } from '@/utils/ai-chat-store.js'
 
 export default {
-  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0 } },
-  onLoad() {
+  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
+  async onLoad() {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
     this.syncPrerequisites()
-    if (this.ready) {
-      this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时，陪你一起观察消费和生活习惯。' }]
-      this.sendCountdown()
-    }
+    this.chats = await loadAIChats()
+    if (this.chats.length) this.selectChat(this.chats[0].id)
+    else this.newChat()
   },
-  onShow() { this.syncPrerequisites(); if (this.ready && !this.messages.length) { this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时和人格偏好，陪你一起观察消费和生活习惯。' }]; this.sendCountdown() } },
+  onShow() { this.syncPrerequisites() },
   methods: {
     syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
