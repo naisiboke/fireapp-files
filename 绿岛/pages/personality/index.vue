@@ -65,9 +65,9 @@ function finish(){
   const rows=Object.keys(names).map(k=>{const qs=questions.value.filter(q=>q.dimension===k);const score=Math.round(qs.reduce((sum,q,i)=>{const raw=answers.value[questions.value.indexOf(q)]||3;return sum+(q.reverse?6-raw:raw)},0)/(qs.length*5)*100);return{name:names[k],score,copy:copies[k]}})
   data={title:'你的大五人格画像',summary:'这是你的行为倾向参考，不是固定标签。你可以根据高分和低分调整生活方式。',rows}
  }else{
-  const axes=[['EI','E','外向','内向'],['SN','S','实感','直觉'],['TF','T','思考','情感'],['JP','J','判断','感知']]
-  const rows=axes.map(([axis,pos,a,b])=>{const qs=questions.value.filter(q=>q.axis===axis);const score=Math.round(qs.reduce((sum,q)=>sum+((answers.value[questions.value.indexOf(q)]||3)-3),0 )/(qs.length*2)*50+50);return{name:a+' / '+b,score,copy:'这一维度反映你在'+a+'与'+b+'之间的偏好，分数越高越偏向'+a+'。'}})
-  const letters=rows.map((r,i)=>r.score>=50?axes[i][1]:axes[i][3]).join('')
+  const axes=[['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']]
+  const rows=axes.map(([axis,pos,neg])=>{const qs=questions.value.filter(q=>q.axis===axis);const score=Math.round(qs.reduce((sum,q)=>sum+((answers.value[questions.value.indexOf(q)]||3)-3),0 )/(qs.length*2)*50+50);return{name:axis,score,copy:'该维度用于显示你的偏好倾向，分数仅作自我理解参考。'}})
+  const letters=rows.map((r,i)=>r.score>=50?axes[i][1]:axes[i][2]).join('')
   const profiles={
     INTJ:['建筑师','擅长独立思考、搭建长期方案并持续优化系统。你通常先看结构和逻辑，再决定是否行动。适合把宏大目标拆成阶段计划，同时给自己留出与人沟通和休息的空间。'],
     INTP:['逻辑学家','喜欢追问原理、分析可能性和寻找更准确的解释。你适合探索复杂问题，但要警惕一直研究而迟迟不开始。用小步行动把想法变成可验证的结果。'],
