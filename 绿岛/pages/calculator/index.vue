@@ -174,7 +174,7 @@ async function generateDiagnosis() {
     const result = await askBehaviorAI({ question, finance: state.finance, countdown: r.date ? '预计退休日期：'+dateText(r.date)+'；剩余约'+(r.years == null ? '100年以上或暂不可达' : r.years+'年') : '当前计划暂不可达', personality: state.personalityTests || {} })
     const answer = result && (result.reply || result.message || result.content)
     if (!answer) throw new Error('AI 没有返回解析')
-    aiDiagnosis.value = String(answer).replace(/\\*\\*/g,'').trim().slice(0,1200)
+    aiDiagnosis.value = String(answer).replace(/\*\*/g,'').trim().slice(0,1200)
   } catch (error) {
     aiDiagnosis.value = 'AI 解析暂时失败：' + (error.message || '请稍后重试')
   } finally { aiLoading.value = false }
