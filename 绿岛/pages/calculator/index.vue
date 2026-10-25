@@ -81,12 +81,7 @@
           <text>Pro 诊断需要会员权限，开通后即可查看完整分析。</text>
           <button class="secondary" @click="proNotice = false">知道了</button>
         </view>
-        <view v-if="showDiagnosis && isProMember" class="diagnosis">
-          <view v-for="section in diagnosisSections" :key="section.title" class="diagnosis-section">
-            <text class="diagnosis-title">{{ section.title }}</text>
-            <text class="diagnosis-copy">{{ section.body }}</text>
-          </view>
-        </view>
+        <view v-if="showDiagnosis && isProMember" class="diagnosis"><view v-if="aiDiagnosis" class="ai-diagnosis">{{ aiDiagnosis }}</view><view v-else class="ai-diagnosis loading">正在生成 AI 解析…</view></view>
       </template>
       <button class="secondary" @click="goHome">返回首页</button>
       <text class="formula">固定收益和存入假设，不计税费与通胀。</text>
@@ -102,8 +97,9 @@ import { state, refreshFinance, persistNow } from '@/store/index.js'
 import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts } from '@/utils/engine.js'
 import { validateFireForm, validateGoalForm, hasValidFinance, freedomResult, createFreedomPlan } from '@/utils/finance-plan.js'
 import { isMembershipActive } from '@/utils/membership.js'
+import { askBehaviorAI } from '@/utils/api-service.js'
 
-const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false)
+const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false), aiDiagnosis = ref(''), aiLoading = ref(false)
 const fire = reactive({assets:'',monthlyDeposit:'',retirementExpense:'',rate:'4',withdrawal:'4'})
 const goal = reactive({name:'',assets:'',amount:'',monthlyDeposit:'',expectedMonths:'',rate:'4'})
 const fireFields = [
@@ -164,7 +160,25 @@ function invalidate(which) {
   if (which === 'fire') fireResult.value = null
   else { goalResult.value = null; calculatedGoal.value = null }
 }
-function toggleDiagnosis() { showDiagnosis.value = !showDiagnosis.value; proNotice.value = false }
+function toggleDiagnosis() {
+  if (!isProMember.value) { showDiagnosis.value = true; proNotice.value = true; return }
+  showDiagnosis.value = !showDiagnosis.value; proNotice.value = false
+  if (showDiagnosis.value && !aiDiagnosis.value) generateDiagnosis()
+}
+async function generateDiagnosis() {
+  if (aiLoading.value || !fireResult.value) return
+  aiLoading.value = true; aiDiagnosis.value = ''
+  const r = fireResult.value
+  const question = '请根据我的 FIRE 退休倒计时和财务数据，生成一段约500字以内的 VIP 专属解析。只讲结论、关键问题和下一步行动，不讲空泛背景，不绕弯。请说明目标资产门槛、预计退休时间、当前进度、每月存入对结果的影响、最需要优先调整的一到三件事，并明确风险。不要承诺收益，不要编造数据。'
+  try {
+    const result = await askBehaviorAI({ question, finance: state.finance, countdown: r.date ? '预计退休日期：'+dateText(r.date)+'；剩余约'+(r.years == null ? '100年以上或暂不可达' : r.years+'年') : '当前计划暂不可达', personality: state.personalityTests || {} })
+    const answer = result && (result.reply || result.message || result.content)
+    if (!answer) throw new Error('AI 没有返回解析')
+    aiDiagnosis.value = String(answer).replace(/\\*\\*/g,'').trim().slice(0,1200)
+  } catch (error) {
+    aiDiagnosis.value = 'AI 解析暂时失败：' + (error.message || '请稍后重试')
+  } finally { aiLoading.value = false }
+}
 function showProPrompt() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1' }) }
 function money(value) { return Number(value).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}) }
 function dateText(date) { const d = new Date(date); return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日' }
@@ -317,7 +331,7 @@ button[disabled] { opacity:.5; }
 .progress-fill { height:100%; border-radius:6px; background:#527059; }
 .result-row { display:flex; justify-content:space-between; gap:12px; padding:10px 0; font-size:13px; line-height:1.7; }
 .result-row text:last-child { text-align:right; }
-.diagnosis { margin-top:14px; border-top:1px solid #e7eee7; }
+.diagnosis { margin-top:14px; border-top:1px solid #e7eee7; }.ai-diagnosis{padding:16px 0;color:#426052;font-size:14px;line-height:1.9;white-space:pre-wrap}.ai-diagnosis.loading{color:#71807a}
 .pro-lock-card,.pro-notice { margin-top:14px; padding:16px; border:1px solid #dce7db; border-radius:12px; background:#f2f7ef; }
 .pro-lock-title { display:block; color:#173d35; font-size:16px; font-weight:700; }
 .pro-lock-copy,.pro-lock-badge { display:block; margin-top:7px; color:#71807a; font-size:13px; line-height:1.6; }
