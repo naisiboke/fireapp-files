@@ -398,8 +398,12 @@ export default {
       return left ? '冷静期剩余 ' + left + ' 天' : '冷静期已结束'
     },
     goTask(t) {
-      if (t.id === 'ledger') uni.navigateTo({ url: '/pages/ledger/index' })
-      else uni.showToast({ title: '这个任务待开发', icon: 'none' })
+      if (t.id === 'ledger') return uni.navigateTo({ url: '/pages/ledger/index' })
+      if (t.id === 'assets') return uni.navigateTo({ url: '/pages/assets/index' })
+      if (t.id === 'wishlist') return uni.navigateTo({ url: '/pages/wishlist/index' })
+      if (t.id === 'read') return uni.navigateTo({ url: '/pages/reading-library/index' })
+      if (t.id === 'savings') return uni.navigateTo({ url: '/pages/calculator/index?mode=goal' })
+      uni.showToast({ title: '这个任务待开发', icon: 'none' })
     },
   },
 }
