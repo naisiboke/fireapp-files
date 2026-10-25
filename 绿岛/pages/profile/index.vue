@@ -43,6 +43,11 @@
           </view>
           <text class="chevron">›</text>
         </view>
+        <view class="menu-item" @tap="goPersonality">
+          <view class="menu-icon"><text class="contact-icon">◎</text></view>
+          <view class="menu-copy"><text class="menu-name">人格测试</text><text class="menu-sub">完成大五人格或 MBTI，解锁 AI 个性化建议</text></view>
+          <text class="chevron">›</text>
+        </view>
       </view>
     </view>
 
@@ -154,6 +159,13 @@ export default {
     openPro() {
       uni.navigateTo({ url: '/pages/profile/membership' })
     },
+    goPersonality() {
+      uni.navigateTo({
+        url: '/pages/personality/index',
+        fail: () => uni.showToast({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }),
+      })
+    },
+
     copyContact() {
       uni.setClipboardData({
         data: 'naisiboke520',
