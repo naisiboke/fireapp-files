@@ -69,7 +69,7 @@ export default {
       persist()
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
-    goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + kind }) },
+    goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + encodeURIComponent(kind || ''), fail: () => uni.showToast({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }) }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
