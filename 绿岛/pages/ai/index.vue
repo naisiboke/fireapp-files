@@ -83,7 +83,7 @@ export default {
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
       const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
-    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return this.countdownText()+'；'+ '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti)) },
+    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return this.countdownText()+'；'+ '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti))+'；MBTI详细报告：'+(p.mbti&&p.mbti.detail?p.mbti.detail:'') },
     sendContext(text) { if(!this.ready)return this.goCalculator(); if(!text||this.loading)return; this.question=text; this.send() },
     sendCountdown() { this.sendContext(this.countdownText()) },
     sendProfile() { this.sendContext(this.profileText()) },
