@@ -34,7 +34,7 @@
 
       <view v-for="(post, i) in visiblePosts" :key="post.id" class="card" :style="{ animationDelay: (i * 40) + 'ms' }">
         <view class="card-head">
-          <text class="tag">{{ post.category }}</text>
+          <view class="tag-wrap"><text class="tag">{{ post.category }}</text><text v-if="!isOfficial(post)" class="journey-tag">{{ post.journey === 'settled' ? '已上岸' : '在路上' }}</text></view>
           <view class="heart" @tap="toggleFavorite(post)">
             <text class="heart-icon" :class="{ saved: isFav(post.id) }">{{ isFav(post.id) ? '♥' : '♡' }}</text>
           </view>
@@ -1050,4 +1050,6 @@ export default {
   margin-top: 8px;
 }
 @media (prefers-reduced-motion: reduce) { .post-backdrop { animation: none; } }
+
+.tag-wrap{display:flex;align-items:center;gap:6px}.journey-tag{font-size:11px;padding:4px 7px;border-radius:6px;background:#e4f0e4;color:#39705b}
 </style>
