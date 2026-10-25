@@ -33,10 +33,25 @@ exports.main = async (event) => {
       return json(200, { users: users.length, members: users.filter(x => x.membership && (x.membership.active || x.membership.status === 'active')).length, communityPosts: posts.length, aiChats: collections.filter(x => x.collection === 'ai-chats' || x.name === 'ai-chats').length })
     }
     if (method === 'GET' && path.endsWith('/users')) return json(200, { items: await list('user_states', 200) })
-    if (method === 'GET' && path.endsWith('/community/posts')) return json(200, { items: await list('community_posts', 200) })
+    if (method === 'GET' && path.endsWith('/community/posts')) {
+      const rows = await list('user_collections', 500)
+      const posts = []
+      rows.filter(x => x.collection === 'ugc' || x.name === 'ugc' || x.key === 'ugc').forEach(row => {
+        const items = Array.isArray(row.items) ? row.items : (Array.isArray(row.value) ? row.value : [])
+        items.forEach(item => posts.push({ ...item, ownerId: row.userId || row._openid || '' }))
+      })
+      return json(200, { items: posts })
+    }
     if (method === 'GET' && path.endsWith('/ai/chats')) {
-      const all = await list('user_collections', 500)
-      return json(200, { items: all.filter(x => x.collection === 'ai-chats' || x.name === 'ai-chats') })
+      const rows = await list('user_collections', 500)
+      const chats = []
+      rows.filter(x => x.collection === 'ai-chats' || x.name === 'ai-chats' || x.key === 'ai-chats').forEach(row => {
+        const items = Array.isArray(row.items) ? row.items : (Array.isArray(row.value) ? row.value : [])
+        items.forEach(item => chats.push({ ...item, ownerId: row.userId || row._openid || '' }))
+      })
+      const states = await list('user_states', 500)
+      states.forEach(row => (row.aiChats || []).forEach(item => chats.push({ ...item, ownerId: row._openid || row.userId || row._id || '' })))
+      return json(200, { items: chats })
     }
     const match = path.match(/\/community\/posts\/([^/]+)$/)
     if (method === 'DELETE' && match) {
