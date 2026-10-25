@@ -173,9 +173,17 @@ export async function hydrateFromServer() {
   try {
     const remote = await fetchUserState()
     if (remote && typeof remote === 'object') {
+      const localMembership = state.membership && typeof state.membership === 'object' ? { ...state.membership } : null
+      const localWasActive = !!(localMembership && (localMembership.active === true || localMembership.status === 'active' || localMembership.pro === true))
+      const remoteMembership = remote.membership && typeof remote.membership === 'object' ? remote.membership : null
+      const remoteIsActive = !!(remoteMembership && (remoteMembership.active === true || remoteMembership.status === 'active' || remoteMembership.pro === true))
       applySaved(remote)
+      // 云端会员接口尚未同步或返回旧快照时，保留本地已确认会员，并立即回写云端。
+      if (localWasActive && !remoteIsActive) state.membership = { ...state.membership, ...localMembership, active: true, status: 'active' }
       HeroDay(state)
-      writeLocal(serializableState())
+      const snapshot = serializableState()
+      writeLocal(snapshot)
+      if (localWasActive && !remoteIsActive) syncStateToServer(snapshot)
       state.cloudSync = { status: 'synced', message: '已从云端读取' }
       return { configured: true, loaded: true }
     }
