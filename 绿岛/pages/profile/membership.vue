@@ -62,9 +62,14 @@ export default {
     try {
       const remote = await fetchMembership()
       if (remote && typeof remote === 'object') {
-        state.membership = { ...state.membership, ...remote }
-        persist()
-        this.membershipStatus = membershipText(state)
+        const local = state.membership || {}
+        const remoteActive = remote.active === true || remote.status === 'active' || remote.pro === true
+        const localActive = local.active === true || local.status === 'active' || local.pro === true
+        if (remoteActive || !localActive) {
+          state.membership = { ...local, ...remote }
+          persist()
+          this.membershipStatus = membershipText(state)
+        }
       }
     } catch (error) {
       // 后端尚未部署会员接口时，保留本地状态，不阻断页面使用。
