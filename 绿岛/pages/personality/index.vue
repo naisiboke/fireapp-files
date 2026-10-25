@@ -26,6 +26,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { state, persist } from '@/store/index.js'
+import { savePersonalityResult } from '@/utils/personality-store.js'
 const scale=[{value:1,label:'非常不像我'},{value:2,label:'不太像我'},{value:3,label:'一般'},{value:4,label:'比较像我'},{value:5,label:'非常像我'}]
 const bigTemplates={
  openness:['我喜欢接触陌生的观点和知识','我会主动尝试新的生活方式','我常常从不同角度思考问题','艺术、音乐或文字容易引起我的兴趣','我喜欢想象未来的各种可能','我愿意改变原有的做法','我对抽象问题有耐心','我会把日常经历联想到更大的主题','我喜欢探索不熟悉的地方','我能欣赏与自己不同的审美'],
@@ -62,7 +63,10 @@ function finish(){
   data={title:'你的 MBTI 参考类型：'+letters,summary:'MBTI 是偏好模型，不是能力诊断。结果用于自我理解，建议结合真实经历判断。',rows}
  }
  result.value=data;finished.value=true;started.value=false
- state.personality={completed:true,type:type.value,result:data,completedAt:Date.now()};persist()
+ state.personalityTests={...(state.personalityTests||{}),[type.value]:data}
+ state.personality={completed:true,type:type.value,result:data,completedAt:Date.now()}
+ persist()
+ savePersonalityResult(type.value,data).catch(error=>console.warn('[personality-cloud]',error))
 }
 onMounted(()=>{const pages=getCurrentPages();const current=pages[pages.length-1];onPageLoad(current?.options||{})})
 function back(){if(started.value){started.value=false;return}uni.navigateBack()}
