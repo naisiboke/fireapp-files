@@ -113,7 +113,7 @@ export default {
       this.loading = true
       const startedAt = Date.now()
       try {
-        const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: { bigFive: state.personalityTests && state.personalityTests.bigfive ? state.personalityTests.bigfive : null, mbti: state.personalityTests && state.personalityTests.mbti ? state.personalityTests.mbti : null } })
+        const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: { bigFive: state.personalityTests && state.personalityTests.bigfive ? state.personalityTests.bigfive : '暂未填写', mbti: state.personalityTests && state.personalityTests.mbti ? state.personalityTests.mbti : '暂未填写' } })
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
         const elapsed = Date.now() - startedAt
