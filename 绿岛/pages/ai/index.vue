@@ -103,6 +103,20 @@ export default {
       return text.length > 420 ? text.slice(0, 420) + '…' : text
     },
 
+    typeAnswer(text) {
+      return new Promise(resolve => {
+        const message={role:'assistant',text:''}
+        this.messages.push(message)
+        let index=0
+        const step=()=>{
+          if(index>=text.length){this.scrollToLast();resolve();return}
+          message.text += text.charAt(index++)
+          this.scrollToLast()
+          setTimeout(step, Math.max(16, text.length>240 ? 12 : 26))
+        }
+        step()
+      })
+    },
     async send() {
       if (!this.isMember && this.freeUsed >= 3) {
         uni.showToast({ title: '今日免费额度已用完，请升级会员继续使用', icon: 'none', duration: 2600 })
@@ -123,7 +137,7 @@ export default {
         if (!answer) throw new Error('AI 暂时没有返回建议')
         const elapsed = Date.now() - startedAt
         if (elapsed < 1200) await new Promise(resolve => setTimeout(resolve, 1200 - elapsed))
-        this.messages.push({ role: 'assistant', text: this.formatAnswer(String(answer)) })
+        await this.typeAnswer(this.formatAnswer(String(answer)))
         this.saveCurrentChat()
       } catch (error) {
         this.messages.push({ role: 'assistant', text: error.message || 'AI 暂时无法回答，请稍后再试' })
