@@ -16,8 +16,8 @@
         <text class="requirement-state">{{ personalityReady ? '✓ 已完成' : '任选一个' }}</text>
       </view>
       <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">大五人格 · 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">MBTI · 100题</button></view>
-      <view class="requirement" :class="{ complete: spendingReady }"><view class="requirement-copy"><text class="requirement-title">③ 消费与储蓄数据</text><text class="requirement-sub">{{ spendingReady ? '已完成，可以让 AI 结合你的生活成本分析' : '填写当前资产、每月收入、每月支出和每月存入' }}</text></view><text class="requirement-state">{{ spendingReady ? '✓ 已完成' : '未完成' }}</text></view>
-      <button v-if="!spendingReady" class="setup-button" @tap="goCalculator">去填写消费与储蓄</button>
+      <view class="requirement" :class="{ complete: spendingReady }"><view class="requirement-copy"><text class="requirement-title">③ 消费与储蓄数据</text><text class="requirement-sub">{{ spendingReady ? '已完成，可以让 AI 结合你的真实记账分析' : '在记账中记录本月收入和支出' }}</text></view><text class="requirement-state">{{ spendingReady ? '✓ 已完成' : '未完成' }}</text></view>
+      <button v-if="!spendingReady" class="setup-button" @tap="goLedger">去填写本月记账</button>
       <view v-if="financeReady && personalityReady && spendingReady" class="unlock-note">三项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
@@ -37,6 +37,7 @@
 <script>
 import { state, persist } from '@/store/index.js'
 import { hasValidFinance, freedomResult } from '@/utils/finance-plan.js'
+import { LocalDay } from '@/utils/engine.js'
 import { askBehaviorAI } from '@/utils/api-service.js'
 import { isMembershipActive } from '@/utils/membership.js'
 import { loadAIChats, saveAIChats } from '@/utils/ai-chat-store.js'
@@ -53,7 +54,7 @@ export default {
   },
   onShow() { this.syncPrerequisites() },
   methods: {
-    syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.spendingReady = Number(f.assets)>=0 && Number(f.income)>0 && Number(f.expense)>0 && Number(f.monthlyDeposit)>0; this.ready = this.financeReady && this.personalityReady && this.spendingReady },
+    syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); const month=LocalDay().slice(0,7); const ledger=Array.isArray(state.ledger)?state.ledger:[]; const monthRows=ledger.filter(x=>String(x.date||'').slice(0,7)===month); const incomeTotal=monthRows.filter(x=>x.type==='income').reduce((n,x)=>n+Number(x.cents||0),0); const expenseTotal=monthRows.filter(x=>x.type==='expense').reduce((n,x)=>n+Number(x.cents||0),0); this.spendingReady = incomeTotal>0 && expenseTotal>0; this.ready = this.financeReady && this.personalityReady && this.spendingReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
     todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
@@ -71,6 +72,7 @@ export default {
       persist()
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
+    goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + encodeURIComponent(kind || ''), fail: () => uni.showToast({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }) }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
