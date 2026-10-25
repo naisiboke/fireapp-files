@@ -20,7 +20,7 @@
     </view>
     <view v-else class="chat-shell">
       <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">只讨论消费、记录和生活习惯，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText() }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
-      <scroll-view class="messages" scroll-y :scroll-into-view="lastMessageId">
+      <scroll-view class="messages" scroll-y show-scrollbar="false" :scroll-into-view="lastMessageId">
         <view v-for="(message, index) in messages" :id="'message-' + index" :key="index" class="message-row" :class="message.role"><view class="message-bubble">{{ message.text }}</view></view>
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
       </scroll-view>
@@ -158,4 +158,7 @@ export default {
 .head-left,.head-right{display:flex;align-items:center;gap:10px}.history-toggle,.new-chat{font-size:22px;color:#173d35}.chat-drawer{position:fixed;z-index:40;left:0;top:calc(58px + env(safe-area-inset-top));bottom:0;width:78%;max-width:320px;background:#f7fbf6;border-right:1px solid #dce9dc;box-shadow:8px 0 24px rgba(23,61,53,.12);padding:14px;box-sizing:border-box}.drawer-head{display:flex;justify-content:space-between;font-size:17px;font-weight:700}.new-drawer{margin-top:16px;padding:12px;border-radius:11px;background:#e3f0df;color:#315f4a;font-size:13px}.chat-list{height:calc(100% - 92px);margin-top:12px}.chat-item{padding:12px;border-radius:10px;margin-bottom:6px}.chat-item.active{background:#e3f0df}.chat-item text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-item text:first-child{font-size:13px;color:#243830}.chat-item text:last-child{margin-top:4px;font-size:10px;color:#8b9489}.chat-empty{display:block;padding:30px 10px;text-align:center;color:#8b9489;font-size:12px}.context-actions{display:flex;justify-content:flex-start;gap:8px;margin:0 0 7px}.context-actions button{flex:0 0 auto;min-width:112px;margin:0;height:34px;padding:0 10px;font-size:12px}.profile-button{border:1px solid #b9d4bc;border-radius:16px;background:#e3f0df;color:#39705b}
 
 .chat-toolbar{display:flex;gap:8px;margin:0 18px 8px}.chat-toolbar view{padding:8px 11px;border-radius:10px;background:#fff;border:1px solid #dce9dc;color:#39705b;font-size:12px}.chat-toolbar view:last-child{background:#e3f0df}.context-actions{justify-content:flex-start}.context-actions .profile-button{min-width:150px}
+
+/* 聊天区采用无滚动条布局，底部输入区固定 */
+.chat-shell{height:calc(100vh - 58px - env(safe-area-inset-top));overflow:hidden}.messages{height:0;padding-bottom:120px;scrollbar-width:none;-ms-overflow-style:none}.messages::-webkit-scrollbar{width:0;height:0;display:none}.composer{position:fixed;z-index:30;left:0;right:0;bottom:0;padding:8px 12px calc(10px + env(safe-area-inset-bottom));box-sizing:border-box}
 </style>
