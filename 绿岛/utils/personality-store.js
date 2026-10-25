@@ -1,4 +1,4 @@
-import { isApiConfigured, saveUserCollection } from './api-service.js'
+import { isApiConfigured, saveUserCollection, fetchUserCollection } from './api-service.js'
 const KEY='fire_personality_history_v1'
 function read(){try{const value=uni.getStorageSync(KEY);return Array.isArray(value)?value:[]}catch(e){return[]}}
 function write(value){try{uni.setStorageSync(KEY,JSON.stringify(value));return true}catch(e){return false}}
@@ -9,4 +9,10 @@ export async function savePersonalityResult(type,result){
   write(list)
   if(isApiConfigured()) await saveUserCollection('personality-tests',list)
   return record
+}
+export async function hydratePersonalityHistory(){
+  if(!isApiConfigured()) return []
+  const remote=await fetchUserCollection('personality-tests')
+  if(Array.isArray(remote)){write(remote);return remote}
+  return read()
 }
