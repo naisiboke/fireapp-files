@@ -90,7 +90,7 @@ export default {
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
     formatAnswer(value) {
       const lineBreak = String.fromCharCode(10)
-      let text = String(value || '').replace(/\*\*/g, '').replace(/__/g, '').trim()
+      let text = String(value || '').replace(/[\uFFFD�]+/g, '').replace(/\?{2,}/g, '').replace(/\*\*/g, '').replace(/__/g, '').trim()
       text = text.replace(/[0-9]+[.)、][ \t]*/g, lineBreak)
       text = text.split('•').join('')
       const sentences = text
