@@ -71,6 +71,7 @@ export default {
     goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + kind }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
+    personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
     countdownText() {
       const result = freedomResult(state)
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
@@ -113,7 +114,7 @@ export default {
       this.loading = true
       const startedAt = Date.now()
       try {
-        const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: { bigFive: state.personalityTests && state.personalityTests.bigfive ? state.personalityTests.bigfive : '暂未填写', mbti: state.personalityTests && state.personalityTests.mbti ? state.personalityTests.mbti : '暂未填写' } })
+        const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: this.personalityPayload() })
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
         const elapsed = Date.now() - startedAt
