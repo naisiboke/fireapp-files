@@ -1,5 +1,32 @@
+import { isApiConfigured, fetchUserCollection, saveUserCollection } from './api-service.js'
+
 const KEY='fire_ai_chats_v1'
 function read(){try{const value=uni.getStorageSync(KEY);return Array.isArray(value)?value:[]}catch(e){return[]}}
 function write(value){try{uni.setStorageSync(KEY,JSON.stringify(value));return true}catch(e){return false}}
-export async function loadAIChats(fallback=[]){return Array.isArray(fallback)&&fallback.length?fallback:read()}
-export async function saveAIChats(chats){const value=(Array.isArray(chats)?chats:[]).slice(0,30);write(value);return value}
+function mergeChats(...sources){
+ const map=new Map()
+ sources.flat().filter(x=>x&&x.id).forEach(chat=>map.set(String(chat.id),chat))
+ return Array.from(map.values()).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0)).slice(0,50)
+}
+export async function loadAIChats(fallback=[]){
+ const local=mergeChats(Array.isArray(fallback)?fallback:[],read())
+ if(!isApiConfigured()){write(local);return local}
+ try{
+  const remote=await fetchUserCollection('ai-chats')
+  const merged=mergeChats(Array.isArray(remote)?remote:[],local)
+  write(merged)
+  return merged
+ }catch(error){
+  console.warn('[ai-chat-cloud-load]',error)
+  write(local)
+  return local
+ }
+}
+export async function saveAIChats(chats){
+ const value=mergeChats(Array.isArray(chats)?chats:[])
+ write(value)
+ if(isApiConfigured()){
+  try{await saveUserCollection('ai-chats',value)}catch(error){console.warn('[ai-chat-cloud-save]',error)}
+ }
+ return value
+}
