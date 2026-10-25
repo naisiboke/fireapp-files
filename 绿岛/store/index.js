@@ -45,6 +45,7 @@ const seed = () => ({
   assetHistory: [],
   monthlyTargets: {},
   toolUsage: {},
+  aiChats: [],
   timeLedger: null,
   soundEnabled: true,
   reading: undefined,
