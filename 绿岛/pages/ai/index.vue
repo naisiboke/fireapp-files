@@ -40,7 +40,7 @@ export default {
       this.sendCountdown()
     }
   },
-  onShow() { this.syncPrerequisites() },
+  onShow() { this.syncPrerequisites(); if (this.ready && !this.messages.length) { this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时和人格偏好，陪你一起观察消费和生活习惯。' }]; this.sendCountdown() } },
   methods: {
     syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!(state.personality && state.personality.completed); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
