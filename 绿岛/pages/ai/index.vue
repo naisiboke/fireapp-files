@@ -19,7 +19,7 @@
       <view v-if="financeReady && personalityReady" class="unlock-note">两项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
-      <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">只讨论消费、记录和生活习惯，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
+      <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">只讨论消费、记录和生活习惯，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText() }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
       <scroll-view class="messages" scroll-y :scroll-into-view="lastMessageId">
         <view v-for="(message, index) in messages" :id="'message-' + index" :key="index" class="message-row" :class="message.role"><view class="message-bubble">{{ message.text }}</view></view>
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
@@ -72,6 +72,10 @@ export default {
     goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + kind }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
+    formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
+    newChat() { this.drawerOpen=false; this.currentChatId='chat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); this.messages=[]; this.question=''; this.lastMessageId='' },
+    selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x})):[]; this.drawerOpen=false; this.scrollToLast() },
+    async saveCurrentChat() { if(!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)].slice(0,30); this.currentChatId=chat.id; await saveAIChats(this.chats) },
     personalitySummary() { const p=state.personalityTests||{}, names=[]; if(p.bigfive) names.push('大五人格已完成'); if(p.mbti) names.push('MBTI '+String(p.mbti.title||'已完成').replace('你的 MBTI 参考类型：','')); return names.join(' · ') || '尚未完成测试' },
     personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
     countdownText() {
@@ -79,13 +83,10 @@ export default {
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
       const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
-    sendCountdown() {
-      if (!this.ready) return this.goCalculator()
-      const text = this.countdownText()
-      if (this.messages.some(item => item.role === 'user' && item.text === text)) return
-      this.messages.push({ role: 'user', text })
-      this.scrollToLast()
-    },
+    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti)) },
+    sendContext(text) { if(!this.ready)return this.goCalculator(); if(!text||this.loading)return; this.question=text; this.send() },
+    sendCountdown() { this.sendContext(this.countdownText()) },
+    sendProfile() { this.sendContext(this.profileText()) },
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
     formatAnswer(value) {
       const lineBreak = String.fromCharCode(10)
@@ -113,6 +114,7 @@ export default {
       if (!this.isMember) this.consumeQuota()
       this.messages.push({ role: 'user', text: question })
       this.scrollToLast()
+      this.saveCurrentChat()
       this.loading = true
       const startedAt = Date.now()
       try {
@@ -122,6 +124,7 @@ export default {
         const elapsed = Date.now() - startedAt
         if (elapsed < 1200) await new Promise(resolve => setTimeout(resolve, 1200 - elapsed))
         this.messages.push({ role: 'assistant', text: this.formatAnswer(String(answer)) })
+        this.saveCurrentChat()
       } catch (error) {
         this.messages.push({ role: 'assistant', text: error.message || 'AI 暂时无法回答，请稍后再试' })
       } finally { this.loading = false; this.scrollToLast() }
@@ -137,4 +140,6 @@ export default {
 
 .personality-card{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 18px 6px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid #dce9dc}.personality-card-title{display:block;color:#173d35;font-size:14px;font-weight:700}.personality-card-sub{display:block;margin-top:4px;color:#71807a;font-size:11px}.personality-card-arrow{font-size:22px;color:#527059}
 .setup-card{margin:28px 18px;padding:24px 18px;border-radius:22px}.setup-title{font-size:21px}.setup-sub{font-size:12px;line-height:1.65}.requirement{margin-top:12px;padding:12px;border-radius:12px}.requirement-title{font-size:13px}.requirement-sub{font-size:10px}.choice-buttons .setup-button{height:42px;border-radius:10px}
+
+.head-left,.head-right{display:flex;align-items:center;gap:10px}.history-toggle,.new-chat{font-size:22px;color:#173d35}.chat-drawer{position:fixed;z-index:40;left:0;top:calc(58px + env(safe-area-inset-top));bottom:0;width:78%;max-width:320px;background:#f7fbf6;border-right:1px solid #dce9dc;box-shadow:8px 0 24px rgba(23,61,53,.12);padding:14px;box-sizing:border-box}.drawer-head{display:flex;justify-content:space-between;font-size:17px;font-weight:700}.new-drawer{margin-top:16px;padding:12px;border-radius:11px;background:#e3f0df;color:#315f4a;font-size:13px}.chat-list{height:calc(100% - 92px);margin-top:12px}.chat-item{padding:12px;border-radius:10px;margin-bottom:6px}.chat-item.active{background:#e3f0df}.chat-item text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-item text:first-child{font-size:13px;color:#243830}.chat-item text:last-child{margin-top:4px;font-size:10px;color:#8b9489}.chat-empty{display:block;padding:30px 10px;text-align:center;color:#8b9489;font-size:12px}.context-actions{display:flex;gap:8px;margin:0 0 7px}.context-actions button{flex:1;margin:0;height:34px;padding:0 8px;font-size:12px}.profile-button{border:1px solid #b9d4bc;border-radius:16px;background:#e3f0df;color:#39705b}
 </style>
