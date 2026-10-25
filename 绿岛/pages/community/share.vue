@@ -1,6 +1,6 @@
 <template>
   <view class="share-page">
-    <view class="share-head"><view class="back" @tap="back">‹</view><text class="title">分享我的经历</text><view class="close" @tap="close">×</view></view>
+    <view class="share-head"><view class="back" @tap="back">‹</view><text class="title">{{ editId ? "编辑我的经历" : "分享我的经历" }}</text><view class="close" @tap="close">×</view></view>
     <scroll-view class="share-scroll" scroll-y>
       <view class="share-content">
         <view class="block"><text class="label">选几个标签</text><view class="tags"><view v-for="tag in tags" :key="tag" class="tag" :class="{active:form.tags.includes(tag)}" @tap="toggleTag(tag)">{{tag}}</view></view></view>
@@ -16,6 +16,7 @@
 </template>
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { COMMUNITY_POST_TAGS as tags } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
 import { reviewCommunityPost } from '@/utils/community-review.js'
@@ -24,7 +25,20 @@ const saved=CS.draft()
 const form=reactive(saved?{...empty(),...saved,timeline:saved.timeline?.length?saved.timeline:[{year:'',title:''}]}:empty())
 const validTimeline=computed(()=>form.timeline.filter(x=>String(x.year).trim()&&String(x.title).trim()))
 const ready=computed(()=>form.tags.length>0&&form.title.trim()&&form.content.trim()&&validTimeline.value.length>0)
-const publishing=ref(false)
+const publishing=ref(false),editId=ref('')
+onLoad((options) => {
+ const id=String(options&&options.editId||'')
+ if(!id)return
+ editId.value=id
+ const post=CS.ugc().find(x=>String(x.id)===id)
+ if(!post)return
+ form.tags=[...(post.tags||String(post.category||'').split(' · ').filter(Boolean))]
+ form.journey=post.journey||'doing'
+ form.title=post.title||''
+ form.content=post.content||post.summary||''
+ form.timeline=(post.timeline||[]).map(row=>({year:row.year||'',title:row.title||row.desc||''}))
+ if(!form.timeline.length)form.timeline=[{year:'',title:''}]
+})
 function leaveShare(){
  const pages=getCurrentPages()
  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/community/index?tab=doing'})})
@@ -40,8 +54,9 @@ async function publish(){
  if(!ready.value){uni.showToast({title:'请填写完整内容',icon:'none'});return}
  if(publishing.value)return
  publishing.value=true
- const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核'}
- const list=CS.ugc();list.unshift(post)
+ const existing=editId.value?CS.ugc().find(x=>String(x.id)===String(editId.value)):null
+ const post={id:existing?existing.id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:existing?existing.displayName:'3263***',createdAt:existing?existing.createdAt:Date.now(),status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核'}
+ const list=CS.ugc();const existingIndex=list.findIndex(x=>String(x.id)===String(post.id));if(existingIndex>=0)list[existingIndex]={...list[existingIndex],...post};else list.unshift(post)
  if(!CS.saveUGC(list)){publishing.value=false;uni.showToast({title:'保存失败',icon:'none'});return}
  try {
   const verdict=await reviewCommunityPost(post)
