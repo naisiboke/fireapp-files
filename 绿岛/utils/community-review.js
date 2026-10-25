@@ -26,7 +26,8 @@ export function validateCommunityPost(post) {
   if(future) return {approved:false,reason:'时间点不能晚于当前年份'}
   const compact=(title+content).replace(/[\\s\\d，。！？,.!?、：:；;'"“”‘’]/g,'')
   if(compact.length<6) return {approved:false,reason:'内容缺少有效文字'}
-  const uniqueRatio=new Set(compact.toLowerCase()).size/Math.max(compact.length,1)\n  if(/^(.)\\1+$/.test(compact) || uniqueRatio<0.45 || /^(?:wd|da|aw|asd|qwe|abc|test|xxx)+$/i.test(compact)) return {approved:false,reason:'内容像随机字符，没有实际经历意义'}
+  const uniqueRatio=new Set(compact.toLowerCase()).size/Math.max(compact.length,1)
+  if(/^(.)\\1+$/.test(compact) || uniqueRatio<0.45 || /^(?:wd|da|aw|asd|qwe|abc|test|xxx)+$/i.test(compact)) return {approved:false,reason:'内容像随机字符，没有实际经历意义'}
   return null
 }
 
