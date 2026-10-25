@@ -105,7 +105,7 @@ export default {
       this.loading = true
       const startedAt = Date.now()
       try {
-        const result = await askBehaviorAI({ question, countdown: this.countdownText() })
+        const result = await askBehaviorAI({ question, countdown: this.countdownText(), personality: state.personality && state.personality.result ? state.personality.result : null })
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
         const elapsed = Date.now() - startedAt
