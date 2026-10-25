@@ -3,9 +3,11 @@
     <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
-      <text class="setup-title">先完成你的 FIRE 倒计时</text>
-      <text class="setup-sub">AI 会根据你的自由日提供行为建议。先填写倒计时，才能开始对话。</text>
-      <button class="setup-button" @tap="goCalculator">去填写倒计时</button>
+      <text class="setup-title">{{ financeReady ? '再完成一次人格测试' : '先完成你的 FIRE 与人格资料' }}</text>
+      <text class="setup-sub">{{ financeReady ? '完成大五人格或 MBTI 测试后，AI 才能更贴合你的生活方式。' : '填写资产报告，并完成大五人格或 MBTI 二选一，才能开始 AI 对话。' }}</text>
+      <button v-if="!financeReady" class="setup-button" @tap="goCalculator">去填写资产报告</button>
+      <button v-if="financeReady && !personalityReady" class="setup-button" @tap="goPersonality">去做人格测试</button>
+      <button v-if="financeReady && personalityReady" class="setup-button" @tap="goCalculator">查看资产报告</button>
     </view>
     <view v-else class="chat-shell">
       <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">只讨论消费、记录和生活习惯，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText }}</text><text class="member-arrow">›</text></view></view>
@@ -28,11 +30,13 @@ import { askBehaviorAI } from '@/utils/api-service.js'
 import { isMembershipActive } from '@/utils/membership.js'
 
 export default {
-  data() { return { state, ready: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0 } },
+  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0 } },
   onLoad() {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
-    this.ready = !!state.financeEntered && hasValidFinance(state)
+    this.financeReady = !!state.financeEntered && hasValidFinance(state)
+    this.personalityReady = !!(state.personality && state.personality.completed)
+    this.ready = this.financeReady && this.personalityReady
     if (this.ready) {
       this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时，陪你一起观察消费和生活习惯。' }]
       this.sendCountdown()
@@ -56,6 +60,7 @@ export default {
       persist()
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
+    goPersonality() { uni.navigateTo({ url: '/pages/personality/index' }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
     countdownText() {
