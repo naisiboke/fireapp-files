@@ -46,28 +46,27 @@
       </view>
     </view>
 
-    <!-- 分组 3：设置 -->
+    <!-- 分组 3：社区 -->
     <view class="group">
-      <text class="group-title">系统设置</text>
+      <text class="group-title">社区</text>
       <view class="group-menu">
         <view class="menu-item" @tap="goPage('/pages/community/manage')">
           <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('shield')" mode="aspectFit" /></view>
           <view class="menu-copy"><text class="menu-name">我的社区设置</text><text class="menu-sub">管理我发布的经历、编辑或删除内容</text></view>
           <text class="chevron">›</text>
         </view>
+      </view>
+    </view>
 
+    <!-- 分组 4：系统设置 -->
+    <view class="group">
+      <text class="group-title">系统设置</text>
+      <view class="group-menu">
         <view class="menu-item" @tap="goPage('/pages/settings/index')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('settings')" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-name">设置</text>
-            <text class="menu-sub">数据、提示音与关于本应用</text>
-          </view>
+          <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('settings')" mode="aspectFit" /></view>
+          <view class="menu-copy"><text class="menu-name">设置</text><text class="menu-sub">数据、提示音与关于本应用</text></view>
           <text class="chevron">›</text>
         </view>
-
-
       </view>
     </view>
 
