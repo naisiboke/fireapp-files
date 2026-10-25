@@ -15,6 +15,7 @@ export async function loadAIChats(fallback=[]){
   const remote=await fetchUserCollection('ai-chats')
   const merged=mergeChats(Array.isArray(remote)?remote:[],local)
   write(merged)
+  try{await saveUserCollection('ai-chats',merged)}catch(error){console.warn('[ai-chat-cloud-merge]',error)}
   return merged
  }catch(error){
   console.warn('[ai-chat-cloud-load]',error)
