@@ -199,7 +199,7 @@ export default {
     targetText() {
       const r = this.fireResult
       if (r.months === 0) return '已达到当前目标'
-      if (r.date) return '预计到达 ' + r.date.toLocaleDateString('zh-CN')
+      if (r.date) return '预计到达 ' + this.formatDateCN(r.date)
       return '调整收入、支出或计算假设，重新规划'
     },
     expenseTotal() { return LedgerSummary(state, undefined, 'expense').total },
@@ -366,6 +366,7 @@ export default {
     },
     pad(n) { return String(n).padStart(2, '0') },
     formatMoney(n) { return Number(n).toLocaleString('zh-CN', { maximumFractionDigits: 0 }) },
+    formatDateCN(date) { const d = new Date(date); return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日' },
     formatAmount(n) {
       const v = Number(n)
       if (!Number.isFinite(v)) return '0.00'
