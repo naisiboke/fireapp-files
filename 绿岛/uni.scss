@@ -93,3 +93,21 @@ $uni-font-size-paragraph:15px;
   --button-focus: 0 0 0 3px rgba(79,128,104,.18);
   --button-pressed: .98;
 }
+
+
+/* 统一页面导航按钮：所有返回和关闭按钮保持一致的点击区域与图标尺寸 */
+.back,
+.close {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+}
