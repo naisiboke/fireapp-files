@@ -19,7 +19,7 @@
       <view v-if="financeReady && personalityReady" class="unlock-note">两项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
-      <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">只讨论消费、记录和生活习惯，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText() }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
+      <view class="chat-intro"><text class="kicker">行为建议 AI</text><text class="intro-sub">可结合你的生活习惯和人格报告提供建议，也可以讨论伴侣相处与匹配参考；不做绝对判断，不提供金融服务或投资建议。</text><view v-if="!isMember" class="member-banner" @tap="goMembership"><text>{{ quotaText() }}</text><text class="member-arrow">›</text></view></view><view v-if="personalityReady" class="personality-card" @tap="goPersonality('')"><view><text class="personality-card-title">我的性格</text><text class="personality-card-sub">{{ personalitySummary() }}</text></view><text class="personality-card-arrow">›</text></view>
       <scroll-view class="messages" scroll-y show-scrollbar="false" :scroll-into-view="lastMessageId">
         <view v-for="(message, index) in messages" :id="'message-' + index" :key="index" class="message-row" :class="message.role"><view class="message-bubble">{{ message.text }}</view></view>
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
@@ -83,7 +83,7 @@ export default {
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
       const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
-    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return this.countdownText()+'；'+ '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti))+'；MBTI详细报告：'+(p.mbti&&p.mbti.detail?p.mbti.detail:'') },
+    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); const mbti=p.mbti&&typeof p.mbti==='object'?p.mbti:{}; const bigFive=p.bigFive&&typeof p.bigFive==='object'?p.bigFive:{}; return this.countdownText()+'；我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；MBTI 类型：'+(mbti.title||'未完成')+'；MBTI 详细报告：'+(mbti.detail||'暂无')+'；人格维度：'+JSON.stringify(mbti.rows||bigFive.rows||[]) },
     sendContext(text) { if(!this.ready)return this.goCalculator(); if(!text||this.loading)return; this.question=text; this.send() },
     sendCountdown() { this.sendContext(this.countdownText()) },
     sendProfile() { this.sendContext(this.profileText()) },
