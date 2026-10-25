@@ -455,7 +455,7 @@ export default {
         summary: x.summary || (x.content ? x.content.slice(0, 100) : ''),
       }))
       return [...seed, ...local]
-        .filter(x => x.status === 'approved' || x.status === 'pending')
+        .filter(x => x.status === 'approved')
         .sort((a, b) => b.createdAt - a.createdAt)
     },
 
