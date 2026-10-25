@@ -11,18 +11,20 @@
         <view v-if="ready" class="preview"><text class="label">预览</text><text class="preview-title">{{form.title}}</text><text class="preview-body">{{form.content}}</text></view>
       </view>
     </scroll-view>
-    <view class="share-foot"><view class="actions"><button class="draft" type="button" @click="saveDraft">保存草稿</button><button class="publish" type="button" :disabled="!ready" @click="publish">发布</button></view><text class="hint">发布后会经过审核，通过后展示</text></view>
+    <view class="share-foot"><view class="actions"><button class="draft" type="button" @click="saveDraft">保存草稿</button><button class="publish" type="button" :disabled="!ready || publishing" @click="publish">{{ publishing ? "审核中…" : "提交审核" }}</button></view><text class="hint">提交后会由 AI 审核，通过后才会展示在社区</text></view>
   </view>
 </template>
 <script setup>
 import { computed, reactive } from 'vue'
 import { COMMUNITY_POST_TAGS as tags } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
+import { reviewCommunityPost } from '@/utils/community-review.js'
 const empty=()=>({tags:[],journey:'doing',title:'',content:'',timeline:[{year:'',title:''}]})
 const saved=CS.draft()
 const form=reactive(saved?{...empty(),...saved,timeline:saved.timeline?.length?saved.timeline:[{year:'',title:''}]}:empty())
 const validTimeline=computed(()=>form.timeline.filter(x=>String(x.year).trim()&&String(x.title).trim()))
 const ready=computed(()=>form.tags.length>0&&form.title.trim()&&form.content.trim()&&validTimeline.value.length>0)
+const publishing=ref(false)
 function leaveShare(){
  const pages=getCurrentPages()
  if(pages.length>1) uni.navigateBack({delta:1,fail:()=>uni.reLaunch({url:'/pages/community/index?tab=doing'})})
@@ -34,12 +36,26 @@ function toggleTag(tag){const i=form.tags.indexOf(tag);if(i>=0)form.tags.splice(
 function addRow(){form.timeline.push({year:'',title:''})}
 function removeRow(i){if(form.timeline.length>1)form.timeline.splice(i,1)}
 function saveDraft(){CS.saveDraft(form);uni.showToast({title:'草稿已保存',icon:'none'})}
-function publish(){
+async function publish(){
  if(!ready.value){uni.showToast({title:'请填写完整内容',icon:'none'});return}
- const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'approved'}
+ if(publishing.value)return
+ publishing.value=true
+ const post={id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:'3263***',createdAt:Date.now(),status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核'}
  const list=CS.ugc();list.unshift(post)
- if(!CS.saveUGC(list)){uni.showToast({title:'保存失败',icon:'none'});return}
- CS.clearDraft();uni.showToast({title:'经历已提交并显示在社区',icon:'none'});setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),300)
+ if(!CS.saveUGC(list)){publishing.value=false;uni.showToast({title:'保存失败',icon:'none'});return}
+ try {
+  const verdict=await reviewCommunityPost(post)
+  const target=CS.ugc().find(x=>x.id===post.id)
+  if(target){target.status=verdict.approved?'approved':'rejected';target.reviewStatus=target.status;target.reviewReason=verdict.reason;target.reviewedAt=Date.now();CS.saveUGC(CS.ugc())}
+  if(verdict.approved){CS.clearDraft();uni.showToast({title:'审核通过，经历已发布',icon:'none'})}
+  else uni.showToast({title:'审核未通过：'+verdict.reason,icon:'none',duration:3000})
+  setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),500)
+ } catch(error) {
+  const target=CS.ugc().find(x=>x.id===post.id)
+  if(target){target.status='review_failed';target.reviewStatus='review_failed';target.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(CS.ugc())}
+  uni.showToast({title:'审核失败，请稍后重试',icon:'none'})
+  setTimeout(()=>uni.navigateTo({url:'/pages/community/manage'}),500)
+ } finally { publishing.value=false }
 }
 </script>
 <style lang="scss">
