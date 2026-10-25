@@ -44,7 +44,7 @@ export default {
     countdownText() {
       const result = freedomResult(state)
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
-      return '我的 FIRE 倒计时：预计 ' + result.date.toLocaleDateString('zh-CN') + ' 达到目标，目前约 ' + (result.months || 0) + ' 个月'
+      const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
     sendCountdown() {
       if (!this.ready) return this.goCalculator()
