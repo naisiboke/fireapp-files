@@ -33,7 +33,8 @@ export function validateCommunityPost(post) {
 
 export async function reviewCommunityPost(post) {
   if (!isApiConfigured()) throw new Error('审核服务尚未配置')
-  const localVerdict=validateCommunityPost(post)\n  if(localVerdict) return localVerdict\n  const question = [
+  const localVerdict=validateCommunityPost(post)
+  if(localVerdict) return localVerdict\n  const question = [
     '你是 Fire生活社区的内容安全审核器。请审核下面的用户投稿。',
     '只审核是否适合公开展示：辱骂、人身攻击、仇恨歧视、色情、血腥暴力、违法犯罪、诈骗引流、恶意广告、泄露他人隐私、极端危险行为等应拒绝。',
     '正常的生活经历、困难、批评、情绪表达和理财记录可以通过。标题和正文必须有真实、连贯、可理解的经历意义；随机字母、乱打字符、重复字符、无上下文短句必须拒绝。',
