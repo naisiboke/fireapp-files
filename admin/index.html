@@ -9,7 +9,7 @@
 </head>
 <body><div id="app"></div>
 <script>
-const DEFAULT_API='https://ziyoukedu-d0gyrczqk4de53b87-1311439378.ap-shanghai.app.tcloudbase.com/api';
+const DEFAULT_API='https://ziyoukedu-d0gyrczqk4de53b87-1311439378.ap-shanghai.app.tcloudbase.com/admin';
 const app=document.getElementById('app');
 const state={token:localStorage.getItem('fire_admin_token')||'',base:localStorage.getItem('fire_admin_api')||DEFAULT_API,tab:'overview',loading:false,error:'',overview:null,users:[],posts:[],chats:[],selected:null};
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
