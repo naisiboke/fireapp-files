@@ -42,7 +42,12 @@ button {
   border-radius: var(--button-radius);
   box-sizing: border-box;
   font: inherit;
-  line-height: 1.2;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  vertical-align: middle;
   box-shadow: none;
   transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
 }
