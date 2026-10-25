@@ -50,6 +50,13 @@
       }
     },
     {
+      "path": "pages/assets/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "记录本月资产"
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationStyle": "custom",
