@@ -56,7 +56,7 @@ function finish(){
   data={title:'你的大五人格画像',summary:'这是你的行为倾向参考，不是固定标签。你可以根据高分和低分调整生活方式。',rows}
  }else{
   const axes=[['EI','E','外向','内向'],['SN','S','实感','直觉'],['TF','T','思考','情感'],['JP','J','判断','感知']]
-  const rows=axes.map(([axis,pos,a,b])=>{const qs=questions.value.filter(q=>q.axis===axis);const score=Math.round(qs.reduce((sum,q)=>sum+((answers.value[questions.value.indexOf(q)]||3)-3),0)/(qs.length*2)*100+50);return{name:a+' / '+b,score,copy:'这一维度反映你在'+a+'与'+b+'之间的偏好，分数越高越偏向'+a+'。'}})
+  const rows=axes.map(([axis,pos,a,b])=>{const qs=questions.value.filter(q=>q.axis===axis);const score=Math.round(qs.reduce((sum,q)=>sum+((answers.value[questions.value.indexOf(q)]||3)-3),0 )/(qs.length*2)*50+50);return{name:a+' / '+b,score,copy:'这一维度反映你在'+a+'与'+b+'之间的偏好，分数越高越偏向'+a+'。'}})
   const letters=rows.map((r,i)=>r.score>=50?axes[i][1]:axes[i][3]).join('')
   data={title:'你的 MBTI 参考类型：'+letters,summary:'MBTI 是偏好模型，不是能力诊断。结果用于自我理解，建议结合真实经历判断。',rows}
  }
