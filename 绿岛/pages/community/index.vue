@@ -423,9 +423,13 @@ export default {
       else uni.showTabBar({ animation: false })
     },
   },
-  onShow() {
+  async onShow() {
     if (this.modal === 'post') uni.hideTabBar({ animation: false })
     else uni.showTabBar({ animation: false })
+    try {
+      await CS.hydrate()
+      this.allUGC = this.buildUGCList()
+    } catch (error) {}
   },
   onHide() { uni.showTabBar({ animation: false }) },
 
