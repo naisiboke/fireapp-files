@@ -187,6 +187,15 @@ export async function saveAuthToken(loginState = null) {
 
 export async function getMediaURL(fileID) {
   if (!fileID) return ''
+  // App 端优先使用 uniCloud 原生接口，避免 WebView 中 SDK 的 fetch/localStorage 兼容差异。
+  try {
+    if (typeof uniCloud !== 'undefined' && typeof uniCloud.getTempFileURL === 'function') {
+      const nativeResult = await uniCloud.getTempFileURL({ fileList: [fileID] })
+      const nativeItem = nativeResult && nativeResult.fileList && nativeResult.fileList[0]
+      const nativeURL = nativeItem && (nativeItem.tempFileURL || nativeItem.tempFileUrl || '')
+      if (nativeURL) return nativeURL
+    }
+  } catch (error) {}
   await getAuth()
   const result = await app.getTempFileURL({ fileList: [fileID] })
   const item = result && result.fileList && result.fileList[0]
