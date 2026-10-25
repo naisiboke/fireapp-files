@@ -58,6 +58,18 @@
       </view>
     </view>
 
+    <!-- 分组 4：反馈问题 -->
+    <view class="group">
+      <text class="group-title">反馈问题</text>
+      <view class="group-menu">
+        <view class="menu-item" @tap="copyContact">
+          <view class="menu-icon"><text class="contact-icon">✉</text></view>
+          <view class="menu-copy"><text class="menu-name">联系客服微信</text><text class="menu-sub">naisiboke520 · 实用建议采纳可获 1 个月会员</text></view>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 分组 4：系统设置 -->
     <view class="group">
       <text class="group-title">系统设置</text>
@@ -142,6 +154,14 @@ export default {
     openPro() {
       uni.navigateTo({ url: '/pages/profile/membership' })
     },
+    copyContact() {
+      uni.setClipboardData({
+        data: 'naisiboke520',
+        success: () => uni.showToast({ title: '微信号已复制', icon: 'none' }),
+        fail: () => uni.showModal({ title: '联系客服微信', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
+      })
+    },
+
     comingSoon(name) {
       uni.showToast({ title: name + ' 开发中', icon: 'none' })
     },
@@ -323,6 +343,7 @@ export default {
   width: 20px;
   height: 20px;
 }
+.contact-icon{font-size:18px;color:#426052}
 
 .menu-copy {
   flex: 1;
