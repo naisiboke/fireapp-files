@@ -43,7 +43,7 @@ function openShare(){uni.navigateTo({url:'/pages/community/share?from=community'
 function formatDate(v){return v?new Date(v).toLocaleDateString('zh-CN'):'刚刚'}
 function statusText(post){const status=post.status||'approved';return {approved:'已发布',pending:'审核中',rejected:'未通过',review_failed:'审核失败'}[status]||'待处理'}
 function statusClass(post){return 'status-'+(post.status||'approved')}
-function startEdit(post){editingId.value=post.id;draft.value={title:post.title||'',content:post.content||post.summary||''}}
+function startEdit(post){uni.navigateTo({url:'/pages/community/share?editId='+encodeURIComponent(post.id)})}
 async function retryReview(post){
  post.status='pending';post.reviewStatus='pending';post.reviewReason='正在重新请求 AI 审核';CS.saveUGC(CS.ugc());load()
  try{
