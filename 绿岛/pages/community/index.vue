@@ -347,11 +347,11 @@
             <view class="post-draft-btn" @tap="saveDraft">
               <text class="post-draft-text">保存草稿</text>
             </view>
-            <view class="post-submit" :class="{ disabled: !postReady }" @tap="submitPost">
-              <text class="post-submit-text">发布</text>
+            <view class="post-submit" :class="{ disabled: !postReady || publishing }" @tap="submitPost">
+              <text class="post-submit-text">{{ publishing ? '审核中…' : '提交审核' }}</text>
             </view>
           </view>
-          <text class="post-hint">发布后会经过审核，通过后展示</text>
+          <text class="post-hint">提交后由 AI 审核，通过后才会展示</text>
         </view>
       </view>
     </view>
@@ -365,6 +365,7 @@ import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/u
 import { CS } from '@/utils/community-store.js'
 import { state } from '@/store/index.js'
 import { isMembershipActive } from '@/utils/membership.js'
+import { reviewCommunityPost } from '@/utils/community-review.js'
 
 const EMPTY_DRAFT = () => ({
   tags: [],
@@ -390,6 +391,7 @@ export default {
       netWorthInput: '',
       postDraft: EMPTY_DRAFT(),
       communityLoaded: 10,
+      publishing: false,
     }
   },
 
@@ -628,11 +630,12 @@ export default {
       uni.showToast({ title: '草稿已保存', icon: 'none' })
     },
 
-    submitPost() {
-      if (!this.postReady) {
-        uni.showToast({ title: '请填写完整', icon: 'none' })
+    async submitPost() {
+      if (!this.postReady || this.publishing) {
+        if (!this.postReady) uni.showToast({ title: '请填写完整', icon: 'none' })
         return
       }
+      this.publishing = true
       const post = {
         id: 'ugc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
         category: this.postDraft.tags.join(' · '),
@@ -643,21 +646,33 @@ export default {
         timeline: this.validTimeline.map(x => ({ year: x.year, desc: x.title })),
         displayName: '3263***',
         createdAt: Date.now(),
-        status: 'approved',
+        status: 'pending',
+        reviewStatus: 'pending',
+        reviewReason: '等待 AI 审核',
       }
       const list = CS.ugc()
       list.unshift(post)
       if (!CS.saveUGC(list)) {
+        this.publishing = false
         uni.showToast({ title: '保存失败', icon: 'none' })
         return
       }
-      CS.clearDraft()
-      this.postDraft = EMPTY_DRAFT()
-      this.allUGC = this.buildUGCList()
-      this.tab = 'doing'
-      this.communityLoaded = 10
-      this.modal = null
-      uni.showToast({ title: '经历已提交并显示在社区', icon: 'none' })
+      try {
+        const verdict = await reviewCommunityPost(post)
+        const target = CS.ugc().find(x => x.id === post.id)
+        if (target) { target.status = verdict.approved ? 'approved' : 'rejected'; target.reviewStatus = target.status; target.reviewReason = verdict.reason; target.reviewedAt = Date.now(); CS.saveUGC(CS.ugc()) }
+        CS.clearDraft()
+        this.postDraft = EMPTY_DRAFT()
+        this.allUGC = this.buildUGCList()
+        this.tab = 'doing'
+        this.communityLoaded = 10
+        this.modal = null
+        uni.showToast({ title: verdict.approved ? '审核通过，经历已发布' : '审核未通过：' + verdict.reason, icon: 'none', duration: 3000 })
+      } catch (error) {
+        const target = CS.ugc().find(x => x.id === post.id)
+        if (target) { target.status = 'review_failed'; target.reviewStatus = 'review_failed'; target.reviewReason = error.message || '审核服务暂时不可用'; CS.saveUGC(CS.ugc()) }
+        uni.showToast({ title: '审核失败，请到我的社区设置查看状态', icon: 'none' })
+      } finally { this.publishing = false }
     },
 
     formatNumber(n) {
