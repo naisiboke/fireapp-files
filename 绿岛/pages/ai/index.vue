@@ -50,7 +50,7 @@ export default {
   },
   onShow() { this.syncPrerequisites(); if (this.ready && !this.messages.length) { this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时和人格偏好，陪你一起观察消费和生活习惯。' }]; this.sendCountdown() } },
   methods: {
-    syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!(state.personality && state.personality.completed); this.ready = this.financeReady && this.personalityReady },
+    syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
     todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
@@ -113,7 +113,7 @@ export default {
       this.loading = true
       const startedAt = Date.now()
       try {
-        const result = await askBehaviorAI({ question, countdown: this.countdownText(), personality: state.personality && state.personality.result ? state.personality.result : null })
+        const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: { bigFive: state.personalityTests && state.personalityTests.bigfive ? state.personalityTests.bigfive : null, mbti: state.personalityTests && state.personalityTests.mbti ? state.personalityTests.mbti : null } })
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
         const elapsed = Date.now() - startedAt
