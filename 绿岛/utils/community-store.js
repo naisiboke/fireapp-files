@@ -43,7 +43,27 @@ export const CS = {
     if (!isApiConfigured()) return false
     const names = [['favorites', K_FAV], ['ugc', K_UGC], ['net-worth', K_ASSETS], ['applied-models', K_APPLIED], ['post-draft', K_DRAFT]]
     const values = await Promise.all(names.map(([name]) => fetchUserCollection(name)))
-    values.forEach((value, index) => { if (value !== undefined && value !== null) { try { uni.setStorageSync(names[index][1], JSON.stringify(value)) } catch {} } })
+    values.forEach((value, index) => {
+      if (value === undefined || value === null) return
+      try {
+        const key = names[index][1]
+        if (names[index][0] === 'ugc' && Array.isArray(value)) {
+          const local = read(key, [])
+          const merged = [...(Array.isArray(value) ? value : []), ...(Array.isArray(local) ? local : [])]
+          const unique = []
+          const seen = new Set()
+          merged.forEach(item => {
+            const id = item && item.id ? String(item.id) : ''
+            if (!id || seen.has(id)) return
+            seen.add(id)
+            unique.push(item)
+          })
+          uni.setStorageSync(key, JSON.stringify(unique))
+        } else {
+          uni.setStorageSync(key, JSON.stringify(value))
+        }
+      } catch {}
+    })
     return true
   },
 }
