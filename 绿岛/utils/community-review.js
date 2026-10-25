@@ -27,6 +27,6 @@ export async function reviewCommunityPost(post) {
     '内容：' + String(post.content || post.summary || ''),
     '时间点：' + JSON.stringify(post.timeline || []),
   ].join('\\n')
-  const result = await askBehaviorAI({ question, communityReview: true, postId: post.id })
+  const result = await askBehaviorAI({ question, communityReview: true, moderationMode: 'community', countdown: '社区内容审核模式：无需填写 FIRE 倒计时', finance: {}, personality: {}, postId: post.id })
   return parseVerdict(answerOf(result))
 }
