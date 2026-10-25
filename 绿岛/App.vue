@@ -8,6 +8,7 @@ export default {
     try { bootstrap() } catch (error) { console.error('[app-bootstrap]', error) }
     // 配置云端 API 后以服务端数据为正式来源；未配置时保持本地过渡缓存。
     Promise.resolve(hydrateFromServer()).catch((error) => console.error('[cloud-hydrate]', error))
+    import('./utils/personality-store.js').then(({ hydratePersonalityHistory }) => hydratePersonalityHistory()).catch(() => {})
     // 首个页面已经由 pages.json 指定为启动页，不再在 App.onLaunch 中二次 reLaunch，避免 H5 首屏空白。
   },
   onShow() {
