@@ -176,6 +176,13 @@
       }
     },
     {
+      "path": "pages/personality/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "人格测试"
+      }
+    },
+    {
       "path": "pages/ai/index",
       "style": {
         "navigationStyle": "custom",
