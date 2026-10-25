@@ -15,7 +15,7 @@
     <!-- Tab -->
     <view class="tabs">
       <view class="tab" :class="{ active: tab === 'settled' }" @tap="setTab('settled')">
-        <text class="tab-text" :class="{ active: tab === 'settled' }">已上岸 7</text>
+        <text class="tab-text" :class="{ active: tab === 'settled' }">已上岸 {{ settledCount }}</text>
       </view>
       <view class="tab" :class="{ active: tab === 'doing' }" @tap="setTab('doing')">
         <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ allUGC.length }}</text>
@@ -395,8 +395,10 @@ export default {
 
   computed: {
     isMember() { return isMembershipActive(state) },
+    settledCount() { return COMMUNITY_OFFICIAL.length + this.allUGC.filter(x => x.journey === 'settled').length },
     allPosts() {
-      return this.tab === 'settled' ? COMMUNITY_OFFICIAL : this.allUGC
+      if (this.tab === 'settled') return [...COMMUNITY_OFFICIAL, ...this.allUGC.filter(x => x.journey === 'settled')]
+      return this.allUGC.filter(x => x.journey !== 'settled')
     },
     visiblePosts() {
       return this.allPosts.slice(0, this.communityLoaded)
