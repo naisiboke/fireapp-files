@@ -70,15 +70,15 @@
         <text class="formula">仅计算会保存目标草稿；确认更新后，首页才展示这项目标。</text>
       </template>
       <template v-else>
-        <button class="secondary" @click="toggleDiagnosis">{{ showDiagnosis ? '收起' : '查看' }} PRO 深度诊断</button>
+        <button class="secondary" @click="toggleDiagnosis">{{ showDiagnosis ? '收起 AI 解析' : '查看' }} PRO 深度诊断</button>
         <view v-if="showDiagnosis && !isProMember" class="pro-lock-card">
-          <text class="pro-lock-title">Pro 深度诊断</text>
-          <text class="pro-lock-copy">根据你的 FIRE 数据生成更完整的财务建议</text>
+          <text class="pro-lock-title">VIP AI 解析</text>
+          <text class="pro-lock-copy">根据你的 FIRE 数据生成约 500 字的重点解析</text>
           <text class="pro-lock-badge">会员专属功能</text>
           <button class="secondary pro-open" @click="showProPrompt">开通 Pro 会员</button>
         </view>
         <view v-if="proNotice" class="pro-notice" role="status" aria-live="polite">
-          <text>Pro 诊断需要会员权限，开通后即可查看完整分析。</text>
+          <text>VIP AI 解析需要会员权限，开通后即可查看。</text>
           <button class="secondary" @click="proNotice = false">知道了</button>
         </view>
         <view v-if="showDiagnosis && isProMember" class="diagnosis"><view v-if="aiDiagnosis" class="ai-diagnosis">{{ aiDiagnosis }}</view><view v-else class="ai-diagnosis loading">正在生成 AI 解析…</view></view>
