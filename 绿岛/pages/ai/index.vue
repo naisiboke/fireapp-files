@@ -1,6 +1,6 @@
 <template>
   <view class="ai-page">
-    <view class="head"><view class="head-left"><text class="back" @tap="back">‹</text><text class="history-toggle" @tap="drawerOpen=true">☰</text></view><text class="title">问 AI</text><view class="head-right"><text class="new-chat" @tap="newChat">＋</text><text class="close" @tap="close">×</text></view></view>
+    <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
     <view v-if="drawerOpen" class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><text @tap="drawerOpen=false">×</text></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
@@ -25,7 +25,7 @@
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
       </scroll-view>
       <view class="composer">
-        <view class="context-actions"><button class="countdown-button" @tap="sendCountdown">发送我的倒计时</button><button class="profile-button" @tap="sendProfile">发送我的个人资料</button></view>
+        <view class="context-actions"><button class="profile-button" @tap="sendProfile">发送我的个人详细资料</button></view>
         <view class="input-row"><input v-model="question" class="question" confirm-type="send" placeholder="输入你想聊的习惯" placeholder-class="placeholder" @confirm="send" /><button class="send" :disabled="loading" @tap="send">发送</button></view>
       </view>
     </view>
@@ -45,7 +45,7 @@ export default {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
     this.syncPrerequisites()
-    this.chats = await loadAIChats()
+    this.chats = await loadAIChats(state.aiChats || [])
     if (this.chats.length) this.selectChat(this.chats[0].id)
     else this.newChat()
   },
@@ -75,7 +75,7 @@ export default {
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
     newChat() { this.drawerOpen=false; this.currentChatId='chat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); this.messages=[]; this.question=''; this.lastMessageId='' },
     selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x})):[]; this.drawerOpen=false; this.scrollToLast() },
-    async saveCurrentChat() { if(!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)].slice(0,30); this.currentChatId=chat.id; await saveAIChats(this.chats) },
+    async saveCurrentChat() { if(!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)].slice(0,30); this.currentChatId=chat.id; state.aiChats=this.chats; persist(); await saveAIChats(this.chats) },
     personalitySummary() { const p=state.personalityTests||{}, names=[]; if(p.bigfive) names.push('大五人格已完成'); if(p.mbti) names.push('MBTI '+String(p.mbti.title||'已完成').replace('你的 MBTI 参考类型：','')); return names.join(' · ') || '尚未完成测试' },
     personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
     countdownText() {
@@ -83,7 +83,7 @@ export default {
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
       const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
-    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti)) },
+    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); return this.countdownText()+'；'+ '我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；大五人格：'+(typeof p.bigFive==='string'?p.bigFive:JSON.stringify(p.bigFive))+'；MBTI：'+(typeof p.mbti==='string'?p.mbti:JSON.stringify(p.mbti)) },
     sendContext(text) { if(!this.ready)return this.goCalculator(); if(!text||this.loading)return; this.question=text; this.send() },
     sendCountdown() { this.sendContext(this.countdownText()) },
     sendProfile() { this.sendContext(this.profileText()) },
@@ -142,4 +142,6 @@ export default {
 .setup-card{margin:28px 18px;padding:24px 18px;border-radius:22px}.setup-title{font-size:21px}.setup-sub{font-size:12px;line-height:1.65}.requirement{margin-top:12px;padding:12px;border-radius:12px}.requirement-title{font-size:13px}.requirement-sub{font-size:10px}.choice-buttons .setup-button{height:42px;border-radius:10px}
 
 .head-left,.head-right{display:flex;align-items:center;gap:10px}.history-toggle,.new-chat{font-size:22px;color:#173d35}.chat-drawer{position:fixed;z-index:40;left:0;top:calc(58px + env(safe-area-inset-top));bottom:0;width:78%;max-width:320px;background:#f7fbf6;border-right:1px solid #dce9dc;box-shadow:8px 0 24px rgba(23,61,53,.12);padding:14px;box-sizing:border-box}.drawer-head{display:flex;justify-content:space-between;font-size:17px;font-weight:700}.new-drawer{margin-top:16px;padding:12px;border-radius:11px;background:#e3f0df;color:#315f4a;font-size:13px}.chat-list{height:calc(100% - 92px);margin-top:12px}.chat-item{padding:12px;border-radius:10px;margin-bottom:6px}.chat-item.active{background:#e3f0df}.chat-item text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-item text:first-child{font-size:13px;color:#243830}.chat-item text:last-child{margin-top:4px;font-size:10px;color:#8b9489}.chat-empty{display:block;padding:30px 10px;text-align:center;color:#8b9489;font-size:12px}.context-actions{display:flex;justify-content:flex-start;gap:8px;margin:0 0 7px}.context-actions button{flex:0 0 auto;min-width:112px;margin:0;height:34px;padding:0 10px;font-size:12px}.profile-button{border:1px solid #b9d4bc;border-radius:16px;background:#e3f0df;color:#39705b}
+
+.chat-toolbar{display:flex;gap:8px;margin:0 18px 8px}.chat-toolbar view{padding:8px 11px;border-radius:10px;background:#fff;border:1px solid #dce9dc;color:#39705b;font-size:12px}.chat-toolbar view:last-child{background:#e3f0df}.context-actions{justify-content:flex-start}.context-actions .profile-button{min-width:150px}
 </style>
