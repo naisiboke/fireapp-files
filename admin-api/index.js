@@ -29,8 +29,10 @@ exports.main = async (event) => {
   const path = pathOf(event)
   try {
     if (method === 'GET' && path.endsWith('/overview')) {
-      const [users, posts, collections] = await Promise.all([list('user_states', 1000), list('community_posts', 1000), list('user_collections', 1000)])
-      return json(200, { users: users.length, members: users.filter(x => x.membership && (x.membership.active || x.membership.status === 'active')).length, communityPosts: posts.length, aiChats: collections.filter(x => x.collection === 'ai-chats' || x.name === 'ai-chats').length })
+      const [users, collections] = await Promise.all([list('user_states', 1000), list('user_collections', 1000)])
+      const communityPosts = collections.filter(x => x.collection === 'ugc' || x.name === 'ugc' || x.key === 'ugc').reduce((n,x) => n + (Array.isArray(x.items) ? x.items.length : 0), 0)
+      const aiChats = users.reduce((n,x) => n + (Array.isArray(x.aiChats) ? x.aiChats.length : 0), 0) + collections.filter(x => x.collection === 'ai-chats' || x.name === 'ai-chats' || x.key === 'ai-chats').reduce((n,x) => n + (Array.isArray(x.items) ? x.items.length : 0), 0)
+      return json(200, { users: users.length, members: users.filter(x => x.membership && (x.membership.active || x.membership.status === 'active')).length, communityPosts, aiChats })
     }
     if (method === 'GET' && path.endsWith('/users')) return json(200, { items: await list('user_states', 200) })
     if (method === 'GET' && path.endsWith('/community/posts')) {
