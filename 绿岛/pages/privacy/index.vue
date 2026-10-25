@@ -1,9 +1,9 @@
 <template>
   <view class="privacy-page">
     <view class="head"><text class="title">隐私政策</text><view class="close" role="button" aria-label="关闭" @tap="close">×</view></view>
-    <view class="content"><text class="h2">FIRE Fire生活隐私政策</text><text class="date">版本：v1.0 · 生效日期：2026-10-07 · 最后更新时间：2026-10-07</text>
+    <view class="content"><text class="h2">FIRE Fire生活隐私政策</text><text class="date">版本：v1.1 · 生效日期：2026-10-25 · 最后更新时间：2026-10-25</text>
       <view v-for="section in sections" :key="section.title" class="section"><text class="h3">{{ section.title }}</text><text class="p">{{ section.text }}</text></view>
-      <view class="contact-card"><text class="contact-title">联系方式</text><text class="p">当前项目尚未配置真实客服邮箱、公司名称或办公地址。发布前请在应用配置中补充 PRIVACY_CONTACT_EMAIL、PRIVACY_OPERATOR_NAME 和 PRIVACY_OPERATOR_ADDRESS；在配置完成前，请通过应用商店页面或项目维护入口联系我们。</text></view>
+      <view class="contact-card"><text class="contact-title">联系方式</text><text class="p">隐私问题、数据删除、账号注销和安全问题可通过微信联系：naisiboke520。请不要在公开社区内容中发送身份证号、银行卡号、登录验证码、访问令牌或其他敏感信息。</text></view>
     </view>
   </view>
 </template>
@@ -31,8 +31,12 @@ export default { data() { return { sections: [
 { title: '十九、未成年人使用说明', text: '本应用不以未成年人为主要服务对象。未成年人应在监护人同意和指导下使用，不要提交真实财务、联系方式或其他敏感信息。若监护人发现未经同意的未成年人数据，请通过配置后的联系方式联系我们。' },
 { title: '二十、用户隐私权利', text: '在法律允许范围内，你可以查询、更正、导出、删除个人数据，撤回可选设置同意，关闭个性化内容，以及注销账户。我们可能需要验证账户身份后处理请求，并在无法满足时说明原因和替代方式。' },
 { title: '二十一、隐私政策更新方式', text: '当数据类型、使用目的、服务器或权利安排发生重要变化时，我们会更新本页面的版本和时间，并在适当位置提示。继续使用更新后的功能表示你已阅读更新内容；需要单独同意的事项会按法律要求另行处理。' },
-{ title: '二十二、联系方式', text: '当前项目没有配置真实运营主体名称、办公地址或客服邮箱。发布前请补充 PRIVACY_CONTACT_EMAIL、PRIVACY_OPERATOR_NAME 和 PRIVACY_OPERATOR_ADDRESS，并在应用内和应用商店同步展示。配置完成前，请通过项目维护入口提交隐私问题。' },
-{ title: '二十三、生效日期和最后更新时间', text: '本政策 v1.0 于 2026-10-07 生效，最后更新时间为 2026-10-07。后续版本会在本页更新版本号和时间。' },
+
+{ title: '二十三、AI 功能和人格分析', text: '当你主动使用 AI 功能时，当前问题以及你选择发送的个人资料可能被发送到已配置的 AI 服务，用于生成生活、消费、习惯和人格相关建议。资料可能包括人格测试结果、MBTI 类型、收入、支出、资产、储蓄和 FIRE 倒计时。AI 输出仅供参考，不构成医疗、法律、投资或伴侣关系的确定性判断。你可以不发送个人详细资料。' },
+{ title: '二十四、社区审核和公开展示', text: '社区投稿会先经过内容校验和 AI 审核，审核中的内容不会公开展示。系统会检查未来日期、无意义字符、辱骂、人身攻击、违法、色情、暴力、诈骗、广告引流和隐私泄露等风险。审核结果可能出现误判，你可以修改、删除或通过反馈渠道提出异议。已通过的投稿、昵称、标签和内容可能向其他用户展示。' },
+{ title: '二十五、会员兑换码和奖励', text: '会员兑换码由服务端验证并记录使用状态。兑换时可能记录兑换码、账号标识、兑换时间、会员时长和权益状态。同一兑换码原则上只能使用一次。通过反馈问题获得的会员奖励需要人工核实，不代表提交任何内容都必然获得奖励。' },
+{ title: '二十六、账号安全和异常处理', text: '你应妥善保管登录设备、验证码和访问凭证，不要转发或截图。发现账号异常登录、数据异常、令牌泄露或兑换码滥用时，请立即联系维护人员并停止继续使用相关凭证。我们会根据安全需要限制请求、暂停异常会话、修复数据或要求重新登录。' },
+{ title: '二十七、生效日期和最后更新时间', text: '本政策 v1.1 于 2026-10-25 生效，最后更新时间为 2026-10-25。后续版本会在本页更新版本号和时间。' },
 ] } }, methods: { close() { uni.reLaunch({ url: '/pages/profile/index' }) } }, onBackPress() { this.close(); return true } }
 </script>
 
