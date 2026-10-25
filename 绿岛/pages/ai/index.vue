@@ -34,15 +34,15 @@ export default {
   onLoad() {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
-    this.financeReady = !!state.financeEntered && hasValidFinance(state)
-    this.personalityReady = !!(state.personality && state.personality.completed)
-    this.ready = this.financeReady && this.personalityReady
+    this.syncPrerequisites()
     if (this.ready) {
       this.messages = [{ role: 'assistant', text: '你好，我会根据你的 FIRE 倒计时，陪你一起观察消费和生活习惯。' }]
       this.sendCountdown()
     }
   },
+  onShow() { this.syncPrerequisites() },
   methods: {
+    syncPrerequisites() { this.financeReady = !!state.financeEntered && hasValidFinance(state); this.personalityReady = !!(state.personality && state.personality.completed); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
     todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
