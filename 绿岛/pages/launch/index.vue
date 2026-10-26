@@ -64,7 +64,7 @@ export default {
 .launch-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fdfdfb;color:#173d35;overflow:hidden}
 .launch-glow{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,#dcebdc 0%,rgba(220,235,220,0) 70%);opacity:.8}
 .launch-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
-.launch-mark{width:70px;height:70px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:#173d35;color:#f3f7ef;font-size:30px;font-weight:700;box-shadow:0 14px 35px rgba(23,61,53,.2)}
-.launch-title{font-size:25px;font-weight:700;letter-spacing:.12em}
+.launch-mark{width:60px;height:60px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:#173d35;color:#f3f7ef;font-size:26px;font-weight:700;box-shadow:0 14px 35px rgba(23,61,53,.2)}
+.launch-title{font-size:22px;font-weight:700;letter-spacing:.12em}
 .launch-status{font-size:13px;color:#7a8b82}
 </style>
