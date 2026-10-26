@@ -256,6 +256,7 @@ export default {
     this.startGuardian()
   },
   onShow() {
+    uni.hideTabBar({ animation: false })
     this.pageVisible = true
     refreshFinance()
     const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
@@ -413,7 +414,7 @@ export default {
 <style>
 @keyframes firePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: 140px; animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
+.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: calc(88px + env(safe-area-inset-bottom)); animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
 .home-masthead { animation: fireCardIn .48s cubic-bezier(.22,1,.36,1) both; }
 .home-metrics { animation: fireCardIn .48s .06s cubic-bezier(.22,1,.36,1) both; }
 .task-row { animation: fireCardIn .42s cubic-bezier(.22,1,.36,1) both; }
@@ -425,40 +426,41 @@ export default {
 .goal-card-mini .goal-card-progress { height: 3px; margin: 7px 0 0; }
 .btn-primary:active,.task-row:active,.metric:active { transform: scale(.98); transition: transform .12s ease; }
 
-.home-masthead { position: relative; padding: 60px 24px 24px; overflow: hidden; }
+.home-masthead { position: relative; padding: calc(24px + env(safe-area-inset-top)) 20px 20px; overflow: hidden; }
 .masthead-bg { position: absolute; left: 0; top: 0; right: 0; height: 375px; background-size: cover; background-position: center; z-index: 0; }
 .masthead-fade {
   position: absolute; left: 0; top: 0; right: 0; height: 375px; z-index: 1;
   background: linear-gradient(to bottom, rgba(253,253,251,0) 0%, rgba(253,253,251,0) 20%, rgba(253,253,251,0.65) 50%, rgba(253,253,251,0.98) 76%, #fdfdfb 100%);
   pointer-events: none;
 }
-.masthead-title { position: relative; z-index: 3; min-height: 167px; }
-.masthead-h1 { display: block; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; line-height: 1.3; }
+.masthead-title { position: relative; z-index: 3; min-height: 140px; }
+.masthead-h1 { display: block; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; line-height: 1.3; }
 .masthead-date { display: block; font-size: 13px; color: #e6e9e3; margin-top: 8px; }
 
 .freedom-summary { position: relative; z-index: 3; display: block; padding: 0; }
 .freedom-head { display: flex; justify-content: space-between; align-items: center; }
-.freedom-label { font-size: 18px; font-weight: 700; color: #203c2b; letter-spacing: 0.4px; }
+.freedom-label { font-size: 16px; font-weight: 700; color: #203c2b; letter-spacing: 0.4px; }
 .plan-link { font-size: 14px; color: #527059; }
 .day-countdown { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-top: 14px; }
 .calendar-unit { display: inline-flex; align-items: baseline; gap: 3px; }
-.calendar-num { font-size: 48px; font-weight: 800; color: #1e342a; letter-spacing: -1px; line-height: 1.1; }
+.calendar-num { font-size: 40px; font-weight: 800; color: #1e342a; letter-spacing: -1px; line-height: 1.1; }
 .calendar-label { font-size: 16px; font-weight: 500; color: #526a58; }
 .countdown-clock { display: flex; align-items: center; gap: 10px; margin: 8px 0 10px; }
 .clock-unit { display: inline-flex; align-items: baseline; gap: 3px; }
 .clock-num { font-size: 22px; font-weight: 500; color: #314b38; letter-spacing: 1.3px; font-variant-numeric: tabular-nums; }
 .clock-label { font-size: 16px; color: #314b38; opacity: 0.72; }
-.countdown-target { display: block; font-size: 12px; color: #687760; line-height: 1.7; margin: 0 0 20px; }\n.inflation-note { display:block; margin-top:-14px; margin-bottom:16px; color:#8a958b; font-size:10px; line-height:1.5; }
+.countdown-target { display: block; font-size: 12px; color: #687760; line-height: 1.7; margin: 0 0 20px; }
+.inflation-note { display:block; margin-top:-14px; margin-bottom:16px; color:#8a958b; font-size:10px; line-height:1.5; }
 .progress { width: 100%; height: 6px; background: #dfe8db; border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; background: #527059; border-radius: 4px; transition: width 0.4s ease; }
 .freedom-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
 .foot-left, .foot-right { font-size: 12px; color: #687760; }
 
-.home-unconfigured { position: relative; z-index: 2; padding: 16px 0 24px; }
-.unconfigured-label { display: block; font-size: 18px; font-weight: 700; color: #203c2b; }
-.unconfigured-h2 { display: block; font-size: 24px; font-weight: 600; color: #243830; margin: 14px 0 10px; line-height: 1.5; }
+.home-unconfigured { position: relative; z-index: 2; padding: 13px 0 24px; }
+.unconfigured-label { display: block; font-size: 16px; font-weight: 700; color: #203c2b; }
+.unconfigured-h2 { display: block; font-size: 22px; font-weight: 600; color: #243830; margin: 14px 0 10px; line-height: 1.5; }
 .unconfigured-sub { display: block; font-size: 14px; line-height: 1.8; color: #52605a; }
-.btn-primary { margin-top: 24px; padding: 16px 20px; border-radius: 10px; background: #243830; display: flex; justify-content: center; align-items: center; }
+.btn-primary { margin-top: 24px; padding: 12px 16px; border-radius: 10px; background: #243830; display: flex; justify-content: center; align-items: center; }
 .btn-primary-text { color: #fff; font-size: 15px; font-weight: 500; }
 
 .goal-card { margin: 0 24px 24px; padding: 20px; border-radius: 18px; background: linear-gradient(135deg, #eef4e8, #e3eee4); border: 1px solid #d9e6d6; box-sizing: border-box; }
@@ -469,11 +471,11 @@ export default {
 .goal-card-meta { display: block; line-height: 1.7; }
 .goal-card-progress { height: 6px; margin: 16px 0 12px; border-radius: 6px; background: #d5e3d4; overflow: hidden; }
 .goal-card-progress-fill { height: 100%; border-radius: 6px; background: #527059; }
-.home-content { padding: 0 24px; }
-.home-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 24px 0; border-top: 1px solid #e5e9e0; border-bottom: 1px solid #e5e9e0; }
+.home-content { padding: 0 20px; }
+.home-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 20px 0; border-top: 1px solid #e5e9e0; border-bottom: 1px solid #e5e9e0; }
 .metric { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .metric-label { font-size: 12px; color: #52605a; line-height: 1.4; white-space: nowrap; }
-.metric-value { font-size: 18px; font-weight: 500; color: #243830; line-height: 1.4; word-break: break-all; }
+.metric-value { font-size: 16px; font-weight: 500; color: #243830; line-height: 1.4; word-break: break-all; }
 .metric-value.metric-expense { color: #8a4f16; }
 .metric-value.metric-income  { color: #25613f; }
 
@@ -486,13 +488,13 @@ export default {
 .wishlist-home-sub { display:block; margin-top:4px; color:#718074; font-size:11px; }
 .wishlist-home-arrow { color:#718074; font-size:22px; }
 
-.section { margin-top: 28px; }
+.section { margin-top: 24px; }
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.section-title { font-size: 18px; font-weight: 700; color: #143e37; }
+.section-title { font-size: 16px; font-weight: 700; color: #143e37; }
 .section-count { font-size: 14px; color: #527059; }
-.task-row { display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #e5e9e0; }
+.task-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #e5e9e0; }
 .task-row-done { opacity: 0.75; }
-.task-icon { width: 38px; height: 38px; border-radius: 12px; background: #ecf2e6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.task-icon { width: 34px; height: 34px; border-radius: 12px; background: #ecf2e6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .task-icon-img { width: 19px; height: 19px; }
 .task-text { flex: 1; min-width: 0; }
 .task-title { display: block; font-size: 14px; color: #243830; line-height: 1.6; word-break: break-all; }
