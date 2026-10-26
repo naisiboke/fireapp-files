@@ -804,7 +804,7 @@ export default {
   padding: 60px 8px 8px;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
   background: linear-gradient(to bottom, rgba(255,255,255,0), #fff 70%);
 }
 .lock-btn { width: 100%; padding: 12px 8px; border-radius: 10px; background: #ffffff; box-shadow: 0 -3px 13px #ffffff; display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -848,7 +848,7 @@ export default {
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 100000;
   background: rgba(36,56,48,0.4);
   display: flex;
   align-items: flex-end;
@@ -857,7 +857,7 @@ export default {
 }
 .modal {
   width: 100%;
-  max-height: 85vh;
+  max-height: 78vh;
   overflow-y: auto;
   background: #ffffff;
   border-radius: 18px;
