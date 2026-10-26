@@ -332,7 +332,7 @@ export default {
 .edit-page {
   min-height: 100vh;
   padding: 60px 18px 40px;
-  background: linear-gradient(165deg, #e2ebda, #f2f3e9 62%, #dce7d8);
+  background: linear-gradient(165deg, #f3f4f2, #f8f9f7 62%, #eef1ed);
   box-sizing: border-box;
 }
 
@@ -346,8 +346,8 @@ export default {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #e5eddd;
-  border: 1px solid #d0ddc5;
+  background: #ffffff;
+  border: 1px solid #e1e7df;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -366,8 +366,8 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 10px 11px;
-  background: #e5ebdf;
-  border: 1px solid #ccd9c4;
+  background: #ffffff;
+  border: 1px solid #e2e8df;
   border-radius: 14px;
   min-height: 60px;
 }
@@ -413,8 +413,8 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 10px 2px;
-  background: #e2eadc;
-  border: 1px solid #d1dec9;
+  background: #ffffff;
+  border: 1px solid #e2e8df;
   border-radius: 16px;
   min-height: 90px;
   justify-content: center;
@@ -451,8 +451,8 @@ export default {
   max-width: 460px;
   margin: 0 auto;
   padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-  background: #e3ebdd;
-  border: 1px solid #bed0b4;
+  background: #ffffff;
+  border: 1px solid #e2e8df;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -10px 30px rgba(25,60,48,0.13);
   box-sizing: border-box;
@@ -489,7 +489,7 @@ export default {
 .keyboard-toggle {
   padding: 5px 8px;
   border-radius: 8px;
-  background: #d0ddc8;
+  background: #eef2ed;
   flex-shrink: 0;
 }
 .toggle-text { font-size: 11px; color: #294834; }
@@ -508,7 +508,7 @@ export default {
   padding: 8px 4px;
   border: 1px solid #b9cbaa;
   border-radius: 8px;
-  background: #e6eedc;
+  background: #f4f6f2;
   display: flex;
   justify-content: center;
 }
@@ -521,14 +521,14 @@ export default {
   flex: 1;
   min-width: 0;
   padding: 10px 12px;
-  background: #d6e2ce;
+  background: #f4f6f2;
   border-radius: 8px;
   font-size: 14px;
   color: #294834;
 }
 .meta-date {
   padding: 10px 14px;
-  background: #d6e2ce;
+  background: #f4f6f2;
   border-radius: 8px;
   font-size: 13px;
   color: #294834;
@@ -548,12 +548,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eff3e8;
-  border: 1px solid #ccdac2;
+  background: #f7f9f6;
+  border: 1px solid #e2e8df;
   border-radius: 12px;
 }
 .key:active { background: #cadcbd; }
-.key.delete, .key.clear { background: #d0ddc8; }
+.key.delete, .key.clear { background: #eef2ed; }
 .key.done {
   grid-column: 4;
   grid-row: 3 / span 2;
