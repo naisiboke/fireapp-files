@@ -390,4 +390,5 @@ export default {
   color: #8b9489;
   margin-top: 40px;
 }
+@media screen and (max-width:390px){.profile-page{padding:calc(18px + env(safe-area-inset-top)) 16px calc(82px + env(safe-area-inset-bottom))}.page-head{margin-bottom:14px}.page-h1{font-size:24px}.page-sub{font-size:12px}.user-card{gap:10px;padding:12px;border-radius:13px}.avatar{width:42px;height:42px}.avatar-text{font-size:18px}.user-name{font-size:16px}.user-goal{font-size:11px}.pro-card{gap:10px;padding:12px;border-radius:13px}.pro-title{font-size:14px}.pro-desc{font-size:10px}.pro-btn{padding:7px 9px}.pro-btn-text{font-size:11px}.group{margin-top:18px}.group-title{font-size:12px}.group-menu{border-radius:13px}.menu-item{gap:10px;padding:10px 12px}.menu-icon{width:30px;height:30px;border-radius:9px}.menu-icon-img{width:17px;height:17px}.menu-name{font-size:13px}.menu-sub{font-size:10px}.chevron{font-size:20px}}
 </style>
