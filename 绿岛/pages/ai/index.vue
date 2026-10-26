@@ -4,20 +4,20 @@
     <view v-if="drawerOpen" class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><text @tap="drawerOpen=false">×</text></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
-      <text class="setup-title">完成两项资料，解锁 AI</text>
-      <text class="setup-sub">资产报告必须完成；人格测试只需完成大五人格或 MBTI 任意一个。</text>
+      <text class="setup-title">让 AI 更了解你</text>
+      <text class="setup-sub">补充资产、人格和记账信息后，AI 会结合你的真实情况给出更贴合的建议。资料越完整，对话越准确。</text>
       <view class="requirement" :class="{ complete: financeReady }">
         <view class="requirement-copy"><text class="requirement-title">① FIRE 资产报告</text><text class="requirement-sub">{{ financeReady ? '已完成，可以继续使用' : '填写资产、每月存入和退休后消费' }}</text></view>
         <text class="requirement-state">{{ financeReady ? '✓ 已完成' : '未完成' }}</text>
       </view>
-      <button v-if="!financeReady" class="setup-button" @tap="goCalculator">去填写资产报告</button>
+      <button v-if="!financeReady" class="setup-button" @tap="goCalculator">补充资产报告</button>
       <view class="requirement choice-requirement" :class="{ complete: personalityReady }">
         <view class="requirement-copy"><text class="requirement-title">② 人格测试（二选一）</text><text class="requirement-sub">{{ personalityReady ? '已完成，大五人格或 MBTI 均可' : '完成其中一个即可解锁 AI' }}</text></view>
         <text class="requirement-state">{{ personalityReady ? '✓ 已完成' : '任选一个' }}</text>
       </view>
-      <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">大五人格 · 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">MBTI · 100题</button></view>
+      <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">了解自己 · 大五人格 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">了解自己 · MBTI 100题</button></view>
       <view class="requirement" :class="{ complete: spendingReady }"><view class="requirement-copy"><text class="requirement-title">③ 消费与储蓄数据</text><text class="requirement-sub">{{ spendingReady ? '已完成，可以让 AI 结合你的真实记账分析' : '在记账中记录本月收入和支出' }}</text></view><text class="requirement-state">{{ spendingReady ? '✓ 已完成' : '未完成' }}</text></view>
-      <button v-if="!spendingReady" class="setup-button" @tap="goLedger">去填写本月记账</button>
+      <button v-if="!spendingReady" class="setup-button" @tap="goLedger">补充本月记账</button>
       <view v-if="financeReady && personalityReady && spendingReady" class="unlock-note">三项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
@@ -165,4 +165,5 @@ export default {
 
 /* 聊天区采用无滚动条布局，底部输入区固定 */
 .chat-shell{height:calc(100vh - 58px - env(safe-area-inset-top));overflow:hidden}.messages{height:0;padding-bottom:120px;scrollbar-width:none;-ms-overflow-style:none}.messages::-webkit-scrollbar{width:0;height:0;display:none}.composer{position:fixed;z-index:30;left:0;right:0;bottom:0;padding:8px 12px calc(10px + env(safe-area-inset-bottom));box-sizing:border-box}
+@media screen and (max-width:430px){.setup-card{margin:18px 12px;padding:18px 14px;border-radius:18px}.setup-title{font-size:22px}.setup-sub{font-size:12px;line-height:1.6}.requirement{padding:11px;border-radius:12px}.requirement-title{font-size:13px}.requirement-sub{font-size:10px}.requirement-state{font-size:10px}.setup-button{height:42px;font-size:12px;margin-top:12px}.choice-buttons{gap:6px}.choice-buttons .setup-button{font-size:10px;padding:0 4px}} 
 </style>
