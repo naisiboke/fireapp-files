@@ -372,7 +372,7 @@ export default {
 .ledger-page {
   min-height: 100vh;
   padding: 60px 24px 180px;   /* 底部留出 tabBar 空间 */
-  background: #eef2e8;
+  background: #f3f4f2;
   box-sizing: border-box;
 }
 
@@ -382,8 +382,8 @@ export default {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #e5eddd;
-  border: 1px solid #d0ddc5;
+  background: #ffffff;
+  border: 1px solid #e1e7df;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,15 +404,15 @@ export default {
   gap: 12px;
   margin-bottom: 16px;
   padding: 8px 12px;
-  background: #e5eddd;
+  background: #ffffff;
   border-radius: 14px;
-  border: 1px solid #d0ddc5;
+  border: 1px solid #e1e7df;
 }
 .month-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #d6e2ce;
+  background: #f4f6f2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -427,8 +427,8 @@ export default {
   display: flex;
   gap: 16px;
   padding: 18px;
-  background: #e5eddd;
-  border: 1px solid #d0ddc5;
+  background: #ffffff;
+  border: 1px solid #e1e7df;
   border-radius: 20px;
   margin-bottom: 16px;
 }
@@ -456,8 +456,8 @@ export default {
 
 .record-list { display: flex; flex-direction: column; gap: 10px; }
 .record-entry {
-  background: #e8eee2;
-  border: 1px solid #d6e0cd;
+  background: #ffffff;
+  border: 1px solid #e2e8df;
   border-radius: 14px;
   overflow: hidden;
 }
@@ -496,7 +496,7 @@ export default {
   justify-content: flex-end;
   gap: 8px;
   padding: 8px;
-  border-top: 1px solid #d6e0cd;
+  border-top: 1px solid #e2e8df;
 }
 .action-btn { padding: 8px 12px; }
 .action-text { font-size: 12px; color: #648575; }
@@ -528,14 +528,14 @@ export default {
 
 /* 预算面板 */
 .budget-section {
-  background: #e2eadd;
-  border: 1px solid #c4d4b9;
+  background: #ffffff;
+  border: 1px solid #e2e8df;
   border-radius: 16px;
   overflow: hidden;
 }
 .budget-top {
   margin-bottom: 16px;
-  border-color: #9aaf86;
+  border-color: #c5d4c2;
   box-shadow: 0 4px 14px rgba(154,175,134,0.18);
 }
 .budget-bottom { margin-top: 32px; }
@@ -547,14 +547,14 @@ export default {
   padding: 14px 18px;
   gap: 12px;
 }
-.budget-toggle:active { background: #dbe5d2; }
+.budget-toggle:active { background: #f1f4ef; }
 .budget-toggle-left { flex: 1; min-width: 0; }
 .budget-toggle-label { display: block; font-size: 14px; font-weight: 600; color: #243830; }
 .budget-top .budget-toggle-label { color: #4a6b3e; }
 .budget-toggle-hint { display: block; font-size: 11px; color: #6c7e68; margin-top: 4px; }
 .budget-chevron { font-size: 18px; color: #648575; line-height: 1; flex-shrink: 0; }
 
-.budget-body { padding: 14px 18px 18px; border-top: 1px solid #d6e0cd; }
+.budget-body { padding: 14px 18px 18px; border-top: 1px solid #e2e8df; }
 .budget-field { padding: 8px 0; }
 .budget-label { display: block; font-size: 12px; color: #52605a; margin-bottom: 8px; }
 
@@ -565,7 +565,7 @@ export default {
   font-size: 16px;
   color: #243830;
   padding: 0 14px;
-  background: #d6e2ce;
+  background: #f4f6f2;
   border-radius: 10px;
   box-sizing: border-box;
 }
@@ -592,7 +592,7 @@ export default {
   margin-top: 20px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: #dce8d4;
+  background: #eef2ed;
   white-space: pre-line;
 }
 
@@ -613,7 +613,7 @@ export default {
   transition: background 0.2s, box-shadow 0.2s;
 }
 .fab.fab-disabled {
-  background: #c5ccc0;
+  background: #d9ded8;
   box-shadow: 0 4px 12px rgba(120,140,120,0.20);
 }
 .fab-icon {
