@@ -112,6 +112,7 @@ export default {
     commonTools() { return this.filteredTools.slice(0, 4) },
     uncommonTools() { return this.filteredTools.slice(4) },
   },
+  onShow() { uni.hideTabBar({ animation: false }) },
   methods: {
     iconUri(key, color) {
       const p = ICONS[key] || ICONS.ledger
@@ -142,21 +143,21 @@ export default {
 <style>
 @keyframes toolPageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes toolSlideIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-.tools-view { min-height: 100vh; padding: 60px 24px 140px; background: #f3f4f2; box-sizing: border-box; animation: toolPageIn .32s cubic-bezier(.22,1,.36,1) both; }
+.tools-view { min-height: 100vh; padding: calc(24px + env(safe-area-inset-top)) 20px calc(88px + env(safe-area-inset-bottom)); background: #f3f4f2; box-sizing: border-box; animation: toolPageIn .32s cubic-bezier(.22,1,.36,1) both; }
 .tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) both; }
 .tool-card:nth-child(2) { animation-delay: .06s; }.tool-card:nth-child(3) { animation-delay: .12s; }.tool-card:nth-child(4) { animation-delay: .18s; }.tool-card:nth-child(5) { animation-delay: .24s; }.tool-card:nth-child(6) { animation-delay: .3s; }
 .tool-card:active { transform: translateX(3px) scale(.99); transition: transform .12s ease; }
 .tool-controls{margin:18px 0 24px}.tool-search{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;background:#fff;border:1px solid #dfe7dd;border-radius:13px;box-sizing:border-box}.search-icon{font-size:22px;color:#527059;line-height:1}.tool-search input{flex:1;height:42px;color:#243830;font-size:14px;background:transparent}.search-placeholder{color:#9aa99d}.category-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;width:100%;box-sizing:border-box}.category-chip{display:flex;align-items:center;justify-content:center;min-width:58px;height:36px;padding:0 14px;border-radius:999px;background:#e5eee4;color:#71807a;font-size:12px;white-space:nowrap;box-sizing:border-box;touch-action:manipulation}.category-chip:active{transform:scale(.97)}.category-chip.active{background:#315f4a;color:#fff;font-weight:600}.tools-empty{padding:54px 16px;text-align:center;color:#71807a;font-size:14px}
-.tools-head { margin-bottom: 24px; }
-.tools-h1 { display: block; font-size: 28px; font-weight: 700; color: #143e37; letter-spacing: 0.5px; }
+.tools-head { margin-bottom: 20px; }
+.tools-h1 { display: block; font-size: 24px; font-weight: 700; color: #143e37; letter-spacing: 0.5px; }
 .tools-sub { display: block; font-size: 13px; color: #71807a; margin-top: 8px; }
 .group-title { display: block; font-size: 13px; color: #71807a; margin-bottom: 12px; }
 .group-title.second { margin-top: 28px; }
 .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .tool-card {
   position: relative;
-  min-height: 120px;
-  padding: 14px 12px;
+  min-height: 104px;
+  padding: 12px 10px;
   background: #ffffff;
   border-radius: 17px;
   border: 1px solid #e9ece7;
@@ -168,7 +169,7 @@ export default {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .tool-card:active { transform: scale(0.97); }
-.tool-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tool-icon { width: 28px; height: 28px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .tool-icon-img { width: 19px; height: 19px; }.tool-text-icon { color: #426052; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }.music-text-icon { font-size: 24px; font-weight: 400; }
 .tool-name-row{display:flex;align-items:center;gap:6px;min-width:0}.tool-status{padding:2px 5px;border-radius:5px;background:#fff4d8;color:#9a6b21;font-size:9px;white-space:nowrap}.tool-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .tool-name { display: block; font-size: 14px; font-weight: 500; color: #243830; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
