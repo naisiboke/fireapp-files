@@ -420,18 +420,18 @@ export default {
   watch: {
     modal(value) {
       if (value === 'post') uni.hideTabBar({ animation: false })
-      else uni.showTabBar({ animation: false })
+      else uni.hideTabBar({ animation: false })
     },
   },
   async onShow() {
     if (this.modal === 'post') uni.hideTabBar({ animation: false })
-    else uni.showTabBar({ animation: false })
+    else uni.hideTabBar({ animation: false })
     try {
       await CS.hydrate()
       this.allUGC = this.buildUGCList()
     } catch (error) {}
   },
-  onHide() { uni.showTabBar({ animation: false }) },
+  onHide() { uni.hideTabBar({ animation: false }) },
 
   async onLoad(options) {
     if (options && options.tab === 'doing') this.tab = 'doing'
@@ -690,7 +690,7 @@ export default {
 .community-view {
   min-height: 100vh;
   background: #e8efe4;
-  padding: 24px 16px 160px;
+  padding: calc(20px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom));
   color: #243830;
   box-sizing: border-box;
 }
@@ -704,7 +704,7 @@ export default {
   padding: 12px 0 16px;
 }
 .head-text { min-width: 0; flex: 1; }
-.head-h1 { display: block; font-size: 24px; font-weight: 700; color: #243830; letter-spacing: 0.5px; }
+.head-h1 { display: block; font-size: 22px; font-weight: 700; color: #243830; letter-spacing: 0.5px; }
 .head-sub { display: block; font-size: 13px; color: #64748b; margin-top: 6px; }
 .fav-entry {
   padding: 8px 12px;
@@ -736,14 +736,14 @@ export default {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.card-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0; }
+.card-head { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px 0; }
 .tag { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: #eff3eb; color: #52605a; }
 .heart { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .heart-icon { font-size: 20px; color: #66736a; line-height: 1; }
 .heart-icon.saved { color: #e25562; }
 
-.card-main { padding: 16px; }
-.card-title { display: block; font-size: 18px; font-weight: 600; color: #243830; line-height: 1.4; }
+.card-main { padding: 14px; }
+.card-title { display: block; font-size: 16px; font-weight: 600; color: #243830; line-height: 1.4; }
 .card-summary { display: block; font-size: 13px; color: #52605a; line-height: 1.7; margin-top: 8px; }
 .card-sub { display: block; font-size: 13px; color: #52605a; line-height: 1.7; margin-top: 6px; }
 
@@ -761,7 +761,7 @@ export default {
   align-items: center;
 }
 .foot-text { font-size: 13px; color: #52605a; }
-.foot-arrow { font-size: 18px; color: #527059; }
+.foot-arrow { font-size: 16px; color: #527059; }
 
 /* 时间线 */
 .timeline { display: flex; flex-direction: column; }
@@ -822,7 +822,7 @@ export default {
 
 /* 空态 */
 .empty { padding: 64px 16px; text-align: center; }
-.empty-h2 { display: block; font-size: 18px; font-weight: 600; color: #243830; margin-bottom: 8px; }
+.empty-h2 { display: block; font-size: 16px; font-weight: 600; color: #243830; margin-bottom: 8px; }
 .empty-p { display: block; font-size: 13px; color: #52605a; margin-bottom: 20px; }
 .empty-btn { display: inline-block; padding: 12px 20px; border-radius: 10px; background: #243830; }
 .empty-btn-text { color: #ffffff; font-size: 14px; }
@@ -831,9 +831,9 @@ export default {
 .fab {
   position: fixed;
   right: 20px;
-  bottom: calc(120px + env(safe-area-inset-bottom));
-  width: 64px;
-  height: 64px;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
   border-radius: 32px;
   background: #243830;
   display: flex;
@@ -842,7 +842,7 @@ export default {
   box-shadow: 0 7px 20px rgba(36,56,48,0.25);
   z-index: 8;
 }
-.fab-icon { color: #ffffff; font-size: 32px; font-weight: 300; line-height: 1; margin-top: -4px; }
+.fab-icon { color: #ffffff; font-size: 28px; font-weight: 300; line-height: 1; margin-top: -4px; }
 
 /* 弹窗 */
 .backdrop {
@@ -891,7 +891,7 @@ export default {
 /* 套用配置 */
 .hero { padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #243830, #527059); margin-bottom: 16px; }
 .hero-kicker { display: block; font-size: 11px; color: rgba(255,255,255,0.75); letter-spacing: 1px; }
-.hero-title { display: block; font-size: 18px; font-weight: 600; color: #ffffff; margin-top: 8px; }
+.hero-title { display: block; font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 8px; }
 .hero-sub { display: block; font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px; }
 
 .apply-net { display: block; font-size: 14px; color: #243830; padding: 12px; background: #f7f9f4; border-radius: 10px; margin-bottom: 12px; }
