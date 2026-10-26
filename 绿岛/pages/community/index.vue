@@ -1071,4 +1071,5 @@ export default {
 @media (prefers-reduced-motion: reduce) { .post-backdrop { animation: none; } }
 
 .tag-wrap{display:flex;align-items:center;gap:6px}.journey-tag{font-size:11px;padding:4px 7px;border-radius:6px;background:#e4f0e4;color:#39705b}
+@media screen and (max-width:390px){.community-view{padding:calc(14px + env(safe-area-inset-top)) 12px calc(82px + env(safe-area-inset-bottom))}.community-head{gap:8px;padding:8px 0 12px}.head-h1{font-size:21px}.head-sub{font-size:11px}.fav-entry{padding:7px 9px}.fav-entry-text{font-size:11px}.tabs{margin-bottom:12px;padding:4px}.tab{padding:9px 6px}.tab-text{font-size:12px}.list{gap:9px}.card{border-radius:13px}.card-head{padding:12px 12px 0}.card-main{padding:12px}.card-title{font-size:16px}.card-summary,.card-sub{font-size:12px}.card-foot{padding:9px 12px}.foot-text{font-size:11px}.fab{right:14px;width:50px;height:50px;border-radius:25px;bottom:calc(72px + env(safe-area-inset-bottom))}.fab-icon{font-size:26px}}
 </style>
