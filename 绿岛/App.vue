@@ -12,6 +12,7 @@ export default {
     // 首个页面已经由 pages.json 指定为启动页，不再在 App.onLaunch 中二次 reLaunch，避免 H5 首屏空白。
   },
   onShow() {
+    uni.hideTabBar({ animation: false })
     const pages = getCurrentPages()
     const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''
     if (!route || PUBLIC_ROUTES.has(route)) return
