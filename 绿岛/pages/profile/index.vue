@@ -145,6 +145,7 @@ export default {
     membershipStatus() { return membershipText(state) },
   },
 
+  onShow() { uni.hideTabBar({ animation: false }) },
   methods: {
     iconUri(key) {
       const p = ICONS[key] || ICONS.settings
@@ -188,7 +189,7 @@ export default {
 @keyframes profileMenuIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
 .profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) both;
   min-height: 100vh;
-  padding: 60px 24px 120px;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(88px + env(safe-area-inset-bottom));
   background: #f3f4f2;
   box-sizing: border-box;
 }
@@ -199,7 +200,7 @@ export default {
 }
 .page-h1 {
   display: block;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #143e37;
   letter-spacing: 0.5px;
@@ -223,8 +224,8 @@ export default {
   box-shadow: 0 5px 16px rgba(23,61,53,0.06);
 }
 .avatar {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #243830;
   display: flex;
@@ -310,7 +311,7 @@ export default {
 
 /* 分组 */
 .group {
-  margin-top: 24px;
+  margin-top: 20px;
 }
 .group-title {
   display: block;
@@ -333,7 +334,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid #eef2ee;
 }
 .menu-item:last-child {
