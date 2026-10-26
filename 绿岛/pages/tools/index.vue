@@ -176,4 +176,5 @@ export default {
 .tool-desc { display: block; font-size: 11px; color: #71807a; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-arrow { position: absolute; right: 12px; top: 17px; font-size: 18px; color: #8c998f; line-height: 1; }
 .safe-note { display: block; text-align: center; font-size: 11px; color: #8b9489; margin-top: 40px; }
+@media screen and (max-width:390px){.tools-view{padding:calc(18px + env(safe-area-inset-top)) 16px calc(78px + env(safe-area-inset-bottom))}.tools-head{margin-bottom:16px}.tools-h1{font-size:24px}.tool-controls{margin:14px 0 18px}.tool-search{height:40px}.category-chip{height:32px;min-width:52px;padding:0 10px}.tool-grid{gap:8px}.tool-card{min-height:96px;padding:10px 9px;gap:8px;border-radius:13px}.tool-icon{width:26px;height:26px;border-radius:8px}.tool-icon-img{width:17px;height:17px}.tool-name{font-size:12px}.tool-desc{font-size:10px}.tool-arrow{right:9px;top:13px;font-size:16px}.group-title.second{margin-top:20px}}
 </style>
