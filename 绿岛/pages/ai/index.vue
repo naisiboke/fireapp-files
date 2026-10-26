@@ -16,8 +16,7 @@
         <text class="requirement-state">{{ personalityReady ? '✓ 已完成' : '任选一个' }}</text>
       </view>
       <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">了解自己 · 大五人格 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">了解自己 · MBTI 100题</button></view>
-      <view class="requirement" :class="{ complete: spendingReady }"><view class="requirement-copy"><text class="requirement-title">③ 消费与储蓄数据</text><text class="requirement-sub">{{ spendingReady ? '已完成，可以让 AI 结合你的真实记账分析' : '在记账中记录本月收入和支出' }}</text></view><text class="requirement-state">{{ spendingReady ? '✓ 已完成' : '未完成' }}</text></view>
-      <button v-if="!spendingReady" class="setup-button" @tap="goLedger">补充本月记账</button>
+
       <view v-if="financeReady && personalityReady && spendingReady" class="unlock-note">三项资料已完成，正在解锁 AI…</view>
     </view>
     <view v-else class="chat-shell">
@@ -43,7 +42,7 @@ import { isMembershipActive } from '@/utils/membership.js'
 import { loadAIChats, saveAIChats } from '@/utils/ai-chat-store.js'
 
 export default {
-  data() { return { state, ready: false, financeReady: false, personalityReady: false, spendingReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
+  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
   async onLoad() {
     this.isMember = isMembershipActive(state)
     this.refreshQuota()
@@ -54,7 +53,7 @@ export default {
   },
   onShow() { this.syncPrerequisites() },
   methods: {
-    syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); const month=LocalDay().slice(0,7); const ledger=Array.isArray(state.ledger)?state.ledger:[]; const monthRows=ledger.filter(x=>String(x.date||'').slice(0,7)===month); const incomeTotal=monthRows.filter(x=>x.type==='income').reduce((n,x)=>n+Number(x.cents||0),0); const expenseTotal=monthRows.filter(x=>x.type==='expense').reduce((n,x)=>n+Number(x.cents||0),0); this.spendingReady = incomeTotal>0 && expenseTotal>0; this.ready = this.financeReady && this.personalityReady && this.spendingReady },
+    syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
     todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
