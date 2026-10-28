@@ -20,7 +20,7 @@
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>
         <view class="tool-text">
-          <view class="tool-name-row"><text class="tool-name">{{ t.name }}</text><text v-if="t.status" class="tool-status">{{ t.status }}</text></view>
+          <view class="tool-name-row"><text class="tool-name">{{ t.name }}</text><text v-if="t.status" class="tool-status" :class="{ 'tool-status-development': t.status === '开发中' }">{{ t.status }}</text></view>
           <text class="tool-desc">{{ t.desc }}</text>
         </view>
         <text class="tool-arrow">›</text>
@@ -34,7 +34,7 @@
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>
         <view class="tool-text">
-          <text class="tool-name">{{ t.name }}</text>
+          <view class="tool-name-row"><text class="tool-name">{{ t.name }}</text><text v-if="t.status" class="tool-status" :class="{ 'tool-status-development': t.status === '开发中' }">{{ t.status }}</text></view>
           <text class="tool-desc">{{ t.desc }}</text>
         </view>
         <text class="tool-arrow">›</text>
@@ -71,10 +71,10 @@ const TOOL_CATALOG = [
   { route: 'wishlist', category: '生活', url: '/pages/wishlist/index', icon: 'wishlist', color: '#426052', bg: '#edf2e9', name: '极简拔草清单', desc: '给心动一点时间', status: '测试中' },
   { route: 'hero', category: '成长', url: '/pages/hero/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: 'FIRE 英雄传', desc: '每日行动与成长' },
   { route: 'personality', category: '成长', url: '/pages/personality/index', icon: 'hero', color: '#426052', bg: '#edf2e9', name: '人格测试', desc: '大五人格或 MBTI', status: '测试中' },
-  { route: 'reading-library', category: '成长', url: '', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知数据库', desc: '打开阅读内容', status: '待开发' },
+  { route: 'reading-library', category: '成长', url: '', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知数据库', desc: '打开阅读内容', status: '开发中' },
   { route: 'time-ledger', category: '效率', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪', status: '待开发' },
   { route: 'ai', category: '效率', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
-  { route: 'music', category: '内容', url: '', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围', status: '待开发' },
+  { route: 'music', category: '内容', url: '', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围', status: '开发中' },
 ]
 
 function svgUri(svg) {
@@ -172,7 +172,8 @@ export default {
 .tool-icon { width: 28px; height: 28px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .tool-icon-img { width: 19px; height: 19px; }.tool-text-icon { color: #426052; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }.music-text-icon { font-size: 24px; font-weight: 400; }
 .tool-name-row{display:flex;align-items:center;gap:6px;min-width:0}.tool-status{padding:2px 5px;border-radius:5px;background:#fff4d8;color:#9a6b21;font-size:9px;white-space:nowrap}.tool-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.tool-name { display: block; font-size: 14px; font-weight: 500; color: #243830; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tool-status-development{background:#fff0ee;color:#c4433d;flex-shrink:0}
+.tool-name { min-width: 0; display: block; font-size: 14px; font-weight: 500; color: #243830; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-desc { display: block; font-size: 11px; color: #71807a; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-arrow { position: absolute; right: 12px; top: 17px; font-size: 18px; color: #8c998f; line-height: 1; }
 .safe-note { display: block; text-align: center; font-size: 11px; color: #8b9489; margin-top: 40px; }
