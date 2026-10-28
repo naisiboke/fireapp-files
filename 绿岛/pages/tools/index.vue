@@ -172,7 +172,7 @@ export default {
 .tool-icon { width: 28px; height: 28px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .tool-icon-img { width: 19px; height: 19px; }.tool-text-icon { color: #426052; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }.music-text-icon { font-size: 24px; font-weight: 400; }
 .tool-name-row{display:flex;align-items:center;gap:6px;min-width:0}.tool-status{padding:2px 5px;border-radius:5px;background:#fff4d8;color:#9a6b21;font-size:9px;white-space:nowrap}.tool-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.tool-status-development{background:#fff0ee;color:#c4433d;flex-shrink:0}
+.tool-status-development{background:transparent;color:#c4433d;flex-shrink:0;font-weight:500}
 .tool-name { min-width: 0; display: block; font-size: 14px; font-weight: 500; color: #243830; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-desc { display: block; font-size: 11px; color: #71807a; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-arrow { position: absolute; right: 12px; top: 17px; font-size: 18px; color: #8c998f; line-height: 1; }
