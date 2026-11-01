@@ -1,5 +1,5 @@
 <template>
-  <view class="profile-page">
+  <view class="profile-page" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部标题 -->
@@ -94,6 +94,7 @@
 </template>
 
 <script>
+import { pageEntryMixin } from '@/utils/page-entry.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
@@ -123,7 +124,7 @@ function svgUri(svg) {
 }
 
 export default {
-  mixins: [feedbackPageMixin],
+  mixins: [feedbackPageMixin, pageEntryMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   components: { AppFeedback,  BottomTabs },
   data() {
@@ -193,7 +194,7 @@ export default {
 <style>
 @keyframes profilePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes profileMenuIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
-.profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) both;
+.profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) backwards;
   min-height: 100vh;
   padding: calc(24px + env(safe-area-inset-top)) 20px calc(88px + env(safe-area-inset-bottom));
   background: #f3f4f2;
@@ -334,7 +335,7 @@ export default {
   box-shadow: 0 5px 16px rgba(23,61,53,0.04);
 }
 
- .menu-item { animation: profileMenuIn .46s cubic-bezier(.22,1,.36,1) both; }
+ .menu-item { animation: profileMenuIn .46s cubic-bezier(.22,1,.36,1) backwards; }
 .menu-item:nth-child(2){animation-delay:.06s}.menu-item:nth-child(3){animation-delay:.12s}.menu-item:nth-child(4){animation-delay:.18s}.menu-item:nth-child(5){animation-delay:.24s}
 .menu-item {
   display: flex;
@@ -397,4 +398,7 @@ export default {
   margin-top: 40px;
 }
 @media screen and (max-width:390px){.profile-page{padding:calc(18px + env(safe-area-inset-top)) 16px calc(82px + env(safe-area-inset-bottom))}.page-head{margin-bottom:14px}.page-h1{font-size:24px}.page-sub{font-size:12px}.user-card{gap:10px;padding:12px;border-radius:13px}.avatar{width:42px;height:42px}.avatar-text{font-size:18px}.user-name{font-size:16px}.user-goal{font-size:11px}.pro-card{gap:10px;padding:12px;border-radius:13px}.pro-title{font-size:14px}.pro-desc{font-size:10px}.pro-btn{padding:7px 9px}.pro-btn-text{font-size:11px}.group{margin-top:18px}.group-title{font-size:12px}.group-menu{border-radius:13px}.menu-item{gap:10px;padding:10px 12px}.menu-icon{width:30px;height:30px;border-radius:9px}.menu-icon-img{width:17px;height:17px}.menu-name{font-size:13px}.menu-sub{font-size:10px}.chevron{font-size:20px}}
+/* Reset only entry animations; page nodes and scroll position stay intact. */
+.profile-page.page-entry-reset{animation:none;opacity:0}
+.profile-page.page-entry-reset .menu-item{animation:none}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <view class="home-view">
+  <view class="home-view" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <view class="home-masthead">
@@ -125,6 +125,7 @@
 </template>
 
 <script>
+import { pageEntryMixin } from '@/utils/page-entry.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
@@ -147,7 +148,7 @@ function svgUri(svg) {
 }
 
 export default {
-  mixins: [feedbackPageMixin],
+  mixins: [feedbackPageMixin, pageEntryMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   components: { AppFeedback,  BottomTabs, AnimatedNumber },
   data() {
@@ -420,12 +421,12 @@ export default {
 <style>
 @keyframes firePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fireCardIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: calc(88px + env(safe-area-inset-bottom)); animation: firePageIn .32s cubic-bezier(.22,1,.36,1) both; }
-.home-masthead { animation: fireCardIn .48s cubic-bezier(.22,1,.36,1) both; }
-.home-metrics { animation: fireCardIn .48s .06s cubic-bezier(.22,1,.36,1) both; }
-.task-row { animation: fireCardIn .42s cubic-bezier(.22,1,.36,1) both; }
+.home-view { min-height: 100vh; background: #fdfdfb; padding-bottom: calc(88px + env(safe-area-inset-bottom)); animation: firePageIn .32s cubic-bezier(.22,1,.36,1) backwards; }
+.home-masthead { animation: fireCardIn .48s cubic-bezier(.22,1,.36,1) backwards; }
+.home-metrics { animation: fireCardIn .48s .06s cubic-bezier(.22,1,.36,1) backwards; }
+.task-row { animation: fireCardIn .42s cubic-bezier(.22,1,.36,1) backwards; }
 .task-row:nth-child(2) { animation-delay: .08s; }.task-row:nth-child(3) { animation-delay: .14s; }.task-row:nth-child(4) { animation-delay: .2s; }
-.goal-card { animation: fireCardIn .48s .1s cubic-bezier(.22,1,.36,1) both; }
+.goal-card { animation: fireCardIn .48s .1s cubic-bezier(.22,1,.36,1) backwards; }
 .goal-card-mini { margin: -4px 24px 12px auto; width: min(42vw, 180px); min-height: 0; padding: 10px 12px; border-radius: 12px; cursor: pointer; }
 .goal-card-mini .goal-card-name { margin: 0; font-size: 13px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .goal-card-mini .goal-card-meta { margin-top: 4px; font-size: 11px; line-height: 1.4; }
@@ -513,4 +514,7 @@ export default {
 
 @media screen and (max-width:390px){.home-view{padding-bottom:calc(78px + env(safe-area-inset-bottom))}.home-masthead{padding:calc(18px + env(safe-area-inset-top)) 16px 18px}.masthead-title{min-height:118px}.masthead-h1{font-size:20px}.calendar-num{font-size:34px}.calendar-label{font-size:13px}.home-content{padding:0 16px}.home-metrics{gap:8px;padding:16px 0}.metric-label{font-size:11px}.metric-value{font-size:15px}.section{margin-top:20px}.section-title{font-size:16px}.task-row{padding:11px 0;gap:9px}.task-icon{width:30px;height:30px;border-radius:9px}.task-icon-img{width:17px;height:17px}.task-title{font-size:13px}.task-sub{font-size:10px}.task-reward{font-size:11px}}
 @media screen and (max-width:430px){.home-masthead{padding:calc(12px + env(safe-area-inset-top)) 14px 14px}.masthead-title{min-height:94px}.masthead-h1{font-size:18px}.masthead-date{font-size:11px;margin-top:5px}.home-unconfigured{padding:8px 0 14px}.unconfigured-label{font-size:15px}.unconfigured-h2{font-size:20px;margin:10px 0 6px}.unconfigured-sub{font-size:12px;line-height:1.55}.btn-primary{margin-top:16px;padding:12px 14px}.btn-primary-text{font-size:13px}.home-content{padding:0 14px}.home-metrics{gap:6px;padding:13px 0}.metric-label{font-size:10px}.metric-value{font-size:14px}.section{margin-top:16px}.section-title{font-size:15px}.section-count{font-size:12px}.task-row{padding:9px 0}.task-title{font-size:12px}.task-sub{font-size:9px}.calendar-num{font-size:30px}.calendar-label{font-size:11px}.countdown-target{font-size:10px;margin-bottom:13px}}
+/* Reset only entry animations; page nodes and scroll position stay intact. */
+.home-view.page-entry-reset{animation:none;opacity:0}
+.home-view.page-entry-reset .home-masthead,.home-view.page-entry-reset .home-metrics,.home-view.page-entry-reset .task-row,.home-view.page-entry-reset .goal-card{animation:none}
 </style>
