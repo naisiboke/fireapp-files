@@ -30,4 +30,15 @@
 
 ## 下载官网模板
 
-已新增独立下载页：`download.html`。部署后可通过 `https://你的域名/download.html` 访问；其中 `DOWNLOAD_LINKS` 的三个空值分别对应 iOS、Windows、Android 下载地址，填入文件地址后按钮会自动启用。现有应用入口 `index.html` 保持不变。
+已新增独立下载页：`download.html`。部署后可通过 `https://你的域名/download.html` 访问；下载页只保留 Android 和 iOS。Android 地址为同站点的 `./downloads/fireday.apk`，检测文件可用后启用下载。iOS 暂未提供正式地址，显示“即将上线”；有正式地址后再填写 `DOWNLOAD_LINKS.ios`。现有应用入口 `index.html` 保持不变。
+
+## Android APK 发布到 CloudBase 静态网站托管
+
+本次网页源码已更新，但当前执行环境无法读取聊天中的 APK 附件，安装包尚未代上传。请使用用户提供的真实 fireday.apk，不能创建占位文件。
+
+1. 在当前官网环境打开“静态网站托管”的文件管理。
+2. 将仓库最新 download.html 上传至站点根目录，替换旧下载页。
+3. 在同一站点根目录创建 downloads 文件夹，将 fireday.apk 上传进去。
+4. 确认 `https://fireday.cn/downloads/fireday.apk` 返回真实安装包，刷新 `https://fireday.cn/download.html`，Android 按钮应显示“下载 Android”。
+
+页面只发起 HEAD 检测，不会提前下载整份 APK；不存在、空文件、网络失败或返回 HTML 首页的路径均不会启用下载。iOS 保留待上线状态，未提供 App Store 地址时不会生成假链接。
