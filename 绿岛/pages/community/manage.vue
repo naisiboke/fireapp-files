@@ -25,72 +25,46 @@
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showDialog, showNotice } from '@/utils/feedback.js'
-const feedbackOwnerId = useFeedbackPage()
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { CS } from '@/utils/community-store.js'
-import { reviewCommunityPost } from '@/utils/community-review.js'
-const posts=ref([]), editingId=ref(''), draft=ref({title:'',content:''})
-function load(){
- const list=CS.ugc()
- const now=Date.now()
- let changed=false
- list.forEach(post=>{
-  if(post.status==='pending' && now-Number(post.createdAt||now)>60000){
-   post.status='review_failed';post.reviewStatus='review_failed';post.reviewReason='审核请求已超时，请点击“重试审核”';changed=true
-  }
- })
- if(changed)CS.saveUGC(list)
- posts.value=list.filter(x=>x.displayName==='3263***').sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0))
-}
+const feedbackOwnerId=useFeedbackPage()
+const posts=ref([]),editingId=ref(''),draft=ref({title:'',content:''})
+let reviewing=new Set()
+function load(){posts.value=CS.ugc().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0))}
+onShow(async()=>{load();const result=await CS.hydrate();load();if(!result.ok)showNotice({title:'部分内容尚未恢复，请联网后重试',icon:'none'})})
 function back(){uni.navigateBack()}
 function close(){uni.switchTab({url:'/pages/profile/index'})}
 function openShare(){uni.navigateTo({url:'/pages/community/share?from=community'})}
-function formatDate(v){return v?new Date(v).toLocaleDateString('zh-CN'):'刚刚'}
-function statusText(post){const status=post.status||'approved';return {approved:'已发布',pending:'审核中',rejected:'未通过',review_failed:'审核失败'}[status]||'待处理'}
-function statusClass(post){return 'status-'+(post.status||'approved')}
+function formatDate(value){return value?new Date(value).toLocaleDateString('zh-CN'):'刚刚'}
+function statusText(post){return {approved:'已发布',pending:'审核中',rejected:'需要修改',review_failed:'待重试'}[post.status]||'待处理'}
+function statusClass(post){return 'status-'+(post.status||'pending')}
 function startEdit(post){uni.navigateTo({url:'/pages/community/share?editId='+encodeURIComponent(post.id)})}
 async function retryReview(post){
- post.status='pending';post.reviewStatus='pending';post.reviewReason='正在重新请求 AI 审核';CS.saveUGC(CS.ugc());load()
+ if(reviewing.has(post.id))return
+ reviewing.add(post.id)
  try{
-  const verdict=await reviewCommunityPost(post)
-  const list=CS.ugc(),target=list.find(x=>x.id===post.id)
-  if(target){target.status=verdict.approved?'approved':'rejected';target.reviewStatus=target.status;target.reviewReason=verdict.reason;target.reviewedAt=Date.now();CS.saveUGC(list)}
-  load();showNotice({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
- }catch(error){
-  const list=CS.ugc(),target=list.find(x=>x.id===post.id)
-  if(target){target.status='review_failed';target.reviewStatus='review_failed';target.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(list)}
-  load();showNotice({title:'审核请求失败，请检查云端 API',icon:'none'})
- }
+  const saved=await CS.submitPost(post)
+  load()
+  showNotice({title:saved.status==='approved'?'云端审核通过，已发布':saved.reviewReason||'内容已保存，请查看状态',icon:'none',duration:3000})
+ }catch(error){load();showNotice({title:error.message||'未确认云端保存，本机内容已保留',icon:'none'})}
+ finally{reviewing.delete(post.id)}
 }
-
 function cancelEdit(){editingId.value=''}
 async function saveEdit(post){
- const title=String(draft.value.title||'').trim(),content=String(draft.value.content||'').trim()
- if(!title||!content)return showNotice({title:'请填写完整内容',icon:'none'})
- const list=CS.ugc(),target=list.find(x=>x.id===post.id)
- if(!target)return
- target.title=title;target.content=content;target.summary=content.slice(0,100);target.updatedAt=Date.now();target.status='pending';target.reviewStatus='pending';target.reviewReason='等待 AI 审核'
- if(!CS.saveUGC(list))return showNotice({title:'保存失败',icon:'none'})
- editingId.value='';load();showNotice({title:'已保存，正在审核',icon:'none'})
- try {
-  const verdict=await reviewCommunityPost(target)
-  const latest=CS.ugc().find(x=>x.id===post.id)
-  if(latest){latest.status=verdict.approved?'approved':'rejected';latest.reviewStatus=latest.status;latest.reviewReason=verdict.reason;latest.reviewedAt=Date.now();CS.saveUGC(CS.ugc())}
-  load();showNotice({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
- } catch(error) {
-  const latest=CS.ugc().find(x=>x.id===post.id)
-  if(latest){latest.status='review_failed';latest.reviewStatus='review_failed';latest.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(CS.ugc())}
-  load();showNotice({title:'审核失败，请稍后重试',icon:'none'})
- } 
+ if(!String(draft.value.title||'').trim()||!String(draft.value.content||'').trim())return
+ await retryReview({...post,title:draft.value.title.trim(),content:draft.value.content.trim()})
+ editingId.value=''
 }
 function removePost(post){
- showDialog({title:'删除这段经历？',content:'删除后无法恢复。',confirmText:'删除',confirmColor:'#a35d4e',success:({confirm})=>{
+ showDialog({title:'删除这段经历？',content:'删除后将从社区隐藏，云端保留恢复记录。',confirmText:'删除',success:async({confirm})=>{
   if(!confirm)return
-  const list=CS.ugc().filter(x=>x.id!==post.id)
-  if(CS.saveUGC(list)){load();showNotice({title:'已删除',icon:'none'})}
+  try{
+   await CS.deletePost(post)
+   load();showNotice({title:'已删除',icon:'none'})
+  }catch(error){showNotice({title:'删除尚未同步，内容已保留，请联网后重试',icon:'none'})}
  }})
 }
-onMounted(load)
 </script>
 <style>
 .manage-page{min-height:100vh;padding:calc(62px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom));background:#f3f6f1;color:#243830;box-sizing:border-box}.head{position:fixed;z-index:5;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 18px 0;display:flex;align-items:center;justify-content:space-between;background:#f3f6f1;border-bottom:1px solid #dfe7dd;box-sizing:border-box}.back,.space,.close{width:40px;height:40px;display:flex;align-items:center;justify-content:center}.back{font-size:32px;color:#173d35}.title{font-size:19px;font-weight:700}.list{display:flex;flex-direction:column;gap:12px}.card{padding:16px;border-radius:16px;background:#fff;border:1px solid #e0e9df;box-shadow:0 4px 14px rgba(36,56,48,.06)}.card-head{display:flex;justify-content:space-between;align-items:center}.meta{display:flex;align-items:center;gap:8px}.status{padding:3px 7px;border-radius:7px;font-size:11px;background:#e8f0e6;color:#527059}.status-pending{background:#fff4d8;color:#9a6b21}.status-rejected,.status-review_failed{background:#fff0eb;color:#a35d4e}.tag{padding:4px 8px;border-radius:7px;background:#e8f0e6;color:#527059;font-size:12px}.date{color:#89968b;font-size:11px}.post-title{display:block;margin-top:13px;font-size:18px;font-weight:700}.post-content{display:block;margin-top:8px;color:#52605a;font-size:13px;line-height:1.7;white-space:pre-wrap}.review-reason{display:block;margin-top:8px;color:#8a6a2b;font-size:11px;line-height:1.5}.actions{display:flex;gap:10px;margin-top:16px}.edit,.delete,.retry,.publish{flex:1;padding:11px;text-align:center;border-radius:10px;font-size:13px}.edit{background:#e8f0e6;color:#243830}.retry{background:#fff4d8;color:#8a6a2b}.delete{background:#fff2ee;color:#a35d4e}.label{display:block;margin-top:4px;margin-bottom:7px;color:#52605a;font-size:12px}.input,.area{width:100%;box-sizing:border-box;border:1px solid #dfe7dd;border-radius:10px;background:#f7f9f4;color:#243830;padding:11px;font-size:14px}.area{height:130px}.empty{text-align:center;padding:90px 20px;color:#71807a;font-size:14px}.publish{display:block;margin:20px auto 0;max-width:180px;background:#173d35;color:#fff}

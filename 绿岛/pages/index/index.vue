@@ -68,6 +68,9 @@
     </view>
 
     <view class="home-content">
+      <view v-if="state.cloudSync && ['error','pending','restoring','empty','synced'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
+        <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
+      </view>
 
       <view class="home-metrics">
         <view class="metric" @tap="goLedger">
@@ -132,7 +135,7 @@ import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
-import { state, refreshFinance } from '@/store/index.js'
+import { state, refreshFinance, hydrateFromServer, syncStateToServer } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
 import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts } from '@/utils/engine.js'
 
@@ -401,6 +404,17 @@ export default {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#769383" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${p}"/></svg>`
       return svgUri(svg)
     },
+    async retryAccountSync() {
+      if(state.cloudSync?.status==='restoring')return
+      const restored=await hydrateFromServer()
+      if(!restored.loaded){
+        if(restored.error?.code==='AUTH_REQUIRED')uni.navigateTo({url:'/pages/login/login?redirect=/pages/index/index'})
+        else showNotice({title:state.cloudSync.message,icon:'none'})
+        return
+      }
+      const result=await syncStateToServer()
+      if(!result.synced&&!result.skipped)showNotice({title:state.cloudSync.message,icon:'none'})
+    },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
     goResult() { uni.navigateTo({ url: '/pages/calculator/index' }) },
     goGoal() { uni.navigateTo({ url: '/pages/calculator/index?mode=goal' }) },
@@ -527,4 +541,8 @@ export default {
 .home-view.page-entry-reset .home-masthead,.home-view.page-entry-reset .home-metrics,.home-view.page-entry-reset .task-row,.home-view.page-entry-reset .goal-card{animation:none}
 .home-metrics .metric-status{font-size:11px;line-height:1.4;color:#a35d4e;font-weight:600}
 .metric-value.metric-over-budget{color:#a35d4e}
+.account-sync-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;margin:0 0 14px;border:1px solid #e3e8df;border-radius:12px;background:#f7f9f5;color:#8a5f38;font-size:12px;line-height:1.6}
+.account-sync-banner text:first-child{flex:1;min-width:0}
+.account-sync-banner text:last-child{white-space:nowrap}
+.account-sync-banner.synced{padding:4px 0 8px;margin-bottom:4px;border:0;background:transparent;color:#718078;font-size:11px}
 </style>

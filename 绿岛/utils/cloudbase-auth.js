@@ -149,7 +149,7 @@ async function getAuth() {
       env: 'ziyoukedu-d0gyrczqk4de53b87',
       region: 'ap-shanghai',
     })
-    auth = app.auth({ persistence: 'none' })
+    auth = app.auth({ persistence: 'local' })
     return auth
   } catch (error) {
     const message = error && error.message ? error.message : '云端登录服务初始化失败'
@@ -200,4 +200,44 @@ export async function getMediaURL(fileID) {
   const result = await app.getTempFileURL({ fileList: [fileID] })
   const item = result && result.fileList && result.fileList[0]
   return item && (item.tempFileURL || item.tempFileUrl || '')
+}
+
+export async function callAccountData(data) {
+  const client = await getAuth()
+  const login = await client.getLoginState()
+  if (!login || !login.user || !login.user.uid) {
+    const error=new Error('登录状态已失效，请重新登录后恢复数据');error.code='AUTH_REQUIRED';throw error
+  }
+  const expected=String(data.expectedUid||login.user.uid)
+  if(expected!==String(login.user.uid)){
+    const error=new Error('账号已切换，已取消旧账号的数据操作');error.code='ACCOUNT_MISMATCH';throw error
+  }
+  const token = await client.getAccessToken()
+  const current=await client.getLoginState()
+  if(String(current?.user?.uid||'')!==String(login.user.uid)){
+    const error=new Error('账号已切换，请在当前账号重试');error.code='ACCOUNT_MISMATCH';throw error
+  }
+  const value=typeof token==='string'?token:token && (token.accessToken||token.access_token)
+  if(value)uni.setStorageSync('fire_access_token',value)
+  let response
+  try { response=await app.callFunction({name:'accountData',data}) }
+  catch(cause){
+    console.warn('[account-function]',cause.code||cause.message)
+    const error=new Error('云端保存暂不可用，本机记录已保留，请稍后重试')
+    error.code=cause.code||'DATA_SERVICE_UNAVAILABLE';throw error
+  }
+  let result=response && response.result
+  if(typeof result==='string')result=JSON.parse(result)
+  if(!result || result.ok!==true){
+    const error=new Error(result && result.message || '云端保存暂不可用，本机记录已保留，请稍后重试')
+    error.code=result && result.code || 'DATA_SERVICE_UNAVAILABLE'
+    throw error
+  }
+  if(String(result.uid)!==String(login.user.uid)){
+    const error=new Error('账号数据归属校验失败，已停止同步');error.code='ACCOUNT_MISMATCH';throw error
+  }
+  return result
+}
+export async function signOutAccountSession() {
+  try { await (await getAuth()).signOut() } catch(error){ console.warn('[auth-signout]',error.code||'') }
 }

@@ -21,7 +21,7 @@ import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice } from '@/utils/feedback.js'
 const feedbackOwnerId = useFeedbackPage()
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { state, persist, hydrateFromServer } from '@/store/index.js'
+import { state, persist, hydrateFromServer, endAccountSession } from '@/store/index.js'
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
 const mode=ref('email'), email=ref(''), phone=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref(''), redirect=ref('')
 const isDev = import.meta.env.DEV
@@ -29,7 +29,7 @@ const ADMIN_TEST_EMAIL = '3263383331@qq.com'
 let noticeTimer=null, countdownTimer=null, verificationInfo=null
 onMounted(()=>{
  const pages=getCurrentPages(); const current=pages[pages.length-1]; const options=(current&&current.options)||{}; redirect.value=options.redirect||'';
- if(uni.getStorageSync('fire_login_status')===true) uni.reLaunch({url:redirect.value||'/pages/index/index'})
+ if(uni.getStorageSync('fire_login_status')===true&&state.cloudSync?.status==='synced') uni.reLaunch({url:redirect.value||'/pages/index/index'})
 })
 onBeforeUnmount(()=>{clearTimeout(noticeTimer);clearInterval(countdownTimer)})
 watch(mode,()=>{code.value='';verificationInfo=null;countdown.value=0})
@@ -55,7 +55,7 @@ async function login(){
  if(!code.value.trim())return toast('请输入验证码')
  if(!verificationInfo)return toast('请先获取验证码')
  loading.value=true
- try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);try{await hydrateFromServer()}catch(syncError){console.warn('[login-hydrate]',syncError)}uni.setStorageSync('fire_account_email',mode.value==='email'?value:'');uni.removeStorageSync('fire_guest_mode');state.profile={...(state.profile||{}),email:mode.value==='email'?value:(state.profile&&state.profile.email)||''};state.started=true;persist();const target=redirect.value||'/pages/index/index';const guideDone=uni.getStorageSync('fire_app_guide_done')===true;const destination=guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target);uni.reLaunch({url:destination})}
+ try{const loginState=await signInWithCode(mode.value,value,code.value.trim(),verificationInfo);endAccountSession();uni.setStorageSync('fire_login_status',false);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);const restored=await hydrateFromServer();if(!restored.loaded){toast(restored.error?.message||'账号数据恢复失败，本机记录已保留，请稍后重试');return}uni.setStorageSync('fire_account_email',mode.value==='email'?value:'');uni.removeStorageSync('fire_guest_mode');state.profile={...(state.profile||{}),email:mode.value==='email'?value:(state.profile&&state.profile.email)||''};state.started=true;persist();await import('@/utils/community-store.js').then(({CS})=>CS.hydrate());const target=redirect.value||'/pages/index/index';const guideDone=uni.getStorageSync('fire_app_guide_done')===true;const destination=guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target);uni.reLaunch({url:destination})}
  catch(error){const detail=error&& (error.message||error.errMsg||error.error_description||error.error);toast(detail||'登录失败，请重新获取验证码后重试');console.error('[email-login]',error)}
  finally{loading.value=false}
 }

@@ -24,19 +24,19 @@ import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { COMMUNITY_POST_TAGS as tags } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
-import { reviewCommunityPost } from '@/utils/community-review.js'
 const empty=()=>({tags:[],journey:'doing',title:'',content:'',timeline:[{year:'',title:''}]})
 const saved=CS.draft()
 const form=reactive(saved?{...empty(),...saved,timeline:saved.timeline?.length?saved.timeline:[{year:'',title:''}]}:empty())
 const validTimeline=computed(()=>form.timeline.filter(x=>String(x.year).trim()&&String(x.title).trim()))
 const ready=computed(()=>form.tags.length>0&&form.title.trim()&&form.content.trim()&&validTimeline.value.length>0)
 const publishing=ref(false),editId=ref('')
-onLoad((options) => {
+onLoad(async (options) => {
  const id=String(options&&options.editId||'')
  if(!id)return
  editId.value=id
- const post=CS.ugc().find(x=>String(x.id)===id)
- if(!post)return
+ let post=CS.ugc().find(x=>String(x.id)===id)
+ if(!post){await CS.hydrate();post=CS.ugc().find(x=>String(x.id)===id)}
+ if(!post){showNotice({title:'未能恢复这段经历，请联网后重试',icon:'none'});return}
  form.tags=[...(post.tags||String(post.category||'').split(' · ').filter(Boolean))]
  form.journey=post.journey||'doing'
  form.title=post.title||''
@@ -54,29 +54,35 @@ function close(){CS.saveDraft(form);uni.switchTab({url:'/pages/community/index'}
 function toggleTag(tag){const i=form.tags.indexOf(tag);if(i>=0)form.tags.splice(i,1);else form.tags.push(tag)}
 function addRow(){form.timeline.push({year:'',title:''})}
 function removeRow(i){if(form.timeline.length>1)form.timeline.splice(i,1)}
-function saveDraft(){CS.saveDraft(form);showNotice({title:'草稿已保存',icon:'none'})}
+function saveDraft(){const saved=CS.saveDraft(form);showNotice({title:saved?'草稿已保留在本机，联网后同步':'保存失败，请重试',icon:'none'})}
 async function publish(){
- if(!ready.value){showNotice({title:'请填写完整内容',icon:'none'});return}
- if(publishing.value)return
+ if(!ready.value||publishing.value)return
  publishing.value=true
- const existing=editId.value?CS.ugc().find(x=>String(x.id)===String(editId.value)):null
- const post={id:existing?existing.id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:existing?existing.displayName:'3263***',createdAt:existing?existing.createdAt:Date.now(),status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核'}
- const list=CS.ugc();const existingIndex=list.findIndex(x=>String(x.id)===String(post.id));if(existingIndex>=0)list[existingIndex]={...list[existingIndex],...post};else list.unshift(post)
- if(!CS.saveUGC(list)){publishing.value=false;showNotice({title:'保存失败',icon:'none'});return}
- try {
-  const verdict=await reviewCommunityPost(post)
-  const target=CS.ugc().find(x=>x.id===post.id)
-  if(target){target.status=verdict.approved?'approved':'rejected';target.reviewStatus=target.status;target.reviewReason=verdict.reason;target.reviewedAt=Date.now();CS.saveUGC(CS.ugc())}
-  if(verdict.approved){CS.clearDraft();showNotice({title:'审核通过，经历已发布',icon:'none'})}
-  else showNotice({title:'审核未通过：'+verdict.reason,icon:'none',duration:3000})
-  setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),500)
- } catch(error) {
-  const target=CS.ugc().find(x=>x.id===post.id)
-  if(target){target.status='review_failed';target.reviewStatus='review_failed';target.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(CS.ugc())}
-  showNotice({title:'审核失败，请稍后重试',icon:'none'})
-  setTimeout(()=>uni.navigateTo({url:'/pages/community/manage'}),500)
- } finally { publishing.value=false }
+ const existing=editId.value?CS.ugc().find(item=>String(item.id)===editId.value):null
+ if(editId.value&&!existing){publishing.value=false;showNotice({title:'原经历尚未恢复，请联网后重试',icon:'none'});return}
+ const post={
+  ...existing,id:existing?.id||'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+  category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey||'doing',
+  title:form.title.trim(),content:form.content.trim(),
+  timeline:validTimeline.value.map(row=>({year:row.year,desc:row.title})),
+  displayName:existing?.displayName||'社区用户',createdAt:existing?.createdAt||Date.now(),
+ }
+ CS.saveDraft(form)
+ try{
+  const saved=await CS.submitPost(post)
+  if(saved.status==='approved'){
+   CS.clearDraft()
+   showNotice({title:'云端审核通过，经历已发布',icon:'none'})
+   setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),500)
+  }else{
+   showNotice({title:saved.reviewReason||'内容已保存，请到我的社区设置查看状态',icon:'none',duration:3500})
+   setTimeout(()=>uni.navigateTo({url:'/pages/community/manage'}),500)
+  }
+ }catch(error){
+  showNotice({title:error.message||'尚未确认云端保存，内容已保留在本机，请重试',icon:'none',duration:3500})
+ }finally{publishing.value=false}
 }
+
 </script>
 <style lang="scss">
 .share-page{position:fixed;inset:0;background:#fff;color:#243830;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);overflow:hidden}.share-head{height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e8efe4}.back,.close{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px;color:#52605a}.close{font-size:30px;color:#52605a}.title{font-size:18px;font-weight:600}.share-scroll{flex:1;height:0;min-height:0;width:100%;pointer-events:auto}.share-content{padding:20px 20px 120px;box-sizing:border-box}.block{margin-bottom:24px}.label{display:block;margin-bottom:10px;color:#52605a;font-size:13px;font-weight:500}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{min-height:44px;padding:0 14px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#eff3eb;color:#52605a;font-size:13px}.tag.active{background:#e8efe4;border:1px solid #243830;color:#243830}.text-input,.text-area,.year,.event{position:relative;z-index:2;pointer-events:auto!important;background:#f7f9f4;border:1px solid #e5e9e0;border-radius:10px;color:#243830;box-sizing:border-box}.text-input{width:100%;height:52px;padding:0 12px;font-size:15px}.text-area{width:100%;min-height:140px;padding:12px;font-size:14px;line-height:1.6}.text-input:focus,.text-area:focus,.year:focus,.event:focus{border-color:#4f8068;outline:none;box-shadow:0 0 0 2px rgba(79,128,104,.12)}.counter{display:block;text-align:right;margin-top:5px;color:#66736a;font-size:11px}.timeline-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.year{width:78px;height:44px;padding:0 8px}.event{flex:1;height:44px;padding:0 8px}.remove{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#a35d4e;font-size:22px}.add-row{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;border:1px dashed #b8c6b3;border-radius:10px;color:#243830;font-size:13px}.preview{padding-top:18px;border-top:1px solid #e8efe4}.preview-title{display:block;font-size:16px;font-weight:600;margin-bottom:8px}.preview-body{display:block;color:#426052;font-size:13px;line-height:1.75;white-space:pre-wrap}.share-foot{position:relative;z-index:20;flex-shrink:0;padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #e8efe4;background:#fff;pointer-events:auto}.actions{display:flex;gap:10px}.actions button{flex:1;min-height:48px;border-radius:10px;font-size:14px}.draft{background:#f7f9f4;color:#243830;border:1px solid #dce4d7}.publish{background:#243830;color:#fff}.publish[disabled]{opacity:.4}.hint{display:block;text-align:center;margin-top:8px;color:#66736a;font-size:11px}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

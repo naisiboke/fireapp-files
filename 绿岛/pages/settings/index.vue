@@ -58,7 +58,9 @@
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
-import { state, reset, persist, syncStateToServer } from '@/store/index.js'
+import { state, reset, persist, syncStateToServer, hydrateFromServer, endAccountSession } from '@/store/index.js'
+import { signOutAccountSession } from '@/utils/cloudbase-auth.js'
+import { CS } from '@/utils/community-store.js'
 import { isApiConfigured, savePrivacySettings, exportUserData, deleteUserData, requestAccountDeletion } from '@/utils/api-service.js'
 import { isMembershipActive, membershipText } from '@/utils/membership.js'
 
@@ -119,13 +121,16 @@ export default {
     async updatePrivacy(patch) {
       state.privacySettings = { ...state.privacySettings, ...patch }; persist()
       if (!isApiConfigured()) return showNotice({ title: '已保留本机设置', icon: 'none' })
-      try { await savePrivacySettings(state.privacySettings); showNotice({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { showNotice({ title: error.message || '同步失败，请重试', icon: 'none' }) }
+      try { const result=await syncStateToServer();if(!result.synced)throw new Error(state.cloudSync.message); showNotice({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { showNotice({ title: error.message || '同步失败，请重试', icon: 'none' }) }
     },
     openPrivacy() { uni.navigateTo({ url: '/pages/privacy/index' }) },
     async retrySync() {
       if (!isApiConfigured()) return showNotice({ title: '请先完成云端配置', icon: 'none' })
+      const restored=await hydrateFromServer()
+      if(!restored.loaded)return showNotice({title:state.cloudSync.message,icon:'none'})
       const result = await syncStateToServer()
-      showNotice({ title: result.synced ? '云端同步完成' : ((state.cloudSync && state.cloudSync.message) || '同步失败'), icon: 'none' })
+      const community=await CS.hydrate()
+      showNotice({ title: result.synced && community.ok ? '云端同步完成' : (!community.ok ? '部分内容尚未同步，本机副本已保留，请重试' : ((state.cloudSync && state.cloudSync.message) || '同步失败')), icon: 'none' })
     },
     async exportData() {
       if (!isApiConfigured()) return showNotice({ title: '云端 API 尚未配置', icon: 'none' })
@@ -139,8 +144,11 @@ export default {
       }})
     },
     logout() {
-      showDialog({ title: '退出当前账号？', content: '退出后需要重新登录，云端数据不会被删除。', confirmText: '退出', confirmColor: '#a35d4e', success: res => {
+      showDialog({ title: '退出当前账号？', content: '退出后需要重新登录，云端数据不会被删除。', confirmText: '退出', confirmColor: '#a35d4e', success: async res => {
         if (!res.confirm) return
+        await syncStateToServer()
+        endAccountSession()
+        await signOutAccountSession()
         ;['fire_login_status', 'fire_access_token', 'fire_login_token', 'fire_account_email'].forEach(key => uni.removeStorageSync(key))
         uni.removeStorageSync('fire_client_id')
         uni.reLaunch({ url: '/pages/login/login' })

@@ -1,22 +1,23 @@
+import { accountId, activateAccount, readAccountCache, writeAccountCache, preserveLegacyCache, adoptVerifiedLegacyCache } from '../utils/account-cache.js'
 import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
-import { isApiConfigured, fetchUserState, saveUserState } from '../utils/api-service.js'
+import { isApiConfigured, fetchAccountBootstrap, saveUserState } from '../utils/api-service.js'
 import { validateNickname } from '../utils/nickname.js'
 
-export const STATE_VERSION = 3
+export const STATE_VERSION = 4
 export const WISHLIST_KEY = 'fire_wishlist_v1'
 
 function readWishlist() {
   try {
-    const value = uni.getStorageSync(WISHLIST_KEY)
+    const value = readAccountCache(WISHLIST_KEY)
     return Array.isArray(value) ? value : null
   } catch (e) { return null }
 }
 
 function writeWishlist(items) {
-  try { uni.setStorageSync(WISHLIST_KEY, JSON.parse(JSON.stringify(items || []))) } catch (e) {}
+  try { const value=JSON.parse(JSON.stringify(items || []));writeAccountCache(WISHLIST_KEY,value);uni.setStorageSync(WISHLIST_KEY,value) } catch (e) {}
 }
 
 const seed = () => ({
@@ -59,6 +60,7 @@ export const state = reactive({ ...seed(), ready: false })
 
 function applySaved(saved) {
   const defaults = seed()
+  for(const key of Object.keys(state))if(!(key in defaults))delete state[key]
   if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
     // 保留未知字段、阅读对象及所有记录，仅为缺失字段补默认值。
     Object.assign(state, defaults, saved)
@@ -116,13 +118,17 @@ function ensureFreedomPlan() {
 }
 
 export function bootstrap() {
+  preserveLegacyCache()
+  const savedMeta=readAccountCache('fire_sync_meta_v1',{})||{}
+  revision=Number(savedMeta.revision)||0;dirty=!!savedMeta.dirty;changeVersion=Number(savedMeta.changeVersion)||0
   applySaved(storage.get('state', null))
   const wishlist = readWishlist()
   if (wishlist) state.items = wishlist
+  uni.setStorageSync(WISHLIST_KEY,state.items)
   HeroDay(state)
   state.ready = true
   // 迁移只对已有状态落盘；首次安装保留空白 seed。
-  if (storage.get('state', null)) persistNow()
+  if (storage.get('state', null)) writeLocal(serializableState())
 }
 
 // onShow 仅刷新本次功能相关字段，不能用旧存储覆盖未落盘的记账/拔草记录。
@@ -156,79 +162,161 @@ function writeLocal(plain) {
   return success
 }
 
-export async function syncStateToServer(snapshot = serializableState()) {
-  if (!isApiConfigured()) return { configured: false }
-  state.cloudSync = { status: 'syncing', message: '' }
-  try {
-    await saveUserState(snapshot)
-    state.cloudSync = { status: 'synced', message: '已与云端同步' }
-    return { configured: true, synced: true }
-  } catch (error) {
-    state.cloudSync = { status: 'error', message: error && error.message ? error.message : '云端同步失败' }
-    console.warn('[cloud-sync]', error)
-    return { configured: true, synced: false, error }
-  }
-}
-
-export async function hydrateFromServer() {
-  if (!isApiConfigured()) return { configured: false }
-  try {
-    const remote = await fetchUserState()
-    if (remote && typeof remote === 'object') {
-      const localMembership = state.membership && typeof state.membership === 'object' ? { ...state.membership } : null
-      const localWasActive = !!(localMembership && (localMembership.active === true || localMembership.status === 'active' || localMembership.pro === true))
-      const remoteMembership = remote.membership && typeof remote.membership === 'object' ? remote.membership : null
-      const remoteIsActive = !!(remoteMembership && (remoteMembership.active === true || remoteMembership.status === 'active' || remoteMembership.pro === true))
-      applySaved(remote)
-      // 云端会员接口尚未同步或返回旧快照时，保留本地已确认会员，并立即回写云端。
-      if (localWasActive && !remoteIsActive) state.membership = { ...state.membership, ...localMembership, active: true, status: 'active' }
-      HeroDay(state)
-      const snapshot = serializableState()
-      writeLocal(snapshot)
-      if (localWasActive && !remoteIsActive) syncStateToServer(snapshot)
-      state.cloudSync = { status: 'synced', message: '已从云端读取' }
-      return { configured: true, loaded: true }
-    }
-    return { configured: true, loaded: false }
-  } catch (error) {
-    state.cloudSync = { status: 'error', message: error && error.message ? error.message : '云端读取失败' }
-    console.warn('[cloud-hydrate]', error)
-    return { configured: true, loaded: false, error }
-  }
-}
-
-export function persistNow() {
-  clearTimeout(saveTimer)
-  saveTimer = null
-  try {
-    const plain = serializableState()
-    const success = writeLocal(plain)
-    if (success) syncStateToServer(plain)
-    return success
-  } catch (e) {
-    console.warn('[persistNow]', e)
-    return false
-  }
-}
-
 let saveTimer = null
-export function persist() {
-  // 拔草数据立即落盘，返回首页时不会被旧存储覆盖。
-  writeWishlist(toRaw(state).items)
-  clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => {
-    saveTimer = null
-    try {
-      const plain = serializableState()
-      writeLocal(plain)
-      syncStateToServer(plain)
-    } catch (e) {
-      console.warn('[persist]', e)
-    }
-  }, 120)
-}
+let sessionEpoch = 0
+let restoreReady = false
+let revision = 0
+let dirty = false
+let changeVersion = 0
+let restoreTask = null
+let writeQueue = Promise.resolve()
 
+function meta() { return {revision,dirty,changeVersion} }
+function saveMeta() { writeAccountCache('fire_sync_meta_v1',meta()) }
+function equivalentState(left,right){
+  const ignored=new Set(['membership','ready','cloudSync'])
+  const normalize=value=>{
+    if(Array.isArray(value))return value.map(normalize)
+    if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,normalize(value[key])]))
+    return value
+  }
+  const clean=value=>Object.fromEntries(Object.entries(value||{}).filter(([key])=>!ignored.has(key)))
+  return JSON.stringify(normalize(clean(left)))===JSON.stringify(normalize(clean(right)))
+}
+function meaningful(value) {
+  return !!(value.financeEntered || ['assets','monthlyDeposit','retirementExpense','income','expense','goal'].some(key=>Number(value.finance?.[key])>0) || value.ledger?.length || value.items?.length || value.assetHistory?.length ||
+    value.aiChats?.length || value.completed?.length || value.goalPlan || value.goalDraft || value.reading || value.personality?.completed ||
+    Object.keys(value.monthlyTargets||{}).length || value.soundEnabled===false || value.privacySettings?.cloudSync===false ||
+    Object.keys(value.personalityTests||{}).length || value.profile?.nicknameUpdatedAt)
+}
+export function suspendAccountSync() {
+  sessionEpoch++
+  restoreReady=false
+  restoreTask=null
+  clearTimeout(saveTimer);saveTimer=null
+}
+export function endAccountSession() {
+  if(accountId()){writeLocal(serializableState());saveMeta()}
+  suspendAccountSync()
+  uni.removeStorageSync('fire_account_uid')
+  applySaved(null)
+  state.ready=true
+  uni.setStorageSync(WISHLIST_KEY,[])
+}
+export async function syncStateToServer() {
+  const uid=accountId(),epoch=sessionEpoch
+  if(!uid || !restoreReady){
+    state.cloudSync={status:'error',message:'尚未恢复账号数据，本机记录已保留，请先重试恢复'}
+    return {synced:false,blocked:true}
+  }
+  const task=writeQueue.catch(()=>{}).then(async()=>{
+    if(accountId()!==uid||epoch!==sessionEpoch)return {synced:false,blocked:true}
+    const snapshot=serializableState(),version=changeVersion
+    if(!dirty)return {synced:true,skipped:true}
+    if(!meaningful(snapshot)&&revision===0){
+      dirty=false;saveMeta()
+      state.cloudSync={status:'empty',message:'尚无财务存档，填写资料后会自动同步'}
+      return {synced:true,skipped:true}
+    }
+    state.cloudSync={status:'syncing',message:'正在同步，本机副本已保留'}
+    try{
+      const result=await saveUserState(snapshot,revision)
+      if(accountId()!==uid||epoch!==sessionEpoch)return {synced:false,blocked:true}
+      revision=result.revision
+      if(changeVersion===version)dirty=false
+      saveMeta()
+      state.cloudSync=dirty?{status:'pending',message:'还有本机修改等待同步'}:{status:'synced',message:'已与账号云端同步'}
+      return {synced:!dirty}
+    }catch(error){
+      if(accountId()===uid&&epoch===sessionEpoch){
+        state.cloudSync={status:'error',message:error.message||'同步失败，本机记录已保留'}
+        saveMeta()
+      }
+      return {synced:false,error}
+    }
+  })
+  writeQueue=task
+  return task
+}
+export async function hydrateFromServer() {
+  const epoch=sessionEpoch
+  if(restoreTask && restoreTask.epoch===epoch)return restoreTask.promise
+  const promise=(async()=>{
+    const beforeOwner=accountId(),beforeVersion=changeVersion
+    restoreReady=false
+    state.cloudSync={status:'restoring',message:'正在恢复账号数据'}
+    try{
+      const remote=await fetchAccountBootstrap()
+      if(epoch!==sessionEpoch || accountId()!==beforeOwner)return {loaded:false,cancelled:true}
+      if(!remote.uid||typeof remote.exists!=='boolean'||!Number.isSafeInteger(remote.revision)||
+        (remote.exists && (!remote.state || typeof remote.state.finance!=='object'||!Array.isArray(remote.state.ledger)))||
+        (!remote.exists && remote.state!==null))throw new Error('云端存档格式异常，本机副本已保留，未覆盖数据')
+      preserveLegacyCache()
+      const adopted=adoptVerifiedLegacyCache(remote.uid,remote.email)
+      activateAccount(remote.uid)
+      const local=storage.get('state',null)
+      const localMeta=readAccountCache('fire_sync_meta_v1',{})||{}
+      // A response may not replace local edits made while the request was in flight.
+      if(beforeOwner===remote.uid && changeVersion!==beforeVersion){
+        writeLocal(serializableState());dirty=true;saveMeta()
+        throw new Error('读取期间有新的本机修改，已保留，请再次同步')
+      }
+      const remoteRevision=remote.revision
+      dirty=(!!localMeta.dirty && meaningful(local)) || adopted || (!!local && meaningful(local) && !remote.exists)
+      changeVersion=Number(localMeta.changeVersion)||0
+      if(localMeta.dirty && meaningful(local) && remote.exists && Number(localMeta.revision)!==remoteRevision){
+        if(equivalentState(local,remote.state))dirty=false
+        else{
+          revision=Number(localMeta.revision)||0
+          applySaved(local);state.ready=true;writeWishlist(state.items)
+          throw new Error('另一设备也更新了存档，已保留本机与云端两份资料，请联系客服核对后合并')
+        }
+      }
+      revision=remoteRevision
+      applySaved(dirty&&local ? local : remote.exists ? remote.state : local)
+      state.ready=true
+      HeroDay(state)
+      writeLocal(serializableState());saveMeta()
+      restoreReady=true
+      state.cloudSync=dirty?{status:'pending',message:'本机修改已保留，等待同步'}:remote.exists?{status:'synced',message:'已恢复当前账号的数据'}:{status:'empty',message:'尚无财务存档，填写资料后会自动同步'}
+      if(dirty)await syncStateToServer()
+      return {loaded:true,exists:remote.exists,uid:remote.uid}
+    }catch(error){
+      if(epoch===sessionEpoch)state.cloudSync={status:'error',message:error.message||'恢复失败，本机数据已保留'}
+      console.warn('[account-restore]',error.code||error.message)
+      return {loaded:false,error}
+    }
+  })()
+  restoreTask={epoch,promise}
+  try{return await promise}finally{if(restoreTask?.promise===promise)restoreTask=null}
+}
+function saveLocalChange() {
+  if(!accountId())return false
+  const plain=serializableState()
+  const previous=storage.get('state',null)
+  if(JSON.stringify(previous)===JSON.stringify(plain))return true
+  dirty=true;changeVersion++
+  const success=writeLocal(plain);saveMeta()
+  if(success)state.cloudSync={status:'pending',message:'本机已保存，等待云端确认'}
+  return success
+}
+export function persistNow() {
+  clearTimeout(saveTimer);saveTimer=null
+  try{
+    const success=saveLocalChange()
+    if(success)syncStateToServer()
+    return success
+  }catch(error){console.warn('[persist-now]',error);return false}
+}
+export function persist() {
+  clearTimeout(saveTimer)
+  // Commit to the account-scoped cache immediately; do not lose edits on a quick page exit.
+  try{if(!saveLocalChange())return}catch(error){console.warn('[persist-local]',error);return}
+  const epoch=sessionEpoch
+  saveTimer=setTimeout(()=>{saveTimer=null;if(epoch===sessionEpoch)syncStateToServer()},120)
+}
 export function reset() {
-  Object.assign(state, seed(), { ready: true })
-  persist()
+  // This operation clears local state only. It must never erase the cloud account.
+  suspendAccountSync()
+  applySaved(null);state.ready=true
 }

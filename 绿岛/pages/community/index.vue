@@ -19,13 +19,15 @@
         <text class="tab-text" :class="{ active: tab === 'settled' }">已上岸 {{ settledCount }}</text>
       </view>
       <view class="tab" :class="{ active: tab === 'doing' }" @tap="setTab('doing')">
-        <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ allUGC.length }}</text>
+        <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ publicCounts.doing }}</text>
       </view>
     </view>
 
+    <text v-if="publicLoading" class="community-sync-note">正在读取社区内容…</text>
     <!-- 列表 -->
+    <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
     <view class="list">
-      <view v-if="visiblePosts.length === 0" class="empty">
+      <view v-if="visiblePosts.length === 0 && !publicLoading" class="empty">
         <text class="empty-h2">还没有人在路上分享</text>
         <text class="empty-p">成为第一个写下自己故事的人吧</text>
         <view class="empty-btn" @tap="openPost">
@@ -142,7 +144,7 @@
         </view>
       </view>
 
-      <view v-if="visiblePosts.length > 0 && visiblePosts.length < allPosts.length" class="load-more" @tap="loadMore">
+      <view v-if="visiblePosts.length < allPosts.length || publicCursor !== null" class="load-more" @tap="loadMore">
         <text class="load-more-text">加载更多</text>
       </view>
       <text v-else-if="visiblePosts.length > 0 && allPosts.length > 0" class="no-more">没有更多了</text>
@@ -367,11 +369,10 @@ import FireOverlay from '@/components/FireOverlay.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
-import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
+import { COMMUNITY_OFFICIAL, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
 import { state } from '@/store/index.js'
 import { isMembershipActive } from '@/utils/membership.js'
-import { reviewCommunityPost } from '@/utils/community-review.js'
 
 const EMPTY_DRAFT = () => ({
   tags: [],
@@ -392,6 +393,11 @@ export default {
       favExpanded: {},
       favorites: [],
       allUGC: [],
+      publicCursor: null,
+      feedVersion: 0,
+      publicCounts: {doing:0,settled:0},
+      publicLoading: false,
+      communitySyncMessage: '',
       modal: null,
       applyPost: null,
       applyResult: null,
@@ -404,8 +410,9 @@ export default {
   },
 
   computed: {
+    syncNotice(){return this.communitySyncMessage||CS.syncState.message},
     isMember() { return isMembershipActive(state) },
-    settledCount() { return COMMUNITY_OFFICIAL.length + this.allUGC.filter(x => x.journey === 'settled').length },
+    settledCount() { return COMMUNITY_OFFICIAL.length + this.publicCounts.settled },
     allPosts() {
       if (this.tab === 'settled') return [...COMMUNITY_OFFICIAL, ...this.allUGC.filter(x => x.journey === 'settled')]
       return this.allUGC.filter(x => x.journey !== 'settled')
@@ -432,54 +439,49 @@ export default {
     },
   },
   async onShow() {
-    if (this.modal === 'post') uni.hideTabBar({ animation: false })
-    else uni.hideTabBar({ animation: false })
-    try {
-      await CS.hydrate()
-      this.allUGC = this.buildUGCList()
-    } catch (error) {}
+    uni.hideTabBar({animation:false})
+    await this.refreshCommunity()
   },
   onHide() { uni.hideTabBar({ animation: false }) },
 
-  async onLoad(options) {
-    if (options && options.tab === 'doing') this.tab = 'doing'
-    this.favorites = CS.favorites()
-    this.allUGC = this.buildUGCList()
-    this.netWorth = CS.netWorth()
-    const d = CS.draft()
-    if (d) this.postDraft = { ...EMPTY_DRAFT(), ...d, timeline: (d.timeline && d.timeline.length) ? d.timeline : [{ year: '', title: '' }] }
-    try {
-      await CS.hydrate()
-      this.favorites = CS.favorites()
-      this.allUGC = this.buildUGCList()
-      this.netWorth = CS.netWorth()
-      const latest = CS.draft()
-      if (latest) this.postDraft = { ...EMPTY_DRAFT(), ...latest, timeline: (latest.timeline && latest.timeline.length) ? latest.timeline : [{ year: '', title: '' }] }
-    } catch (error) {
-      showNotice({ title: error.message || '云端社区数据读取失败，请重试', icon: 'none' })
-    }
+  onLoad(options) {
+    if(options && options.tab==='doing')this.tab='doing'
+    this.favorites=CS.favorites()
+    this.netWorth=CS.netWorth()
+    const saved=CS.draft()
+    if(saved)this.postDraft={...EMPTY_DRAFT(),...saved}
   },
 
   methods: {
-    buildUGCList() {
-      const seed = COMMUNITY_UGC_SEED.map(x => ({ ...x }))
-      const local = CS.ugc().map(x => ({
-        ...x,
-        category: (x.tags || []).join(' · ') || '在路上',
-        summary: x.summary || (x.content ? x.content.slice(0, 100) : ''),
-      }))
-      return [...seed, ...local]
-        .filter(x => x.status === 'approved')
-        .sort((a, b) => b.createdAt - a.createdAt)
+    async refreshCommunity() {
+      const version=++this.feedVersion
+      const journey=this.tab==='settled'?'settled':'doing'
+      this.publicLoading=true
+      const personal=await CS.hydrate()
+      if(version!==this.feedVersion)return
+      this.favorites=CS.favorites();this.netWorth=CS.netWorth()
+      try {
+        const result=await CS.publicPage(journey,0)
+        if(version!==this.feedVersion)return
+        this.allUGC=result.items||[]
+        this.publicCounts=result.stats||{doing:0,settled:0}
+        this.publicCursor=result.nextCursor
+        this.communitySyncMessage=personal.ok?'':'部分本机内容尚未同步，已保留，请重试'
+      }catch(error){
+        if(version===this.feedVersion)this.communitySyncMessage='社区内容暂未恢复，请联网后重试'
+      }finally{if(version===this.feedVersion)this.publicLoading=false}
     },
-
+    buildUGCList(){return this.allUGC},
     isOfficial(post) {
       return !!post.turn
     },
 
     setTab(t) {
       this.tab = t
+      this.allUGC=[]
+      this.publicCursor=null
       this.communityLoaded = 10
+      this.refreshCommunity()
       uni.pageScrollTo({ scrollTop: 0, duration: 0 })
     },
 
@@ -487,8 +489,13 @@ export default {
       this.expanded = { ...this.expanded, [id]: !this.expanded[id] }
     },
 
-    loadMore() {
+    async loadMore() {
       this.communityLoaded += 10
+      if(this.publicCursor===null||this.publicLoading)return
+      this.publicLoading=true
+      try{const version=this.feedVersion;const result=await CS.publicPage(this.tab==='settled'?'settled':'doing',this.publicCursor);if(version!==this.feedVersion)return;this.allUGC=[...this.allUGC,...result.items];this.publicCursor=result.nextCursor}
+      catch(error){this.communitySyncMessage='更多内容暂未加载，请重试'}
+      finally{this.publicLoading=false}
     },
 
     isFav(id) {
@@ -643,48 +650,19 @@ export default {
     },
 
     async submitPost() {
-      if (!this.postReady || this.publishing) {
-        if (!this.postReady) showNotice({ title: '请填写完整', icon: 'none' })
-        return
-      }
-      this.publishing = true
-      const post = {
-        id: 'ugc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        category: this.postDraft.tags.join(' · '),
-        tags: [...this.postDraft.tags],
-        title: this.postDraft.title.trim(),
-        summary: this.postDraft.content.trim().slice(0, 100),
-        content: this.postDraft.content.trim(),
-        timeline: this.validTimeline.map(x => ({ year: x.year, desc: x.title })),
-        displayName: '3263***',
-        createdAt: Date.now(),
-        status: 'pending',
-        reviewStatus: 'pending',
-        reviewReason: '等待 AI 审核',
-      }
-      const list = CS.ugc()
-      list.unshift(post)
-      if (!CS.saveUGC(list)) {
-        this.publishing = false
-        showNotice({ title: '保存失败', icon: 'none' })
-        return
-      }
-      try {
-        const verdict = await reviewCommunityPost(post)
-        const target = CS.ugc().find(x => x.id === post.id)
-        if (target) { target.status = verdict.approved ? 'approved' : 'rejected'; target.reviewStatus = target.status; target.reviewReason = verdict.reason; target.reviewedAt = Date.now(); CS.saveUGC(CS.ugc()) }
-        CS.clearDraft()
-        this.postDraft = EMPTY_DRAFT()
-        this.allUGC = this.buildUGCList()
-        this.tab = 'doing'
-        this.communityLoaded = 10
-        this.modal = null
-        showNotice({ title: verdict.approved ? '审核通过，经历已发布' : '审核未通过：' + verdict.reason, icon: 'none', duration: 3000 })
-      } catch (error) {
-        const target = CS.ugc().find(x => x.id === post.id)
-        if (target) { target.status = 'review_failed'; target.reviewStatus = 'review_failed'; target.reviewReason = error.message || '审核服务暂时不可用'; CS.saveUGC(CS.ugc()) }
-        showNotice({ title: '审核失败，请到我的社区设置查看状态', icon: 'none' })
-      } finally { this.publishing = false }
+      if(!this.postReady||this.publishing)return
+      this.publishing=true
+      try{
+        const saved=await CS.submitPost({
+          id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+          title:this.postDraft.title.trim(),content:this.postDraft.content.trim(),
+          tags:[...this.postDraft.tags],category:this.postDraft.tags.join(' · '),journey:'doing',
+          timeline:this.validTimeline.map(row=>({year:row.year,desc:row.title})),displayName:'社区用户',
+        })
+        if(saved.status==='approved'){CS.clearDraft();this.postDraft=EMPTY_DRAFT();this.modal=null;this.tab='doing';await this.refreshCommunity()}
+        showNotice({title:saved.status==='approved'?'云端审核通过，经历已发布':saved.reviewReason||'内容已保存，请查看状态',icon:'none'})
+      }catch(error){showNotice({title:error.message||'云端尚未确认，本机内容已保留',icon:'none'})}
+      finally{this.publishing=false}
     },
 
     formatNumber(n) {
@@ -1082,4 +1060,5 @@ export default {
 @media screen and (max-width:390px){.community-view{padding:calc(14px + env(safe-area-inset-top)) 12px calc(82px + env(safe-area-inset-bottom))}.community-head{gap:8px;padding:8px 0 12px}.head-h1{font-size:21px}.head-sub{font-size:11px}.fav-entry{padding:7px 9px}.fav-entry-text{font-size:11px}.tabs{margin-bottom:12px;padding:4px}.tab{padding:9px 6px}.tab-text{font-size:12px}.list{gap:9px}.card{border-radius:13px}.card-head{padding:12px 12px 0}.card-main{padding:12px}.card-title{font-size:16px}.card-summary,.card-sub{font-size:12px}.card-foot{padding:9px 12px}.foot-text{font-size:11px}.fab{right:14px;width:50px;height:50px;border-radius:25px;bottom:calc(72px + env(safe-area-inset-bottom))}.fab-icon{font-size:26px}}
 /* Reset only entry animations; page nodes and scroll position stay intact. */
 .community-view.page-entry-reset .card{animation:none;opacity:0}
+.community-sync-note{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;margin-bottom:12px;border-radius:12px;background:#fff;color:#8a5f38;font-size:12px;line-height:1.6}
 </style>
