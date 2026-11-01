@@ -27,7 +27,7 @@
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
       </scroll-view>
       <view class="composer">
-        <view class="context-actions"><button class="profile-button" @tap="sendProfile">发送我的个人详细资料</button></view>
+        <view class="context-actions"><button class="profile-button" @tap="sendProfile">结合我的情况给建议</button></view>
         <view class="input-row"><input v-model="question" class="question" confirm-type="send" placeholder="输入你想聊的习惯" placeholder-class="placeholder" @confirm="send" /><button class="send" :disabled="loading" @tap="send">发送</button></view>
       </view>
     </view>
@@ -94,10 +94,9 @@ export default {
       if (!result.date) return '我的 FIRE 倒计时：暂未计算出目标日期'
       const d = new Date(result.date); return '我的 FIRE 倒计时：预计 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日达到目标，目前约 ' + (result.months || 0) + ' 个月'
     },
-    profileText() { const f=state.finance||{}; const p=this.personalityPayload(); const mbti=p.mbti&&typeof p.mbti==='object'?p.mbti:{}; const bigFive=p.bigFive&&typeof p.bigFive==='object'?p.bigFive:{}; return this.countdownText()+'；我的个人详细资料：当前资产 ¥'+Number(f.assets||0).toLocaleString('zh-CN')+'；每月收入 ¥'+Number(f.income||0).toLocaleString('zh-CN')+'；每月支出 ¥'+Number(f.expense||0).toLocaleString('zh-CN')+'；每月存入 ¥'+Number(f.monthlyDeposit||0).toLocaleString('zh-CN')+'；退休后每月消费 ¥'+Number(f.retirementExpense||0).toLocaleString('zh-CN')+'；预期年化收益率 '+(f.rate||0)+'%；年度提取率 '+(f.withdrawal||0)+'%；MBTI 类型：'+(mbti.title||'未完成')+'；MBTI 详细报告：'+(mbti.detail||'暂无')+'；人格维度：'+JSON.stringify(mbti.rows||bigFive.rows||[]) },
     sendContext(text) { if(!this.ready)return this.goCalculator(); if(!text||this.loading)return; this.question=text; this.send() },
     sendCountdown() { this.sendContext(this.countdownText()) },
-    sendProfile() { this.sendContext(this.profileText()) },
+    sendProfile() { this.sendContext('请结合我的财务情况和性格测试结果，分析目前最需要调整的生活习惯，并给出可执行的建议。') },
     scrollToLast() { this.$nextTick(() => { this.lastMessageId = 'message-' + (this.messages.length - 1) }) },
     formatAnswer(value) {
       const lineBreak = String.fromCharCode(10)
