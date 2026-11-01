@@ -72,11 +72,12 @@
       <view class="home-metrics">
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月消费 ›</text>
-          <text class="metric-value metric-expense">{{ financeConfigured ? '¥ ' + formatAmount(expenseTotal / 100) : '待填写' }}</text>
+          <text class="metric-value metric-expense" :class="{ 'metric-over-budget': expenseOverBudget }">{{ hasExpenseRecords ? '¥ ' + formatAmount(expenseTotal / 100) : '待填写' }}</text>
+          <text v-if="expenseOverBudget" class="metric-status">已超额</text>
         </view>
         <view class="metric" @tap="goLedger">
           <text class="metric-label">本月收入 ›</text>
-          <text class="metric-value metric-income">{{ financeConfigured ? '¥ ' + formatAmount(incomeTotal / 100) : '待填写' }}</text>
+          <text class="metric-value metric-income">{{ hasIncomeRecords ? '¥ ' + formatAmount(incomeTotal / 100) : '待填写' }}</text>
         </view>
         <view class="metric" @tap="goWishlist">
           <text class="metric-label">拔草已省下 ›</text>
@@ -133,7 +134,7 @@ import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { state, refreshFinance } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
-import { GoalEngine, LedgerSummary, ReelCalendarParts } from '@/utils/engine.js'
+import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts } from '@/utils/engine.js'
 
 const TASK_ICONS = {
   ledger:   'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
@@ -154,6 +155,7 @@ export default {
   data() {
     return {
       state,
+      ledgerMonth: LocalDay().slice(0, 7),
       years: 0, months: 0, days: 0,
       hours: 0, minutes: 0, seconds: 0,
       timer: null,
@@ -209,8 +211,12 @@ export default {
       if (r.date) return '预计到达 ' + this.formatDateCN(r.date)
       return '调整收入、支出或计算假设，重新规划'
     },
-    expenseTotal() { return LedgerSummary(state, undefined, 'expense').total },
-    incomeTotal()  { return LedgerSummary(state, undefined, 'income').total },
+    monthlyStatus() { return MonthlyStatus(state, this.ledgerMonth) },
+    expenseTotal() { return this.monthlyStatus.expense.total },
+    incomeTotal() { return this.monthlyStatus.income.total },
+    hasExpenseRecords() { return this.monthlyStatus.expense.count > 0 },
+    hasIncomeRecords() { return this.monthlyStatus.income.count > 0 },
+    expenseOverBudget() { return this.monthlyStatus.expense.status === '已超额' },
     wishlistSaved() {
       return (state.items || [])
         .filter(x => (x.status === 'abandoned' || x.status === 'ended') && Number(x.amount) > 0)
@@ -265,6 +271,7 @@ export default {
   onShow() {
     uni.hideTabBar({ animation: false })
     this.pageVisible = true
+    this.ledgerMonth = LocalDay().slice(0, 7)
     refreshFinance()
     const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
     if (Array.isArray(savedWishlist)) state.items = savedWishlist
@@ -366,6 +373,7 @@ export default {
       this.pageHideHandler = null
     },
     tick() {
+      this.ledgerMonth = LocalDay().slice(0, 7)
       const r = this.fireResult
       if (!r.date) { this.years = this.months = this.days = 0; this.hours = this.minutes = this.seconds = 0; return }
       const p = ReelCalendarParts(r.date)
@@ -517,4 +525,6 @@ export default {
 /* Reset only entry animations; page nodes and scroll position stay intact. */
 .home-view.page-entry-reset{animation:none;opacity:0}
 .home-view.page-entry-reset .home-masthead,.home-view.page-entry-reset .home-metrics,.home-view.page-entry-reset .task-row,.home-view.page-entry-reset .goal-card{animation:none}
+.home-metrics .metric-status{font-size:11px;line-height:1.4;color:#a35d4e;font-weight:600}
+.metric-value.metric-over-budget{color:#a35d4e}
 </style>

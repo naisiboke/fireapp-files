@@ -363,18 +363,22 @@ export function SaveMonthlyTargets(s, month, expense, income) {
 export function MonthlyStatus(s, month) {
   if (!month) month = LocalDay().slice(0, 7)
   const targets = (s.monthlyTargets && s.monthlyTargets[month]) || {}
-  const expense = LedgerSummary(s, month, 'expense').total
-  const income = LedgerSummary(s, month, 'income').total
+  const expenseSummary = LedgerSummary(s, month, 'expense')
+  const incomeSummary = LedgerSummary(s, month, 'income')
+  const expense = expenseSummary.total
+  const income = incomeSummary.total
   const budget = Number.isSafeInteger(targets.expense) && targets.expense >= 0 ? targets.expense : null
   const target = Number.isSafeInteger(targets.income) && targets.income > 0 ? targets.income : null
   return {
     expense: {
       total: expense,
+      count: expenseSummary.count,
       target: budget,
-      status: budget !== null && expense > budget ? '已超额' : '',
+      status: expenseSummary.count > 0 && budget !== null && expense >= budget ? '已超额' : '',
     },
     income: {
       total: income,
+      count: incomeSummary.count,
       target: target,
       status: target === null ? '' :
         income < target ? '未达标' :

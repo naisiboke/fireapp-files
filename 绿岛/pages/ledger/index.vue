@@ -45,7 +45,7 @@
         <view class="budget-btn fire-button-primary" @tap="saveTargets">
           <text class="budget-btn-text">保存本月预算</text>
         </view>
-        <text class="budget-note">修改预算不会影响已有记录，只作为“是否超额”的判断基准。</text>
+        <text class="budget-note">修改预算不会影响已有记录；消费达到或超过预算时显示“已超额”。</text>
       </view>
     </view>
 
@@ -53,8 +53,9 @@
     <view class="overview">
       <view class="ov-item">
         <text class="ov-label">本月消费</text>
-        <text class="ov-num expense">{{ fmt(expenseTotal / 100) }}<text class="ov-unit"> 元</text></text>
+        <text class="ov-num expense" :class="{ 'over-budget': monthlyStatus.expense.status }">{{ fmt(expenseTotal / 100) }}<text class="ov-unit"> 元</text></text>
         <text class="ov-count">{{ expenseCount }} 笔记录</text>
+        <text v-if="monthlyStatus.expense.status" class="ov-status">{{ monthlyStatus.expense.status }}</text>
       </view>
       <view class="ov-item">
         <text class="ov-label">本月收入</text>
@@ -148,7 +149,7 @@
         <view class="budget-btn" @tap="saveTargets">
           <text class="budget-btn-text">保存本月预算</text>
         </view>
-        <text class="budget-note">修改预算不会影响已有记录，只作为“是否超额”的判断基准。</text>
+        <text class="budget-note">修改预算不会影响已有记录；消费达到或超过预算时显示“已超额”。</text>
       </view>
     </view>
 
@@ -170,7 +171,7 @@ import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import {
   LocalDay, LedgerSummary, LedgerCategoryLabel, LedgerCategories,
-  SaveMonthlyTargets, DeleteExpense,
+  SaveMonthlyTargets, DeleteExpense, MonthlyStatus,
 } from '@/utils/engine.js'
 import { categoryIconUri } from '@/utils/category-icons.js'
 
@@ -218,6 +219,7 @@ export default {
       try { return LedgerSummary(state, this.month, 'income') }
       catch (e) { return { records: [], total: 0, count: 0, categories: [] } }
     },
+    monthlyStatus() { return MonthlyStatus(state, this.month) },
     expenseTotal() { return this.summary.total },
     expenseCount() { return this.summary.count },
     expenseCats() { return this.summary.categories },
@@ -634,4 +636,6 @@ export default {
 .fab.fab-disabled .fab-icon { color: #ffffff; }
 
 /* 自定义底部 TabBar */
+.ledger-page .ov-status{display:block;margin-top:6px;font-size:12px;line-height:1.4;color:#a35d4e;font-weight:600}
+.ledger-page .ov-num.over-budget{color:#a35d4e}
 </style>
