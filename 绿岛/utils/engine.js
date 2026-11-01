@@ -288,16 +288,17 @@ export function SaveAssetRecord(s, entry, day) {
   const date = String(entry.date || '')
   if (!/^\d+(\.\d{1,2})?$/.test(raw)) return null
   if (!Number.isFinite(amount) || amount < 0 || amount > 1e9) return null
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > day) return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > day || LocalDay(new Date(date+'T00:00:00')) !== date) return null
   if (!Array.isArray(s.assetHistory)) s.assetHistory = []
   const idx = entry.id ? s.assetHistory.findIndex(function (x) { return x.id === entry.id }) : -1
   if (entry.id && idx < 0) return null
   const sameDateIdx = idx >= 0 ? idx : s.assetHistory.findIndex(function (x) { return x.date === date })
   const current = sameDateIdx >= 0 ? s.assetHistory[sameDateIdx] : null
   const normalized = Math.round(amount * 100) / 100
-  if (current && current.amount === normalized) {
+  if (current && current.amount === normalized && current.date === date) {
     SyncLatestAsset(s)
-    return { changed: false, record: current }
+    const rewarded=date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
+    return { changed: false, record: current, rewarded: !!rewarded }
   }
   let createdAt = current ? current.createdAt : Date.now()
   if (!current) {
@@ -312,7 +313,8 @@ export function SaveAssetRecord(s, entry, day) {
   if (sameDateIdx >= 0) s.assetHistory[sameDateIdx] = record
   else s.assetHistory.push(record)
   SyncLatestAsset(s)
-  return { changed: true, record: record }
+  const rewarded=date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
+  return { changed: true, record: record, rewarded: !!rewarded }
 }
 
 export function DeleteAssetRecord(s, id) {
