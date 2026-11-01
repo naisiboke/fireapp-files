@@ -21,6 +21,7 @@ if (!uniFactory) {
 }
 
 export default defineConfig({
+  envDir: projectRoot,
   plugins: [
     uniFactory(),
     {
