@@ -25,6 +25,67 @@ function stateValue(value) {
   return safe
 }
 async function read(db, collection, id) { return first(await db.collection(collection).doc(id).get()) }
+
+function membershipFor(row, at=Date.now()) {
+  const raw=row?.membership||row?.state?.membership||{}
+  let expiresAt=Number(raw.expiresAt||raw.expireAt||0)
+  if(expiresAt>0&&expiresAt<1000000000000)expiresAt*=1000
+  if(!Number.isFinite(expiresAt)||expiresAt<0)expiresAt=0
+  const active=(raw.active===true||raw.status==='active'||raw.pro===true)&&(!expiresAt||expiresAt>at)
+  return {...raw,active,status:active?'active':expiresAt?'expired':'inactive',expiresAt,
+    plan:'fire-life-monthly',name:'Fire生活通用会员',price:9}
+}
+async function redeemMembership(db,uid,input,at) {
+  const code=String(input||'').trim().toUpperCase().replace(/[‐‑‒–—−]/g,'-').replace(/\s+/g,'')
+  if(/^[a-f0-9]{24,32}$/i.test(code))fail('REDEEM_DOCUMENT_ID','请填写 code 字段的兑换码，不是数据库 _id')
+  if(!/^[A-Z0-9][A-Z0-9-]{5,63}$/.test(code))fail('REDEEM_INVALID','兑换码格式不正确，请检查后重试')
+  const stateId=idFor('state',uid)
+  // Count invalid guesses too. This metadata does not advance the financial snapshot revision.
+  await db.runTransaction(async tx=>{
+    const row=await read(tx,'user_states',stateId)
+    if(row&&row.userId!==uid)fail('FORBIDDEN','账号归属异常')
+    const old=row?.redeemWindow
+    const window=old&&at-Number(old.startedAt)<600000?old:{startedAt:at,count:0}
+    if(Number(window.count)>=10)fail('REDEEM_RATE_LIMIT','兑换尝试过于频繁，请十分钟后重试')
+    const value={...window,count:(Number(window.count)||0)+1}
+    if(row)await tx.collection('user_states').doc(stateId).update({redeemWindow:value})
+    else await tx.collection('user_states').doc(stateId).set({userId:uid,revision:0,redeemWindow:value,updatedAt:at})
+  })
+  const matches=(await db.collection('vip_codes').where({code}).limit(2).get()).data||[]
+  if(!matches.length)fail('REDEEM_NOT_FOUND','兑换码不存在，请填写 code 字段的完整内容')
+  if(matches.length!==1)fail('REDEEM_DUPLICATE','兑换码配置重复，请联系客服处理')
+  const codeId=matches[0]._id
+  return db.runTransaction(async tx=>{
+    const voucher=await read(tx,'vip_codes',codeId)
+    const row=await read(tx,'user_states',stateId)
+    if(!voucher||voucher.code!==code)fail('REDEEM_NOT_FOUND','兑换码不存在')
+    if(row&&row.userId!==uid)fail('FORBIDDEN','账号归属异常')
+    const membership=membershipFor(row,at)
+    if(voucher.status==='used'&&voucher.usedBy===uid)return {membership,alreadyRedeemed:true,durationDays:Number(voucher.durationDays)||0}
+    if(voucher.status!=='unused')fail('REDEEM_USED','兑换码已使用或已停用')
+    const days=Number(voucher.durationDays)
+    if(!Number.isSafeInteger(days)||days<=0||days>3650)fail('REDEEM_DURATION_INVALID','兑换码有效天数配置有误，请联系客服')
+    const rawExpiry=voucher.expiresAt||voucher.expireAt
+    let codeExpiry=Number(rawExpiry||0)
+    if(rawExpiry&&!Number.isFinite(codeExpiry))codeExpiry=Date.parse(rawExpiry)
+    if(rawExpiry&&(!Number.isFinite(codeExpiry)||codeExpiry<=0))fail('REDEEM_INVALID','兑换码到期时间配置有误')
+    if(codeExpiry>0&&codeExpiry<1000000000000)codeExpiry*=1000
+    if(codeExpiry&&codeExpiry<=at)fail('REDEEM_EXPIRED','兑换码已过期')
+    if(membership.active&&!membership.expiresAt)fail('REDEEM_NOT_NEEDED','当前会员无到期限制，无需兑换')
+    const next={...membership,active:true,status:'active',expiresAt:Math.max(at,membership.expiresAt||0)+days*86400000,
+      updatedAt:at,source:'redeem'}
+    await tx.collection('data_backups').doc(idFor('membership',uid,codeId)).set({
+      userId:uid,kind:'membership-redeem',savedAt:at,snapshot:row||null,codeId,
+    })
+    const patch={membership:next,updatedAt:at}
+    if(row?.state)patch.state={...row.state,membership:next}
+    // Never replace finances, reset a revision, or grant an unlimited client-side membership.
+    await tx.collection('user_states').doc(stateId).update(patch)
+    await tx.collection('vip_codes').doc(codeId).update({status:'used',usedBy:uid,usedAt:at,grantedUntil:next.expiresAt})
+    return {membership:next,durationDays:days,alreadyRedeemed:false}
+  })
+}
+
 async function commit(db, collection, id, uid, version, payload, kind) {
   return db.runTransaction(async tx => {
     const existing = await read(tx, collection, id)
@@ -37,6 +98,11 @@ async function commit(db, collection, id, uid, version, payload, kind) {
       })
     }
     const row = { ...payload, userId: uid, revision: revision + 1, updatedAt: Date.now() }
+    if(collection==='user_states'){
+      for(const key of ['redeemWindow','aiQuota'])if(existing?.[key])row[key]=existing[key]
+      row.membership=membershipFor(existing)
+      if(row.state)row.state={...row.state,membership:row.membership}
+    }
     await tx.collection(collection).doc(id).set(row)
     return row
   })
@@ -64,7 +130,7 @@ async function review(post) {
     return { approved:verdict.approved, reason:String(verdict.reason || (verdict.approved?'审核通过':'请修改内容')).slice(0,160) }
   } finally { clearTimeout(timer) }
 }
-function createHandler({ db, identity, moderate = review }) {
+function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }) {
   return async event => {
     try {
       const account = await identity()
@@ -73,9 +139,15 @@ function createHandler({ db, identity, moderate = review }) {
       if(event?.expectedUid && event.expectedUid!==uid)fail('ACCOUNT_MISMATCH','账号已切换，已拒绝旧账号的数据操作')
       const action = String(event && event.action || '')
       const stateId = idFor('state',uid)
+      if(action==='membership.get'){
+        const row=await read(db,'user_states',stateId)
+        if(row&&row.userId!==uid)fail('FORBIDDEN','账号归属异常')
+        return {ok:true,uid,membership:membershipFor(row,now())}
+      }
+      if(action==='membership.redeem')return {ok:true,uid,...await redeemMembership(db,uid,event.code,now())}
       if (action === 'bootstrap') {
         let row = await read(db,'user_states',stateId)
-        if (!row) {
+        if (!row?.state) {
           // Only migrate rows already associated with a verified UID. A device ID/email claim is not proof.
           const old = (await db.collection('user_states').where({ userId:uid }).limit(20).get()).data || []
           const candidates = old.filter(item => item.state && item.state.finance && Array.isArray(item.state.ledger))
@@ -83,7 +155,7 @@ function createHandler({ db, identity, moderate = review }) {
           if (candidates.length === 1) row = await commit(db,'user_states',stateId,uid,0,{state:stateValue(candidates[0].state)},'verified-legacy-state')
         }
         if (row && row.userId !== uid) fail('FORBIDDEN','账号数据归属异常')
-        return {ok:true,uid,email:account.email || '',exists:!!row,state:row ? row.state : null,revision:Number(row?.revision || 0)}
+        return {ok:true,uid,email:account.email || '',exists:!!row?.state,state:row?.state?{...row.state,membership:membershipFor(row,now())}:null,membership:membershipFor(row,now()),revision:Number(row?.revision || 0)}
       }
       if (action === 'state.save') {
         const current = await read(db,'user_states',stateId)

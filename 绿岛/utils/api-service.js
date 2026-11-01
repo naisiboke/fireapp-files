@@ -64,8 +64,19 @@ export async function askBehaviorAI(payload) {
   return apiRequest('/v1/ai/chat', { method: 'POST', data: payload, timeout: 30000 })
 }
 export async function fetchMembership() {
-  const payload = await apiRequest('/v1/me/membership')
-  return payload && payload.membership ? payload.membership : payload
+  const uid=accountId()
+  if(!uid)throw new Error('请先登录后查看会员状态')
+  const result=await callAccountData({action:'membership.get',expectedUid:uid})
+  assertOwner(uid)
+  return result.membership
+}
+export async function redeemMembershipCode(code) {
+  const uid=accountId()
+  if(!uid)throw new Error('请先登录后兑换')
+  const result=await callAccountData({action:'membership.redeem',code,expectedUid:uid})
+  assertOwner(uid)
+  if(!result.membership||typeof result.membership.active!=='boolean')throw new Error('会员返回状态无效，请重试核对')
+  return result
 }
 export async function createMembershipCheckout() {
   return apiRequest('/v1/me/membership/checkout', { method: 'POST', data: { plan: 'fire-life-monthly', price: 9 } })

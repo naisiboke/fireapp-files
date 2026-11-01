@@ -3,7 +3,7 @@ import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
-import { isApiConfigured, fetchAccountBootstrap, saveUserState } from '../utils/api-service.js'
+import { isApiConfigured, fetchAccountBootstrap, saveUserState, fetchMembership, redeemMembershipCode } from '../utils/api-service.js'
 import { validateNickname } from '../utils/nickname.js'
 
 export const STATE_VERSION = 4
@@ -238,6 +238,29 @@ export async function syncStateToServer() {
   writeQueue=task
   return task
 }
+
+// Membership is server-owned; refresh it without marking financial data dirty or changing revisions.
+function applyServerMembership(membership,uid,epoch) {
+  if(accountId()!==uid||epoch!==sessionEpoch)throw new Error('账号已切换，已取消旧账号的会员更新')
+  if(!membership||typeof membership.active!=='boolean')throw new Error('云端会员状态格式无效')
+  state.membership={...membership}
+  writeLocal(serializableState())
+}
+export async function refreshMembershipFromServer() {
+  const uid=accountId(),epoch=sessionEpoch
+  if(!uid)return null
+  const membership=await fetchMembership()
+  applyServerMembership(membership,uid,epoch)
+  return membership
+}
+export async function redeemMembershipForAccount(code) {
+  const uid=accountId(),epoch=sessionEpoch
+  if(!uid)throw new Error('请先登录后兑换')
+  const result=await redeemMembershipCode(code)
+  applyServerMembership(result.membership,uid,epoch)
+  return result
+}
+
 export async function hydrateFromServer() {
   const epoch=sessionEpoch
   if(restoreTask && restoreTask.epoch===epoch)return restoreTask.promise
@@ -274,6 +297,7 @@ export async function hydrateFromServer() {
       }
       revision=remoteRevision
       applySaved(dirty&&local ? local : remote.exists ? remote.state : local)
+      if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
       state.ready=true
       HeroDay(state)
       writeLocal(serializableState());saveMeta()

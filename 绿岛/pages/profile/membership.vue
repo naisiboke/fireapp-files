@@ -42,8 +42,8 @@ import AppFeedback from '@/components/AppFeedback.vue'
 import FireOverlay from '@/components/FireOverlay.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
-import { state, persist } from '@/store/index.js'
-import { fetchMembership, createMembershipCheckout } from '@/utils/api-service.js'
+import { state, refreshMembershipFromServer } from '@/store/index.js'
+import { createMembershipCheckout } from '@/utils/api-service.js'
 import { membershipText } from '@/utils/membership.js'
 
 export default {
@@ -68,17 +68,8 @@ export default {
     this.membershipStatus = membershipText(state)
     if (options && String(options.upgrade) === '1') this.showUpgradeModal = true
     try {
-      const remote = await fetchMembership()
-      if (remote && typeof remote === 'object') {
-        const local = state.membership || {}
-        const remoteActive = remote.active === true || remote.status === 'active' || remote.pro === true
-        const localActive = local.active === true || local.status === 'active' || local.pro === true
-        if (remoteActive || !localActive) {
-          state.membership = { ...local, ...remote }
-          persist()
-          this.membershipStatus = membershipText(state)
-        }
-      }
+      await refreshMembershipFromServer()
+      this.membershipStatus=membershipText(state)
     } catch (error) {
       // 后端尚未部署会员接口时，保留本地状态，不阻断页面使用。
     }

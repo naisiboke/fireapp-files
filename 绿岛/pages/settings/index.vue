@@ -16,8 +16,8 @@
 
     <view class="redeem-card">
       <view class="redeem-head"><view><text class="redeem-title">会员兑换码</text><text class="redeem-sub">输入兑换码开通 Fire生活通用会员</text></view><text class="redeem-price">¥9 / 月</text></view>
-      <view class="redeem-row"><input v-model="redeemCode" class="redeem-input" maxlength="32" placeholder="请输入兑换码" placeholder-class="redeem-placeholder" /><view class="redeem-button" :class="{ disabled: redeeming }" @tap="redeemMembership"><text>{{ redeeming ? '验证中…' : '兑换' }}</text></view></view>
-      <text class="redeem-hint">会员包含 AI 无限使用、社区和 FIRE 深度分析</text>
+      <view class="redeem-row"><input v-model="redeemCode" class="redeem-input" maxlength="64" :disabled="redeeming" placeholder="填写 code 字段的完整兑换码" placeholder-class="redeem-placeholder" /><view class="redeem-button" :class="{ disabled: redeeming }" @tap="redeemMembership"><text>{{ redeeming ? '验证中…' : '兑换' }}</text></view></view>
+      <text class="redeem-hint">按兑换码天数开通；请填写 code 内容，不是 _id</text>
     </view>
 
     <text class="section-title">联系客服与反馈</text>
@@ -58,7 +58,7 @@
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
-import { state, reset, persist, syncStateToServer, hydrateFromServer, endAccountSession } from '@/store/index.js'
+import { state, reset, persist, syncStateToServer, hydrateFromServer, endAccountSession, redeemMembershipForAccount, refreshMembershipFromServer } from '@/store/index.js'
 import { signOutAccountSession } from '@/utils/cloudbase-auth.js'
 import { CS } from '@/utils/community-store.js'
 import { isApiConfigured, savePrivacySettings, exportUserData, deleteUserData, requestAccountDeletion } from '@/utils/api-service.js'
@@ -84,30 +84,18 @@ export default {
     close() { if (this.closing) return; this.closing = true; uni.reLaunch({ url: '/pages/profile/index', complete: () => { this.closing = false } }) },
     openProfile() { uni.navigateTo({ url: '/pages/profile/edit' }) },
     openMembership() { uni.navigateTo({ url: '/pages/profile/membership' }) },
-    redeemMembership() {
-      const code = String(this.redeemCode || '').trim()
-      if (!code) return showNotice({ title: '请输入兑换码', icon: 'none' })
-      if (this.redeeming) return
-      this.redeeming = true
-      setTimeout(() => {
-        this.redeeming = false
-        showNotice({ title: '兑换服务正在迁移到云端，请稍后再试', icon: 'none' })
-        return
-        state.membership = {
-          ...(state.membership || {}),
-          active: true,
-          status: 'active',
-          plan: 'fire-life-monthly',
-          name: 'Fire生活通用会员',
-          price: 9,
-          expiresAt: 0,
-          updatedAt: Date.now(),
-          source: 'redeem',
-        }
-        persist()
-        this.redeemCode = ''
-        showNotice({ title: '会员已开通', icon: 'none' })
-      }, 260)
+    async redeemMembership() {
+      if(this.redeeming)return
+      const code=String(this.redeemCode||'').trim()
+      if(!code)return showNotice({title:'请输入兑换码',icon:'none'})
+      if(/^[a-f0-9]{24,32}$/i.test(code))return showNotice({title:'请填写 code 字段的兑换码，不是数据库 _id',icon:'none'})
+      this.redeeming=true
+      try{
+        const result=await redeemMembershipForAccount(code)
+        this.redeemCode=''
+        showNotice({title:result.alreadyRedeemed?'此码已兑换，会员状态已刷新':'已兑换 '+result.durationDays+' 天会员',icon:'none'})
+      }catch(error){showNotice({title:error.message||'兑换失败，请重试',icon:'none'})}
+      finally{this.redeeming=false}
     },
     copyContact() {
       uni.setClipboardData({
@@ -162,6 +150,7 @@ export default {
     },
     replayOnboarding() { state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' }) },
   },
+  onShow() { refreshMembershipFromServer().catch(error=>console.warn('[membership-refresh]',error.code||'')) },
   onBackPress() {
     if (dismissFeedback(this.feedbackOwnerId)) return true
  if (!this.closing) this.close(); return true },

@@ -74,3 +74,7 @@ node scripts/check-ledger-summary.mjs
 ```
 
 account-data 脚本使用真实客户端/服务端模块和内存数据库，覆盖账号隔离、同账号重装、空快照拒绝、网络中断、保存确认丢失、异步账号切换、帖子审核及恢复。它不访问生产环境，也不能替代真实 SDK 和 APK 的验收。
+
+## VIP 兑换更新
+
+已补上 membership.get / membership.redeem。使用现有 vip_codes 的 code、durationDays、status 字段，不接受 _id 兑换。请按 [三天 VIP 兑换部署说明](./VIP_REDEEM_DEPLOY.md) 更新 accountData 的 service.js 后再打包客户端。

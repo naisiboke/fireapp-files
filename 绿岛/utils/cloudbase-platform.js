@@ -9,6 +9,15 @@ export function accountTransportError(cause,stage='invoke') {
   const candidate=String(rawCode||'CLOUD_CALL_FAILED')
   const code=/^[A-Z0-9_.:-]{1,64}$/i.test(candidate)?candidate:'CLOUD_CALL_FAILED'
   const messages={
+    REDEEM_DOCUMENT_ID:'请填写 code 字段的兑换码，不是数据库 _id',
+    REDEEM_INVALID:'兑换码格式或配置不正确，请检查后重试',
+    REDEEM_NOT_FOUND:'兑换码不存在，请填写完整兑换码',
+    REDEEM_USED:'兑换码已使用或已停用',
+    REDEEM_DUPLICATE:'兑换码配置重复，请联系客服',
+    REDEEM_DURATION_INVALID:'兑换码有效天数配置有误，请联系客服',
+    REDEEM_EXPIRED:'兑换码已过期',
+    REDEEM_RATE_LIMIT:'兑换尝试过于频繁，请十分钟后重试',
+    REDEEM_NOT_NEEDED:'当前会员无到期限制，无需兑换',
     EMAIL_ONLY:'目前仅支持邮箱验证码登录',
     EMAIL_VERIFICATION_MISMATCH:'邮箱已修改，请重新获取验证码',
     INVALID_AUTH_RESPONSE:'登录服务返回信息不完整，请重新获取验证码',

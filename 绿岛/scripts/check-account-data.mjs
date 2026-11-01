@@ -116,8 +116,8 @@ function createClient(){
   if(transport==='malformed'&&event.action==='bootstrap')return {...result,exists:true,state:{}}
   return result
  }
- const api=moduleOf(source('utils/api-service.js'),['fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
- const store=moduleOf(source('store/index.js'),['state','bootstrap','hydrateFromServer','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
+ const api=moduleOf(source('utils/api-service.js'),['fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
+ const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
   ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname(){return {ok:true}},
   console:silent,setTimeout:callback=>{const id=++timerId;clientTimers.set(id,callback);return id},clearTimeout:id=>clientTimers.delete(id),
  })
@@ -234,4 +234,32 @@ check('failed sign-in restoration still preserves the previous account cache',cl
 transport='online'
 check('production data transport does not use the old device-ID collection endpoints',!source('utils/api-service.js').includes("apiRequest('/v1/me/state")&&!source('utils/api-service.js').includes("apiRequest('/v1/me/collections/"))
 check('client publish no longer overwrites an edited record with a fresh storage read',!source('pages/community/share.vue').includes('CS.saveUGC(CS.ugc())'))
+
+deviceStorage=new Map();trustedUid='member-A'
+client=createClient();client.store.bootstrap();await client.store.hydrateFromServer()
+await db.collection('vip_codes').doc('client-voucher-1').set({code:'FIRE3D-CLIENT-A',durationDays:3,status:'unused'})
+const redeemStart=Date.now()
+const redeemed=await client.store.redeemMembershipForAccount('FIRE3D-CLIENT-A')
+check('confirmed redemption updates current membership immediately',redeemed.membership.active&&client.store.state.membership.active)
+check('client uses finite server expiry rather than unlimited local VIP',client.store.state.membership.expiresAt>=redeemStart+3*86400000&&client.store.state.membership.expiresAt<=Date.now()+3*86400000)
+check('membership-only updates do not dirty financial snapshots',client.cache.readAccountCache('fire_sync_meta_v1',{}).dirty===false)
+deviceStorage=new Map();client=createClient();client.store.bootstrap();await client.store.hydrateFromServer()
+check('new device can restore membership with no financial archive',client.store.state.membership.active&&client.store.state.finance.assets===0)
+transport='offline'
+let offlineRedeem
+try{await client.store.redeemMembershipForAccount('FIRE3D-UNCONFIRMED')}catch(error){offlineRedeem=error}
+check('offline redemption never grants an unconfirmed extension',offlineRedeem&&client.store.state.membership.expiresAt===redeemed.membership.expiresAt)
+transport='online'
+await db.collection('vip_codes').doc('client-voucher-race').set({code:'FIRE3D-CLIENT-RACE',durationDays:3,status:'unused'})
+holdAction='membership.redeem';releaseHeld=null
+const lateMembership=client.store.redeemMembershipForAccount('FIRE3D-CLIENT-RACE').catch(error=>error)
+for(let turn=0;turn<100&&!releaseHeld;turn++)await Promise.resolve()
+check('membership request can be delayed after server confirmation',typeof releaseHeld==='function')
+client.store.endAccountSession();trustedUid='member-B';holdAction=''
+await client.store.hydrateFromServer()
+releaseHeld();const oldMembershipResult=await lateMembership
+check('late redemption does not grant membership to a newly active account',oldMembershipResult instanceof Error&&!client.store.state.membership.active&&client.cache.accountId()==='member-B')
+client.store.endAccountSession();trustedUid='member-A';await client.store.hydrateFromServer()
+check('old account grant remains recoverable after an account switch',client.store.state.membership.active&&client.store.state.membership.expiresAt===redeemed.membership.expiresAt+3*86400000)
+
 console.log(checks.length+' account data safety checks passed')
