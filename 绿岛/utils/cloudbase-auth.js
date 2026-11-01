@@ -1,4 +1,4 @@
-import { configureNativeCloudbase, accountTransportError } from './cloudbase-platform.js'
+import { accountTransportError } from './cloudbase-platform.js'
 
 let cloudbaseModule = null
 let app = null
@@ -9,20 +9,17 @@ async function getAuth() {
   if(auth)return auth
   if(authTask)return authTask
   authTask=(async()=>{
+    // #ifdef APP-PLUS
+    const { createNativeCloudbase }=await import('./cloudbase-native.js')
+    app=createNativeCloudbase(uni)
+    // #endif
+    // #ifndef APP-PLUS
     if(!cloudbaseModule){
       const module=await import('@cloudbase/js-sdk')
       cloudbaseModule=module.default||module
     }
-    let nativeOptions={}
-    // #ifdef APP-PLUS
-    const adapterModule=await import('@cloudbase/adapter-uni-app')
-    nativeOptions=configureNativeCloudbase(cloudbaseModule,adapterModule.default||adapterModule,uni,import.meta.env)
+    app=cloudbaseModule.init({env:'ziyoukedu-d0gyrczqk4de53b87',region:'ap-shanghai'})
     // #endif
-    app=cloudbaseModule.init({
-      env:'ziyoukedu-d0gyrczqk4de53b87',
-      region:'ap-shanghai',
-      ...nativeOptions,
-    })
     auth=app.auth({persistence:'local'})
     return auth
   })()
@@ -38,13 +35,14 @@ async function getAuth() {
 export { auth }
 
 export async function sendVerificationCode(mode, value) {
+  if(mode!=='email')throw accountTransportError({code:'EMAIL_ONLY'},'auth')
   const client = await getAuth()
-  return client.getVerification(mode === 'phone' ? { phone_number: '+86 ' + value } : { email: value })
+  return client.getVerification({ email: value })
 }
 
 export async function signInWithCode(mode, value, verificationCode, verificationInfo) {
+  if(mode!=='email')throw accountTransportError({code:'EMAIL_ONLY'},'auth')
   const client = await getAuth()
-  if (mode === 'phone') return client.signInWithSms({ verificationInfo, verificationCode, phoneNum: '+86 ' + value })
   return client.signInWithEmail({ verificationInfo, verificationCode, email: value })
 }
 

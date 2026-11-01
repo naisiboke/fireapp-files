@@ -1,5 +1,5 @@
 <template><view class="register-page">
-    <AppFeedback :owner-id="feedbackOwnerId" /><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">注册功能即将开放，先探索你的自由计划。</text><view class="button" @tap="back">返回登录</view></view></template>
+    <AppFeedback :owner-id="feedbackOwnerId" /><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">目前仅支持邮箱验证码注册和登录。返回登录页，输入邮箱并获取验证码即可。</text><view class="button" @tap="back">返回登录</view></view></template>
 <script setup>
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'

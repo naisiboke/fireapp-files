@@ -1,6 +1,6 @@
 # 账号数据恢复修复：先部署云函数，再打包 APP
 
-本次前端数据同步改为调用普通云函数 `accountData`。原来的 AI 对话、支付 HTTP 函数保持独立。**只重新打包 APK 不会完成修复**：未部署 accountData 时，新版会保留本机副本并暂停上传，登录恢复会提示失败，避免用空数据覆盖旧存档。
+本次前端数据同步改为调用普通云函数 `accountData`。原来的 AI 对话、支付 HTTP 函数保持独立。App 当前通过带用户 Bearer Token 的官方 `/v1/functions/accountData` API 调用，详情见 [App 邮箱登录说明](./NATIVE_CLOUDBASE_SETUP.md)。**只重新打包 APK 不会完成修复**：未部署 accountData 时，新版会保留本机副本并暂停上传，登录恢复会提示失败，避免用空数据覆盖旧存档。
 
 ## 1. 部署 accountData
 
@@ -14,7 +14,7 @@
 6. 把 DeepSeek 密钥只放到该云函数环境变量 `DEEPSEEK_API_KEY`，不要放到 APP 或代码里。没有密钥时帖子仍会保存到云端，但标记为审核失败，允许重试。
 7. 发布函数后，再更新 APP 源码并重新打包，使用同一邮箱/手机号登录。
 
-此函数必须经 CloudBase 已登录 SDK 调用。服务端从 auth.getUserInfo() 获取 UID，忽略客户端的 userId/clientId。不要把此入口直接改成无鉴权 HTTP 接口。普通云函数控制台测试没有真实用户上下文，返回 AUTH_REQUIRED 是预期行为。
+此函数必须经 CloudBase 已登录 SDK 或携带用户 AccessToken 的官方普通云函数 HTTP API 调用。服务端从 auth.getUserInfo() 获取 UID，忽略客户端的 userId/clientId。不要把此入口直接改成无鉴权 HTTP 接口。普通云函数控制台测试没有真实用户上下文，返回 AUTH_REQUIRED 是预期行为。
 
 官方参考：[云函数用户身份](https://github.com/TencentCloudBase/node-sdk/blob/master/docs/auth.md)、[服务端事务](https://docs.cloudbase.net/database/transaction)。
 

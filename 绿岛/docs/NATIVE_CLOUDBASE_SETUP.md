@@ -1,45 +1,57 @@
-# FIRE生活 App 云服务接入修复
+# FIRE生活 App：邮箱登录与账号同步
 
-网页使用浏览器内置的网络、存储接口；标准 uni-app App 需要注册官方适配器。此前手写的 window/fetch/localStorage 补丁已移除，避免误用浏览器通道。
+当前登录入口仅支持邮箱验证码。手机号、QQ、微信登录入口已经移除。
 
-## 更新依赖
+## 更新和打包
 
-进入有 package.json 的“绿岛”目录运行：
+1. 下载最新源码，在包含 package.json 的“绿岛”目录执行 `npm install`。
+2. 在 HBuilderX 停止旧运行任务，再重新编译/打包。
+3. 用原签名证书覆盖安装 APK，保留旧版本和本机记录。在云端恢复验证成功之前不要卸载旧 App。
 
-```sh
-npm install
-```
+不再需要复制 .env.example、创建 .env.local 或填写 appSign/appAccessKey。
+原先的强制 APP_CONFIG_MISSING 检查已移除。
 
-新增依赖为 @cloudbase/adapter-uni-app 1.1.1，保留当前 @cloudbase/js-sdk 2.27.3。当前仓库原有 package-lock 只有根依赖声明；npm install 会在本机补齐实际依赖锁定信息。本次环境无法执行 npm 安装或 APK 打包，依赖解析需要本机验证。
+## 接入方式
 
-## 配置 App 专用授权
+App 通过 uni.request 访问当前环境的官方 HTTPS API：
+`https://ziyoukedu-d0gyrczqk4de53b87.api.tcloudbasegateway.com`
 
-按照 [CloudBase 官方 UniApp 适配器说明](https://docs.cloudbase.net/en/api-reference/webv2/adapter/uniapp-adapter) 在当前 CloudBase 环境中配置移动应用标识/凭据。使用实际 APK 的包名和签名完成控制台要求的授权绑定。
+邮箱发送验证码 → 验证验证码 → 已有邮箱登录 / 新邮箱注册。
+登录、刷新返回的 sub 作为当前 UID；账号数据仍由普通云函数 accountData 从 CloudBase 服务端认证上下文读取 UID。
+客户端不会把邮箱或设备编号作为云端数据归属凭据。
 
-把项目内 .env.example 复制为 .env.local，填写：
+App 不再初始化浏览器版 SDK 或官方适配器的旧移动应用签名通道。
+网页继续使用原有 SDK。App 的图片下载链接也走官方带用户令牌的存储 HTTP API。
 
-```dotenv
-VITE_CLOUDBASE_APP_SIGN=CloudBase提供的App标识
-VITE_CLOUDBASE_APP_ACCESS_KEY_ID=CloudBase提供的凭据版本整数
-VITE_CLOUDBASE_APP_ACCESS_KEY=CloudBase移动应用专用凭据
-```
+令牌只保存在本机登录会话中，过期前通过 refresh_token 刷新；并发请求共享刷新任务。
+退出后清除登录凭据，并阻止迟到的刷新结果重建旧会话。
+验证码不写入持久化存储。每次账号数据请求都检查 UID，保留空存档拒绝覆盖、读取失败暂停写入、修订号冲突和本机副本保护。
 
-- 不是支付宝 AppID，也不是 DCloud 的 __UNI__ AppID。
-- 不是 DeepSeek 密钥，不是腾讯云管理员 SecretId/SecretKey，也不是 ADMIN_TOKEN。
-- .env.local 已加入 Git 忽略，不要提交或发送这些值。
-- VITE_* 配置会编译进 APK，不能用于保存服务端秘密。仅使用 CloudBase 允许在客户端使用的移动应用专用凭据，并在控制台按包名/签名等限制使用范围。
-- 三项值不可猜测。缺少时 App 明确显示 APP_CONFIG_MISSING；H5 不读取这些值、不注册原生适配器。
-- 每次更改 .env.local 后停止运行任务，再重新编译/打包；仅上传云函数不会更新 APK 的配置。
+## 控制台
 
-## 验证
+保持当前环境“身份认证 → 登录方式 → 邮箱验证码”启用即可。
+本次补丁不要求重建用户、清空数据库、创建无鉴权 HTTP 路径或部署新的函数。
+已部署的 accountData 仍是普通云函数，通过官方 `/v1/functions/accountData` API 携带用户 Bearer Token 调用。
 
-1. 先保留旧 APK 和本机记录，覆盖安装使用原证书打出的新版 APK。
-2. 用 HBuilderX“运行到手机或模拟器”验证验证码登录、accountData.bootstrap、个人财务恢复及社区发布。
-3. 查看 accountData 的真实调用日志，确认请求到达，UID 与当前登录用户一致。
-4. App 失败时截图错误代码；例如 APP_CONFIG_MISSING、APP_RUNTIME_UNSUPPORTED 或云端返回的具体代码。错误提示不输出令牌/凭据。
-5. H5 回归：验证码登录、云端恢复和原有页面继续可用。
-6. 使用一台未保存本机记录的设备登录同账号，验证云端数据恢复；在确认同步成功前不要卸载原设备。
+若环境 OPA 策略拒绝 HTTP API，App 会提示 ACTION_FORBIDDEN / ACCESS_DENIED 等具体错误，需按当前环境策略允许已登录用户调用 accountData；不要关闭鉴权、放开整个数据库或使用管理员 API Key。
+旧手机号/第三方用户不会被删除；如尚未绑定邮箱，需要核实归属后另行处理，不会自动合并到邮箱账号。
 
-客户端保留了 expectedUid 校验、读取失败暂停写入和空存档保护，不以绕过数据恢复校验来假装登录成功。
+## 验证与限制
 
-本次源码和隔离测试不能替代真实 SDK、真实 App 凭据和 APK 的验证。
+- 用现有邮箱在真实 APK 登录，确认恢复原 UID 和数据。
+- 用新邮箱获取验证码，确认注册后按新 UID 初始化。
+- 覆盖安装后再次读取同账号的财务、聊天和社区记录。
+- 切换邮箱账号，验证私人数据隔离。
+- 断网、错误验证码、过期令牌、云函数拒绝调用时，不显示同步成功，不上传空白覆盖旧存档。
+- 云服务要求图形验证时，当前 App 显示明确提示；图形挑战页面尚未接入，需使用网页版完成登录或稍后重试。不能跳过服务端验证。
+
+运行 `node scripts/check-cloudbase-platform.mjs` 检查原生请求、认证、刷新竞争和账号归属。
+本次环境无法安装 npm 依赖、打 APK 或访问你的真实登录会话；隔离检查不代表真机登录已通过。
+
+官方接口依据：
+- [发送验证码](https://docs.cloudbase.net/http-api/auth/auth-send-verification)
+- [验证验证码](https://docs.cloudbase.net/http-api/auth/auth-verify-verification)
+- [邮箱登录](https://docs.cloudbase.net/http-api/auth/auth-sign-in)
+- [新用户注册](https://docs.cloudbase.net/http-api/auth/auth-sign-up)
+- [刷新令牌](https://docs.cloudbase.net/http-api/auth/auth-grant-token)
+- [普通云函数 HTTP API](https://docs.cloudbase.net/en/cloud-function/function-calls/http-api)

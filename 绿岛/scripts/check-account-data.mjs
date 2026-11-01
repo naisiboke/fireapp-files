@@ -225,7 +225,7 @@ const loginDependencies={
  signInWithCode:async()=>{trustedUid='account-B';return {}},saveAuthToken:async()=>{},sendVerificationCode:async()=>({}),uni,
  setTimeout:()=>1,clearTimeout(){},clearInterval(){},console:silent,
 }
-const loginPage=new Function(...Object.keys(loginDependencies),loginScript+'\nreturn {email,code,login,allowCode(){verificationInfo={}}};')(...Object.values(loginDependencies))
+const loginPage=new Function(...Object.keys(loginDependencies),loginScript+'\nreturn {email,code,login,allowCode(){verificationInfo={};sentEmail=account()}};')(...Object.values(loginDependencies))
 loginPage.email.value='account-b@example.com';loginPage.code.value='123456';loginPage.allowCode()
 transport='offline'
 await loginPage.login()
