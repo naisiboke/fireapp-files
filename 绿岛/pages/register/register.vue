@@ -1,5 +1,9 @@
-<template><view class="register-page"><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">注册功能即将开放，先探索你的自由计划。</text><view class="button" @tap="back">返回登录</view></view></template>
+<template><view class="register-page">
+    <AppFeedback :owner-id="feedbackOwnerId" /><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">注册功能即将开放，先探索你的自由计划。</text><view class="button" @tap="back">返回登录</view></view></template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+const feedbackOwnerId = useFeedbackPage()
 function back(){uni.navigateBack()}
 </script>
 <style lang="scss">.register-page{min-height:100vh;background:#f5f7f2;padding:calc(28px + env(safe-area-inset-top)) 24px;box-sizing:border-box;color:#173d35;display:flex;flex-direction:column;align-items:center}.back{align-self:flex-start;min-width:44px;min-height:44px;font-size:32px;line-height:40px}.title{margin-top:50px;font-size:26px;font-weight:700}.sub{margin-top:14px;color:#6b7c70;font-size:14px}.button{margin-top:40px;min-height:48px;width:100%;max-width:360px;border-radius:12px;background:#173d35;color:#fff;display:flex;align-items:center;justify-content:center}</style>

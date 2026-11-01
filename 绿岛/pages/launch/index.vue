@@ -1,5 +1,6 @@
 <template>
   <view class="launch-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="launch-glow"></view>
     <view class="launch-card">
       <view class="launch-mark">岛</view>
@@ -9,7 +10,13 @@
   </view>
 </template>
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showDialog, dismissFeedback } from '@/utils/feedback.js'
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() {
     return { redirecting: false, routeTimer: null, status: '正在打开Fire生活…' }
   },
@@ -44,7 +51,7 @@ export default {
             this.redirecting = false
             this.status = '页面加载失败，请重新打开应用'
             console.error('[launch-route-failed]', url, error)
-            uni.showModal({
+            showDialog({
               title: 'Fire生活启动失败',
               content: '页面资源没有正确加载，请重新安装最新版本。',
               showCancel: false,

@@ -1,5 +1,6 @@
 <template>
   <view class="tools-view">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <view class="tools-head">
       <text class="tools-h1">工具</text>
@@ -48,6 +49,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist } from '@/store/index.js'
 import { LocalDay } from '@/utils/engine.js'
@@ -82,7 +86,9 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components: { AppFeedback,  BottomTabs },
   data() { return { state, query: '', activeCategory: '全部' } },
   computed: {
     sortedTools() {
@@ -134,7 +140,7 @@ export default {
           if (Number.isSafeInteger(budget.expense) && budget.expense > 0 && Number.isSafeInteger(budget.income) && budget.income > 0) target = '/pages/ledger/edit'
         }
         uni.navigateTo({ url: target })
-      } else uni.showToast({ title: t.name + ' 开发中', icon: 'none' })
+      } else showNotice({ title: t.name + ' 开发中', icon: 'none' })
     },
   },
 }

@@ -1,5 +1,6 @@
 <template>
   <view class="calculator-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="page-head">
       <button class="back" aria-label="返回" @click="back">‹</button>
       <text class="page-title">躺平倒计时</text>
@@ -90,6 +91,10 @@
 </template>
 
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage({ handleBack: false })
 import { computed, reactive, ref, onUnmounted } from 'vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { onLoad, onShow, onHide, onUnload, onBackPress } from '@dcloudio/uni-app'
@@ -221,7 +226,7 @@ async function calculate() {
     state.freedomPlan = createFreedomPlan(state.finance)
     if (persistNow()) {
       fireResult.value = freedomResult(state)
-      uni.showToast({title:'自由计划已保存',icon:'none'})
+      showNotice({title:'自由计划已保存',icon:'none'})
     } else {
       state.finance = oldFinance; state.profile = oldProfile; state.freedomPlan = oldPlan; state.financeEntered = oldEntered
       errors.value = ['保存失败，请检查设备存储后重试']
@@ -232,7 +237,7 @@ async function calculate() {
     state.goalDraft = plan
     if (persistNow()) {
       calculatedGoal.value = plan; goalResult.value = GoalEngine(plan)
-      uni.showToast({title:'目标草稿已保存',icon:'none'})
+      showNotice({title:'目标草稿已保存',icon:'none'})
     } else { state.goalDraft = old; errors.value = ['保存失败，请检查设备存储后重试'] }
   }
   now.value = Date.now()
@@ -244,7 +249,7 @@ function publishGoal() {
   const old = state.goalPlan
   const plan = {...calculatedGoal.value,progress:goalResult.value.progress,targetDate:goalResult.value.date ? dateText(goalResult.value.date) : '100年内暂未可达'}
   state.goalPlan = plan
-  if (persistNow()) uni.showToast({title:'目标已更新到首页',icon:'none'})
+  if (persistNow()) showNotice({title:'目标已更新到首页',icon:'none'})
   else { state.goalPlan = old; errors.value = ['保存失败，请重试'] }
   saving.value = false
 }
@@ -282,6 +287,7 @@ function cleanup() {
 onUnload(cleanup)
 onUnmounted(cleanup)
 onBackPress(event => {
+  if (dismissFeedback(feedbackOwnerId)) return true
   if (event && event.from === 'navigateBack') return false
   if (getCurrentPages().length > 1) return false
   back()

@@ -1,5 +1,6 @@
 <template>
   <view class="share-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="share-head"><view class="back" @tap="back">‹</view><text class="title">{{ editId ? "编辑我的经历" : "分享我的经历" }}</text><view class="close" @tap="close">×</view></view>
     <scroll-view class="share-scroll" scroll-y>
       <view class="share-content">
@@ -15,6 +16,10 @@
   </view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showNotice } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage()
 import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { COMMUNITY_POST_TAGS as tags } from '@/utils/community-data.js'
@@ -49,26 +54,26 @@ function close(){CS.saveDraft(form);uni.switchTab({url:'/pages/community/index'}
 function toggleTag(tag){const i=form.tags.indexOf(tag);if(i>=0)form.tags.splice(i,1);else form.tags.push(tag)}
 function addRow(){form.timeline.push({year:'',title:''})}
 function removeRow(i){if(form.timeline.length>1)form.timeline.splice(i,1)}
-function saveDraft(){CS.saveDraft(form);uni.showToast({title:'草稿已保存',icon:'none'})}
+function saveDraft(){CS.saveDraft(form);showNotice({title:'草稿已保存',icon:'none'})}
 async function publish(){
- if(!ready.value){uni.showToast({title:'请填写完整内容',icon:'none'});return}
+ if(!ready.value){showNotice({title:'请填写完整内容',icon:'none'});return}
  if(publishing.value)return
  publishing.value=true
  const existing=editId.value?CS.ugc().find(x=>String(x.id)===String(editId.value)):null
  const post={id:existing?existing.id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),category:form.tags.join(' · '),tags:[...form.tags],journey:form.journey || 'doing',title:form.title.trim(),summary:form.content.trim().slice(0,100),content:form.content.trim(),timeline:validTimeline.value.map(x=>({year:x.year,desc:x.title})),displayName:existing?existing.displayName:'3263***',createdAt:existing?existing.createdAt:Date.now(),status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核'}
  const list=CS.ugc();const existingIndex=list.findIndex(x=>String(x.id)===String(post.id));if(existingIndex>=0)list[existingIndex]={...list[existingIndex],...post};else list.unshift(post)
- if(!CS.saveUGC(list)){publishing.value=false;uni.showToast({title:'保存失败',icon:'none'});return}
+ if(!CS.saveUGC(list)){publishing.value=false;showNotice({title:'保存失败',icon:'none'});return}
  try {
   const verdict=await reviewCommunityPost(post)
   const target=CS.ugc().find(x=>x.id===post.id)
   if(target){target.status=verdict.approved?'approved':'rejected';target.reviewStatus=target.status;target.reviewReason=verdict.reason;target.reviewedAt=Date.now();CS.saveUGC(CS.ugc())}
-  if(verdict.approved){CS.clearDraft();uni.showToast({title:'审核通过，经历已发布',icon:'none'})}
-  else uni.showToast({title:'审核未通过：'+verdict.reason,icon:'none',duration:3000})
+  if(verdict.approved){CS.clearDraft();showNotice({title:'审核通过，经历已发布',icon:'none'})}
+  else showNotice({title:'审核未通过：'+verdict.reason,icon:'none',duration:3000})
   setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),500)
  } catch(error) {
   const target=CS.ugc().find(x=>x.id===post.id)
   if(target){target.status='review_failed';target.reviewStatus='review_failed';target.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(CS.ugc())}
-  uni.showToast({title:'审核失败，请稍后重试',icon:'none'})
+  showNotice({title:'审核失败，请稍后重试',icon:'none'})
   setTimeout(()=>uni.navigateTo({url:'/pages/community/manage'}),500)
  } finally { publishing.value=false }
 }

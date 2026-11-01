@@ -1,5 +1,6 @@
 <template>
   <view class="ledger-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部：返回 + 标题 -->
     <view class="head">
@@ -163,6 +164,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import {
   LocalDay, LedgerSummary, LedgerCategoryLabel, LedgerCategories,
@@ -174,6 +178,8 @@ const NECESSITY_TEXT = { necessary: '必要', comfort: '改善生活', impulse: 
 
 
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
   data() {
     return {
       state: state,
@@ -262,12 +268,12 @@ export default {
 
     saveTargets() {
       if (!SaveMonthlyTargets(state, this.month, this.budgetInput, this.incomeInput)) {
-        uni.showToast({ title: '请填写两个有效金额', icon: 'none' })
+        showNotice({ title: '请填写两个有效金额', icon: 'none' })
         return
       }
       persist()
       this.budgetExpanded = false
-      uni.showToast({ title: '预算已保存，可以开始记账', icon: 'success' })
+      showNotice({ title: '预算已保存，可以开始记账', icon: 'success' })
     },
 
     onMonthChange(e) {
@@ -304,7 +310,7 @@ export default {
 
     goAdd() {
       if (!this.targetsReady) {
-        uni.showToast({ title: '请先填写本月预算', icon: 'none' })
+        showNotice({ title: '请先填写本月预算', icon: 'none' })
         this.budgetExpanded = true
         return
       }
@@ -316,14 +322,14 @@ export default {
     },
 
     confirmDelete(x) {
-      uni.showModal({
+      showDialog({
         title: '删除这笔记录？',
         content: this.catLabel(x) + ' · ' + this.fmt(x.cents / 100) + ' 元',
         confirmColor: '#a15f63',
         success: function (res) {
           if (res.confirm && DeleteExpense(state, x.id)) {
             persist()
-            uni.showToast({ title: '已删除', icon: 'none' })
+            showNotice({ title: '已删除', icon: 'none' })
           }
         },
       })
@@ -354,6 +360,8 @@ export default {
   },
 
   onBackPress() {
+    if (dismissFeedback(this.feedbackOwnerId)) return true
+
     if (this._navigating) return true
     this._navigating = true
     uni.navigateBack({

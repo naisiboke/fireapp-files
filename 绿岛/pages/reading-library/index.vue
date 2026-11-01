@@ -1,5 +1,6 @@
 <template>
   <view class="reading-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="reading-head">
       <text class="back" @tap="back">‹</text>
       <view><text class="title">认知数据库</text><text class="sub">把读过的内容，变成自己的理解</text></view>
@@ -18,7 +19,13 @@
   </view>
 </template>
 <script>
+import { dismissFeedback } from '@/utils/feedback.js'
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() { return { tab: 'shelf' } },
   methods: {
     back() { uni.switchTab({ url: '/pages/tools/index' }) },

@@ -1,5 +1,6 @@
 <template>
   <view class="edit-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="title">个人资料</text><text class="close" @tap="close">×</text></view>
     <view class="account-card"><text class="account-label">绑定邮箱</text><text class="account-email">{{ boundEmail || '暂未绑定邮箱' }}</text><text class="account-hint">{{ boundEmail ? '用于登录和接收安全通知' : '请使用邮箱验证码登录后完成绑定' }}</text></view>
     <view class="card">
@@ -22,6 +23,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import { validateNickname } from '@/utils/nickname.js'
 import { isMembershipActive } from '@/utils/membership.js'
@@ -31,6 +35,9 @@ const CHANGE_INTERVAL = 30 * 24 * 60 * 60 * 1000
 function isProMember() { return isMembershipActive(state) }
 
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() { return { name: '', email: '', saving: false, lastChangedAt: 0, pro: false } },
   computed: {
     boundEmail() { return this.email },
@@ -50,13 +57,13 @@ export default {
     close() { uni.navigateBack() },
     save() {
       const result = validateNickname(this.name)
-      if (!result.ok) return uni.showToast({ title: result.message, icon: 'none' })
+      if (!result.ok) return showNotice({ title: result.message, icon: 'none' })
       const profile = state.profile || {}
       const currentName = String(profile.name || '')
-      if (result.value === currentName) return uni.showToast({ title: '昵称没有变化', icon: 'none' })
+      if (result.value === currentName) return showNotice({ title: '昵称没有变化', icon: 'none' })
       const elapsed = Date.now() - this.lastChangedAt
       if (!this.pro && this.lastChangedAt && elapsed < CHANGE_INTERVAL) {
-        return uni.showToast({ title: this.nextChangeText, icon: 'none' })
+        return showNotice({ title: this.nextChangeText, icon: 'none' })
       }
       this.saving = true
       state.profile = { ...profile, name: result.value, nicknameUpdatedAt: Date.now() }
@@ -65,7 +72,7 @@ export default {
       persist()
       setTimeout(() => {
         this.saving = false
-        uni.showToast({ title: '个人资料已保存', icon: 'none' })
+        showNotice({ title: '个人资料已保存', icon: 'none' })
         setTimeout(() => uni.navigateBack(), 350)
       }, 120)
     },

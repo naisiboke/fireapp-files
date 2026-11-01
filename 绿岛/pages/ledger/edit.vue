@@ -1,5 +1,6 @@
 <template>
   <view class="edit-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部 -->
     <view class="edit-top">
@@ -103,6 +104,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import {
   LocalDay, LedgerCategories, SaveExpense, HeroDay, HeroComplete,
@@ -119,6 +123,8 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
   data() {
     return {
       editing: false,
@@ -299,7 +305,7 @@ export default {
       } catch (e) { /* ignore */ }
 
       persist()
-      uni.showToast({ title: this.editing ? '已保存' : '已记账', icon: 'success' })
+      showNotice({ title: this.editing ? '已保存' : '已记账', icon: 'success' })
 
       if (this.editing) {
         setTimeout(function () { uni.navigateBack() }, 400)
@@ -322,6 +328,8 @@ export default {
   },
 
   onBackPress() {
+    if (dismissFeedback(this.feedbackOwnerId)) return true
+
     this.back()
     return true
   },

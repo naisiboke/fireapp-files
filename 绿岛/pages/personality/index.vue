@@ -1,5 +1,6 @@
 <template>
   <view class="personality-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><view class="back" @tap="back">‹</view><text class="title">人格测试</text><view class="close" @tap="close">×</view></view>
     <view v-if="!started && !finished" class="chooser">
       <text class="hero-title">认识自己的行为方式</text><text class="hero-sub">选择一个测试开始。完成后可把结果用于 AI 的生活建议。</text>
@@ -29,6 +30,9 @@
   </view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+const feedbackOwnerId = useFeedbackPage()
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { state, persist } from '@/store/index.js'

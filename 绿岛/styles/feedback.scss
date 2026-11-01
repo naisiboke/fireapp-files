@@ -1,0 +1,69 @@
+/* Shared visual language for existing content dialogs. */
+.fire-overlay-panel .modal,
+.fire-overlay-panel .upgrade-modal,
+.fire-overlay-panel .chat-drawer {
+  position:relative!important;inset:auto!important;width:100%!important;max-width:none!important;max-height:none!important;
+  padding:20px!important;margin:0!important;box-sizing:border-box!important;border:0!important;border-radius:0!important;
+  background:#fff!important;color:#243830!important;box-shadow:none!important;transform:none!important;text-align:left!important;
+}
+.fire-overlay-panel .modal-head,
+.fire-overlay-panel .sheet-head,
+.fire-overlay-panel .post-head,
+.fire-overlay-panel .drawer-head,
+.fire-modal-heading {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-height:40px!important;margin:0 0 16px!important}
+.fire-overlay-panel .modal-h2,
+.fire-overlay-panel .sheet-title,
+.fire-overlay-panel .post-h2,
+.fire-overlay-panel .modal-title,
+.fire-overlay-panel .drawer-head>text {font-size:18px!important;line-height:1.5!important;font-weight:600!important;color:#173d35!important;margin:0!important}
+.fire-overlay-panel .modal-close,
+.fire-overlay-panel .post-close,
+.fire-overlay-panel .sheet-head .close,
+.fire-modal-close {display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;background:#f2f5f0!important;color:#52635b!important;box-shadow:none!important;line-height:1!important}
+.fire-modal-close::after {border:0!important}
+.fire-overlay-panel .modal-p,
+.fire-overlay-panel .modal-copy {display:block!important;color:#718078!important;font-size:14px!important;line-height:1.75!important;margin:0 0 16px!important}
+.fire-overlay-panel .modal-kicker {display:block;font-size:11px!important;color:#718078!important;letter-spacing:.08em;margin-bottom:10px}
+.fire-overlay-panel .modal-price {display:block;margin:8px 0 16px!important;font-size:28px!important;color:#173d35!important}
+.fire-overlay-panel .modal-unit {font-size:13px!important;color:#718078!important}
+.fire-overlay-panel .btn,
+.fire-overlay-panel .primary,
+.fire-overlay-panel .post-submit,
+.fire-modal-action {display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;min-height:44px!important;padding:12px 16px!important;border:0!important;border-radius:12px!important;background:#173d35!important;color:#fff!important;font-size:14px!important;line-height:1.4!important;box-shadow:none!important}
+.fire-modal-action {width:100%;margin:20px 0 0!important}
+.fire-overlay-panel .btn.light,
+.fire-overlay-panel .post-draft-btn {min-height:44px!important;padding:12px 16px!important;box-sizing:border-box!important;border:0!important;border-radius:12px!important;background:#f0f3ee!important;color:#52635b!important}
+.fire-overlay-panel .btn-text,
+.fire-overlay-panel .post-submit-text {font-size:14px!important;color:inherit!important}
+.fire-overlay-panel .post-draft-text {font-size:14px!important;color:#52635b!important}
+.fire-overlay-panel .form-input,
+.fire-overlay-panel .post-input,
+.fire-overlay-panel .post-textarea-wrap,
+.fire-overlay-panel .input,
+.fire-overlay-panel .money-input {background:#f7f9f5!important;border:1px solid #e2e8df!important;border-radius:12px!important;color:#243830!important}
+.fire-overlay-panel .post-modal,
+.fire-overlay-panel .sheet {position:relative!important;width:100%!important;height:72vh!important;max-height:var(--fire-panel-height,78vh)!important;min-height:0!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important;overflow:hidden!important;padding-top:0!important;border:0!important;border-radius:0!important;background:#fff!important}
+.fire-overlay-panel .post-head,
+.fire-overlay-panel .sheet-head {padding:16px 20px!important;margin:0!important;border-bottom:1px solid #edf1ea!important}
+.fire-overlay-panel .post-scroll,
+.fire-overlay-panel .sheet-scroll {flex:1!important;min-height:0!important;height:0!important}
+.fire-overlay-panel .post-foot,
+.fire-overlay-panel .sheet-footer {padding:16px 20px!important;background:#fff!important;border-top:1px solid #edf1ea!important}
+.fire-overlay-panel .sheet-content {padding:0 20px 24px!important}
+.fire-overlay-panel .choice {background:#f0f3ee!important;color:#52635b!important}
+.fire-overlay-panel .choice.active {background:#e5eee4!important;color:#173d35!important}
+.fire-overlay-panel .fav-list {margin:0!important}
+.fire-overlay-panel .fav-item {padding:14px!important;background:#f7f9f5!important;border:1px solid #edf1ea!important;border-radius:12px!important;margin-top:10px!important}
+.fire-overlay-panel .fav-title {font-size:15px!important;color:#243830!important}
+.fire-overlay-panel .fav-sub {font-size:13px!important;color:#718078!important;line-height:1.6!important}
+.fire-overlay-panel .chat-list {height:42vh!important;max-height:calc(var(--fire-panel-height,80vh) - 150px)!important}
+.fire-overlay-panel .new-drawer {background:#f0f3ee!important;color:#315f4a!important;border-radius:12px!important}
+.fire-loading-content {padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;background:#fff;color:#243830}
+.fire-loading-content .spinner {width:28px!important;height:28px!important;border-width:2px!important;border-color:#e2e8df!important;border-top-color:#527059!important}
+.fire-loading-content .generating-title {font-size:18px!important;color:#173d35!important;margin-top:18px!important}
+.fire-loading-content .generating-sub {font-size:13px!important;line-height:1.7!important;color:#718078!important}
+.fire-loading-content .generating-time {font-size:12px!important;color:#718078!important;margin-top:16px!important}
+
+.fire-overlay-panel .modal-head{position:sticky!important;top:0;z-index:2;background:#fff!important;padding-bottom:8px!important}
+
+.fire-overlay-panel .modal{overflow:visible!important}

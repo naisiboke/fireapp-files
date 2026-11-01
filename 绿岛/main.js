@@ -1,5 +1,6 @@
 import './uni.scss'
 import App from './App'
+import { showDialog } from './utils/feedback.js'
 
 // #ifndef VUE3
 import Vue from 'vue'
@@ -21,19 +22,20 @@ export function createApp() {
 	const app = createSSRApp(App)
   app.config.globalProperties.$tencentCloud = tencentCloudConfig
 
+  let lastRuntimeErrorAt = 0
+  let runtimeErrorPending = false
   const showRuntimeError = (error, info = '') => {
-    const message = error && error.stack
-      ? error.stack
-      : String(error && error.message ? error.message : error)
-    const content = [message, info].filter(Boolean).join('\\n\\n').slice(0, 1800)
-    setTimeout(() => {
-      uni.showModal({
-        title: 'FIRE 英雄传运行错误',
-        content: content || '未知错误，请截图反馈',
-        showCancel: false,
-        confirmText: '知道了',
-      })
-    }, 80)
+    console.error('[app-runtime]', error, info)
+    const now = Date.now()
+    if (runtimeErrorPending || now - lastRuntimeErrorAt < 10000) return
+    lastRuntimeErrorAt = now
+    runtimeErrorPending = true
+    showDialog({
+      title: '页面暂时遇到问题',
+      content: '请返回后重试。如果仍然出现问题，可通过“问题反馈与奖励”联系我们。',
+      showCancel: false,
+      confirmText: '知道了',
+    }).finally(() => { runtimeErrorPending = false })
   }
 
   app.config.errorHandler = (error, instance, info) => {

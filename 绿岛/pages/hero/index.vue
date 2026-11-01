@@ -1,5 +1,6 @@
 <template>
   <view class="hero-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="hero-head"><view class="back" @tap="back">‹</view><view><text class="title">FIRE 英雄传</text><text class="sub">一点点行动，慢慢靠近自由。</text></view></view>
     <view class="growth"><view class="level">Lv{{ growth.level }}</view><view class="growth-copy"><text class="realm">{{ growth.name }}</text><text class="exp">{{ growth.max ? '已达最高境界' : growth.current + ' / ' + growth.required + ' EXP' }}</text><view class="progress"><view class="fill" :style="{width:growth.progress+'%'}"></view></view></view></view>
     <text class="detail">累计经验 {{ growth.total }} EXP · 每完成一个任务 +10 EXP</text>
@@ -14,13 +15,19 @@
   </view>
 </template>
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import { HeroDay, HeroLevel } from '@/utils/engine.js'
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data(){return{state,today:new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric'}),tasks:[{id:'assets',title:'记录本月资产',desc:'更新当前资产，让计划保持清晰。'},{id:'savings',title:'检视储蓄目标',desc:'看看每月存入是否符合计划。'},{id:'wishlist',title:'处理一笔待消费计划',desc:'给一笔消费留出冷静期。'},{id:'read',title:'阅读 10 分钟',desc:'留一点时间思考真正想要的生活。'}] }},
   computed:{dailyTasks(){const h=state.hero;const catalog=this.tasks.concat([{id:'ledger',title:'记录今天的消费',desc:'保存今天的支出，自动完成任务。'}]);return h?[...h.slots.map(x=>catalog.find(t=>t.id===x.id)).filter(Boolean),catalog.find(t=>t.id==='ledger')]:[]},growth(){return HeroLevel(state.exp)},hero(){HeroDay(state);return state.hero},todayCount(){const h=state.hero||{};return (h.slots||[]).filter(x=>x.done).length+Number(h.ledgerDone||false)},badges(){const h=state.hero||{totalCompleted:0,log:[],actionDays:[]};return[{name:'迈出第一步',ok:h.totalCompleted>0},{name:'理性选择',ok:h.log.some(x=>x.id==='wishlist')},{name:'七日同行',ok:h.actionDays.length>=7}]}},
   onShow(){if(HeroDay(state))persist()},
-  methods:{back(){uni.switchTab({url:'/pages/tools/index'})},reading(){uni.navigateTo({url:'/pages/reading-library/index'})},isDone(id){const h=state.hero||{};if(id==='ledger')return!!h.ledgerDone;return !!(h.slots||[]).find(x=>x.id===id)?.done},complete(id){const routes={ledger:'/pages/ledger/index',wishlist:'/pages/wishlist/index',read:'/pages/reading-library/index'};if(routes[id])uni.navigateTo({url:routes[id]});else uni.showToast({title:'财务数据页面尚未完成',icon:'none'})},},
+  methods:{back(){uni.switchTab({url:'/pages/tools/index'})},reading(){uni.navigateTo({url:'/pages/reading-library/index'})},isDone(id){const h=state.hero||{};if(id==='ledger')return!!h.ledgerDone;return !!(h.slots||[]).find(x=>x.id===id)?.done},complete(id){const routes={ledger:'/pages/ledger/index',wishlist:'/pages/wishlist/index',read:'/pages/reading-library/index'};if(routes[id])uni.navigateTo({url:routes[id]});else showNotice({title:'财务数据页面尚未完成',icon:'none'})},},
 }
 </script>
 <style>

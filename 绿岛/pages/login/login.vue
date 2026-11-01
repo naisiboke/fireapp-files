@@ -1,5 +1,6 @@
 <template>
-  <view class="login-page"><view class="login-shell">
+  <view class="login-page">
+    <AppFeedback :owner-id="feedbackOwnerId" /><view class="login-shell">
     <text class="brand">Fire生活</text><view class="avatar"><text>岛</text></view>
     <view class="intro"><text class="title">欢迎回到Fire生活</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
     <view class="mode-tabs" role="tablist"><view class="mode-tab" :class="{active:mode==='email'}" role="tab" :aria-selected="mode==='email'" @tap="switchMode('email')">邮箱登录</view><view class="mode-tab" :class="{active:mode==='phone'}" role="tab" :aria-selected="mode==='phone'" @tap="switchMode('phone')">手机号登录</view></view>
@@ -15,6 +16,10 @@
   </view></view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showNotice } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage()
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { state, persist, hydrateFromServer } from '@/store/index.js'
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
@@ -28,7 +33,7 @@ onMounted(()=>{
 })
 onBeforeUnmount(()=>{clearTimeout(noticeTimer);clearInterval(countdownTimer)})
 watch(mode,()=>{code.value='';verificationInfo=null;countdown.value=0})
-function toast(message){notice.value=message;uni.showToast({title:message,icon:'none',duration:2200});clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.value='',2200)}
+function toast(message){notice.value=message;showNotice({title:message,icon:'none',duration:2200});clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.value='',2200)}
 function switchMode(next){mode.value=next}
 function fillAdmin(){mode.value='email';email.value=ADMIN_TEST_EMAIL;toast('已填入测试邮箱，请获取验证码')}
 function register(){uni.navigateTo({url:'/pages/register/register'})}

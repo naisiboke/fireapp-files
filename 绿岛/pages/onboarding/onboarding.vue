@@ -1,5 +1,6 @@
 <template>
   <view class="onboarding">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="noise-layer" aria-hidden="true"></view>
     <view class="word-field" aria-hidden="true">
       <text
@@ -24,6 +25,9 @@
 </template>
 
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+const feedbackOwnerId = useFeedbackPage()
 import { computed, ref } from 'vue'
 import { state, persist } from '@/store/index.js'
 

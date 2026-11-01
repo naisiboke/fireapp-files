@@ -1,5 +1,6 @@
 <template>
   <view class="guide-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="progress"><view class="progress-fill" :style="{ width: ((step + 1) / steps.length * 100) + '%' }"></view></view>
     <view class="guide-top"><text class="brand">Fire生活新手指南</text><text class="counter">{{ step + 1 }} / {{ steps.length }}</text></view>
     <view class="guide-main">
@@ -13,7 +14,13 @@
 </template>
 
 <script>
+import { dismissFeedback } from '@/utils/feedback.js'
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() {
     return {
       step: 0,

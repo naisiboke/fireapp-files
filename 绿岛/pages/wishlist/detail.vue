@@ -1,5 +1,6 @@
 <template>
   <view class="detail-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="detail-head"><view class="back" @tap="back">‹</view><text class="title">拔草详情</text><view class="head-space"></view></view>
     <scroll-view v-if="item" class="detail-scroll" scroll-y>
       <view class="hero-card"><view class="hero-icon">{{ categoryIcon(item.category) }}</view><text class="name">{{ item.name }}</text><text class="status" :class="item.status">{{ statusLabel }}</text></view>
@@ -21,6 +22,10 @@
   </view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showDialog, showNotice } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage()
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { state, persist } from '@/store/index.js'
 const item=ref(null), now=ref(Date.now()), timer=ref(null)
@@ -45,12 +50,12 @@ function endEarly(){
   target.updated=Date.now()
   target.endedAt=Date.now()
   persist()
-  uni.showToast({title:'已提前结束冷静期',icon:'success'})
+  showNotice({title:'已提前结束冷静期',icon:'success'})
   setTimeout(()=>uni.navigateBack(),350)
 }
 function removeItem(){
   if(!item.value) return
-  uni.showModal({
+  showDialog({
     title:'删除消费计划',
     content:'删除后无法恢复，确定要删除吗？',
     confirmText:'删除',
@@ -58,10 +63,10 @@ function removeItem(){
     success:({confirm})=>{
       if(!confirm) return
       const index=state.items.findIndex(x=>x.id===item.value.id)
-      if(index<0){ uni.showToast({title:'项目不存在',icon:'none'}); return }
+      if(index<0){ showNotice({title:'项目不存在',icon:'none'}); return }
       state.items.splice(index,1)
       persist()
-      uni.showToast({title:'已删除',icon:'none'})
+      showNotice({title:'已删除',icon:'none'})
       setTimeout(()=>uni.navigateBack(),250)
     },
   })
@@ -74,7 +79,7 @@ function finish(status){
   target.updated=Date.now()
   persist()
   const message=status==='abandoned'?'挑战成功，已放弃购买':status==='failed'?'挑战失败，已放弃挑战':'挑战失败，已记录购买'
-  uni.showToast({title:message,icon:'success'})
+  showNotice({title:message,icon:'success'})
   setTimeout(()=>uni.navigateBack(),350)
 }
 onMounted(()=>{

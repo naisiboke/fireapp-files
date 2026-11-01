@@ -1,5 +1,6 @@
 <template>
   <view class="manage-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><view class="back" @tap="back">‹</view><text class="title">我的社区设置</text><view class="close" @tap="close">×</view></view>
     <view v-if="posts.length" class="list">
       <view v-for="post in posts" :key="post.id" class="card">
@@ -21,6 +22,10 @@
   </view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showDialog, showNotice } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage()
 import { ref, onMounted } from 'vue'
 import { CS } from '@/utils/community-store.js'
 import { reviewCommunityPost } from '@/utils/community-review.js'
@@ -50,39 +55,39 @@ async function retryReview(post){
   const verdict=await reviewCommunityPost(post)
   const list=CS.ugc(),target=list.find(x=>x.id===post.id)
   if(target){target.status=verdict.approved?'approved':'rejected';target.reviewStatus=target.status;target.reviewReason=verdict.reason;target.reviewedAt=Date.now();CS.saveUGC(list)}
-  load();uni.showToast({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
+  load();showNotice({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
  }catch(error){
   const list=CS.ugc(),target=list.find(x=>x.id===post.id)
   if(target){target.status='review_failed';target.reviewStatus='review_failed';target.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(list)}
-  load();uni.showToast({title:'审核请求失败，请检查云端 API',icon:'none'})
+  load();showNotice({title:'审核请求失败，请检查云端 API',icon:'none'})
  }
 }
 
 function cancelEdit(){editingId.value=''}
 async function saveEdit(post){
  const title=String(draft.value.title||'').trim(),content=String(draft.value.content||'').trim()
- if(!title||!content)return uni.showToast({title:'请填写完整内容',icon:'none'})
+ if(!title||!content)return showNotice({title:'请填写完整内容',icon:'none'})
  const list=CS.ugc(),target=list.find(x=>x.id===post.id)
  if(!target)return
  target.title=title;target.content=content;target.summary=content.slice(0,100);target.updatedAt=Date.now();target.status='pending';target.reviewStatus='pending';target.reviewReason='等待 AI 审核'
- if(!CS.saveUGC(list))return uni.showToast({title:'保存失败',icon:'none'})
- editingId.value='';load();uni.showToast({title:'已保存，正在审核',icon:'none'})
+ if(!CS.saveUGC(list))return showNotice({title:'保存失败',icon:'none'})
+ editingId.value='';load();showNotice({title:'已保存，正在审核',icon:'none'})
  try {
   const verdict=await reviewCommunityPost(target)
   const latest=CS.ugc().find(x=>x.id===post.id)
   if(latest){latest.status=verdict.approved?'approved':'rejected';latest.reviewStatus=latest.status;latest.reviewReason=verdict.reason;latest.reviewedAt=Date.now();CS.saveUGC(CS.ugc())}
-  load();uni.showToast({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
+  load();showNotice({title:verdict.approved?'审核通过，已发布':'审核未通过：'+verdict.reason,icon:'none',duration:3000})
  } catch(error) {
   const latest=CS.ugc().find(x=>x.id===post.id)
   if(latest){latest.status='review_failed';latest.reviewStatus='review_failed';latest.reviewReason=error.message||'审核服务暂时不可用';CS.saveUGC(CS.ugc())}
-  load();uni.showToast({title:'审核失败，请稍后重试',icon:'none'})
+  load();showNotice({title:'审核失败，请稍后重试',icon:'none'})
  } 
 }
 function removePost(post){
- uni.showModal({title:'删除这段经历？',content:'删除后无法恢复。',confirmText:'删除',confirmColor:'#a35d4e',success:({confirm})=>{
+ showDialog({title:'删除这段经历？',content:'删除后无法恢复。',confirmText:'删除',confirmColor:'#a35d4e',success:({confirm})=>{
   if(!confirm)return
   const list=CS.ugc().filter(x=>x.id!==post.id)
-  if(CS.saveUGC(list)){load();uni.showToast({title:'已删除',icon:'none'})}
+  if(CS.saveUGC(list)){load();showNotice({title:'已删除',icon:'none'})}
  }})
 }
 onMounted(load)

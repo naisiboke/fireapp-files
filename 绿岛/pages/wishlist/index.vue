@@ -1,5 +1,6 @@
 <template>
   <view class="wishlist-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><view class="back" @tap="back">‹</view><view><text class="title">极简拔草</text><text class="sub">记下想要的，留点时间再决定。</text></view></view>
     <view class="save-banner"><view><text class="save-label">拔草已省下</text><text class="save-amount">¥ {{ money(saved) }}</text></view><text class="tag">为自己留白</text></view>
     <view class="tabs"><view v-for="t in tabs" :key="t.id" class="tab" :class="{active: filter===t.id}" @tap="filter=t.id"><text>{{ t.name }}</text></view></view>
@@ -8,9 +9,9 @@
     </view></view>
     <view v-else class="empty"><text class="empty-icon">＋</text><text class="empty-title">{{ filter==='active'?'给心动留一点时间':'这里还没有记录' }}</text><text class="empty-sub">添加一个想买的东西，设置 3、7 或 30 天冷静期。</text></view>
     <view v-if="!showAdd" class="add" @tap="openAdd"><text>＋ 添加消费计划</text></view>
-    <view v-if="showAdd" class="mask" :style="panelStyle">
+    <FireOverlay :visible="showAdd" :owner-id="feedbackOwnerId" label="添加消费计划" wide @close="closeAdd">
       <view class="sheet">
-        <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" type="button" @tap="closeAdd" @click="closeAdd" aria-label="关闭">×</button></view>
+        <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" type="button" @tap="closeAdd" @click="closeAdd" aria-label="关闭"><view class="fire-close-mark"></view></button></view>
         <scroll-view class="sheet-scroll" scroll-y :scroll-into-view="focusedField">
           <view class="sheet-content">
             <text class="field-label">名称</text>
@@ -25,16 +26,22 @@
         </scroll-view>
         <view class="sheet-footer"><text v-if="formError" class="form-error">{{ formError }}</text><button class="primary" type="button" @click="handleSubmit">完成</button></view>
       </view>
-    </view>
+    </FireOverlay>
     <BottomTabs v-if="!showAdd" current="tools" />
   </view>
 </template>
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import FireOverlay from '@/components/FireOverlay.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist, WISHLIST_KEY } from '@/store/index.js'
 import { WishlistSaved } from '@/utils/engine.js'
 export default {
-  components:{ BottomTabs },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components:{ AppFeedback, FireOverlay,  BottomTabs },
   data(){return{state,filter:'active',showAdd:false,form:{name:'',amount:'',category:'other',days:7},formError:'',submitLock:false,focusedField:'',keyboardHeight:0,viewportHeight:0,viewportTop:0,categories:[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}],tabs:[{id:'active',name:'进行中'},{id:'ended',name:'已提前结束（挑战成功）'},{id:'abandoned',name:'已放弃'},{id:'failed',name:'挑战失败'},{id:'bought',name:'已购买'}]}},
   onLoad(){
     this.keyboardListener = event => { this.keyboardHeight = Math.max(0, Number(event.height) || 0) }
@@ -84,8 +91,8 @@ export default {
       if (this.submitLock) return
       const name = String(this.form.name || '').trim()
       const amount = Number(this.form.amount)
-      if (!name) { this.formError = '请填写消费计划名称'; uni.showToast({title:'请填写消费计划名称',icon:'none'}); return }
-      if (!Number.isFinite(amount) || amount <= 0) { this.formError = '请填写正确的预计金额'; uni.showToast({title:'请填写正确的预计金额',icon:'none'}); return }
+      if (!name) { this.formError = '请填写消费计划名称'; showNotice({title:'请填写消费计划名称',icon:'none'}); return }
+      if (!Number.isFinite(amount) || amount <= 0) { this.formError = '请填写正确的预计金额'; showNotice({title:'请填写正确的预计金额',icon:'none'}); return }
       this.submitLock = true
       this.formError = ''
       this.addItem()
@@ -95,7 +102,7 @@ export default {
     back(){uni.switchTab({url:'/pages/tools/index'})},
     categoryIcon(c){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[c]||'＋'},
     statusText(x){if(x.status==='active'){const left=Math.max(0,Math.ceil((Number(x.created||Date.now())+Number(x.days||7)*86400000-Date.now())/86400000));return left?'冷静期剩余 '+left+' 天':'冷静期已结束'}if(x.status==='ended')return '已提前结束（挑战成功）';if(x.status==='failed')return '放弃挑战 · 挑战失败';return x.status==='abandoned'?'已放弃购买 · 已计入省下金额':'已购买 · 未计入省下金额'},
-    addItem(){const name=String(this.form.name||'').trim(),amount=Number(this.form.amount);state.items.push({id:'item-'+Date.now(),name,amount,category:this.form.category,days:this.form.days,created:Date.now(),status:'active',note:''});persist();this.form={name:'',amount:'',category:'other',days:7};this.closeAdd();uni.showToast({title:'消费计划已添加',icon:'success'})},
+    addItem(){const name=String(this.form.name||'').trim(),amount=Number(this.form.amount);state.items.push({id:'item-'+Date.now(),name,amount,category:this.form.category,days:this.form.days,created:Date.now(),status:'active',note:''});persist();this.form={name:'',amount:'',category:'other',days:7};this.closeAdd();showNotice({title:'消费计划已添加',icon:'success'})},
     open(item){
       uni.navigateTo({ url: '/pages/wishlist/detail?id=' + encodeURIComponent(item.id) })
     },
@@ -105,7 +112,7 @@ export default {
     },
     removeItem(item){
       const index = state.items.findIndex(x => x.id === item.id)
-      if (index >= 0) { state.items.splice(index, 1); persist(); uni.showToast({title:'已删除',icon:'none'}) }
+      if (index >= 0) { state.items.splice(index, 1); persist(); showNotice({title:'已删除',icon:'none'}) }
     },
   },
 }

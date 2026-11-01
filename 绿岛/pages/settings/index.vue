@@ -1,5 +1,6 @@
 <template>
   <view class="settings-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="title">设置</text><view class="close" aria-label="关闭" @tap="close">×</view></view>
 
     <view class="account-card" @tap="openProfile">
@@ -54,11 +55,16 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, reset, persist, syncStateToServer } from '@/store/index.js'
 import { isApiConfigured, savePrivacySettings, exportUserData, deleteUserData, requestAccountDeletion } from '@/utils/api-service.js'
 import { isMembershipActive, membershipText } from '@/utils/membership.js'
 
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
   data() { return { state, closing: false, redeemCode: '', redeeming: false } },
   computed: {
     profileName() { return (state.profile && state.profile.name) || '自由的旅人' },
@@ -78,12 +84,12 @@ export default {
     openMembership() { uni.navigateTo({ url: '/pages/profile/membership' }) },
     redeemMembership() {
       const code = String(this.redeemCode || '').trim()
-      if (!code) return uni.showToast({ title: '请输入兑换码', icon: 'none' })
+      if (!code) return showNotice({ title: '请输入兑换码', icon: 'none' })
       if (this.redeeming) return
       this.redeeming = true
       setTimeout(() => {
         this.redeeming = false
-        uni.showToast({ title: '兑换服务正在迁移到云端，请稍后再试', icon: 'none' })
+        showNotice({ title: '兑换服务正在迁移到云端，请稍后再试', icon: 'none' })
         return
         state.membership = {
           ...(state.membership || {}),
@@ -98,42 +104,42 @@ export default {
         }
         persist()
         this.redeemCode = ''
-        uni.showToast({ title: '会员已开通', icon: 'none' })
+        showNotice({ title: '会员已开通', icon: 'none' })
       }, 260)
     },
     copyContact() {
       uni.setClipboardData({
         data: 'naisiboke520',
-        success: () => uni.showToast({ title: '微信号已复制', icon: 'none' }),
-        fail: () => uni.showModal({ title: '问题反馈与奖励', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
+        success: () => showNotice({ title: '微信号已复制', icon: 'none' }),
+        fail: () => showDialog({ title: '问题反馈与奖励', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
       })
     },
-    openAbout() { uni.showModal({ title: '关于 Fire生活', content: '记录自由计划、消费行动和长期生活选择。', showCancel: false }) },
+    openAbout() { showDialog({ title: '关于 Fire生活', content: '记录自由计划、消费行动和长期生活选择。', showCancel: false }) },
     toggleSound() { state.soundEnabled = !state.soundEnabled; persist() },
     async updatePrivacy(patch) {
       state.privacySettings = { ...state.privacySettings, ...patch }; persist()
-      if (!isApiConfigured()) return uni.showToast({ title: '已保留本机设置', icon: 'none' })
-      try { await savePrivacySettings(state.privacySettings); uni.showToast({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '同步失败，请重试', icon: 'none' }) }
+      if (!isApiConfigured()) return showNotice({ title: '已保留本机设置', icon: 'none' })
+      try { await savePrivacySettings(state.privacySettings); showNotice({ title: '隐私设置已同步', icon: 'none' }) } catch (error) { showNotice({ title: error.message || '同步失败，请重试', icon: 'none' }) }
     },
     openPrivacy() { uni.navigateTo({ url: '/pages/privacy/index' }) },
     async retrySync() {
-      if (!isApiConfigured()) return uni.showToast({ title: '请先完成云端配置', icon: 'none' })
+      if (!isApiConfigured()) return showNotice({ title: '请先完成云端配置', icon: 'none' })
       const result = await syncStateToServer()
-      uni.showToast({ title: result.synced ? '云端同步完成' : ((state.cloudSync && state.cloudSync.message) || '同步失败'), icon: 'none' })
+      showNotice({ title: result.synced ? '云端同步完成' : ((state.cloudSync && state.cloudSync.message) || '同步失败'), icon: 'none' })
     },
     async exportData() {
-      if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置', icon: 'none' })
-      try { await exportUserData(); uni.showToast({ title: '导出请求已提交', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '导出失败', icon: 'none' }) }
+      if (!isApiConfigured()) return showNotice({ title: '云端 API 尚未配置', icon: 'none' })
+      try { await exportUserData(); showNotice({ title: '导出请求已提交', icon: 'none' }) } catch (error) { showNotice({ title: error.message || '导出失败', icon: 'none' }) }
     },
     requestDeletion() {
-      uni.showModal({ title: '提交账号注销？', content: '注销会停止账户使用并按服务端流程处理数据删除。', success: async res => {
+      showDialog({ title: '提交账号注销？', content: '注销会停止账户使用并按服务端流程处理数据删除。', success: async res => {
         if (!res.confirm) return
-        if (!isApiConfigured()) return uni.showToast({ title: '云端 API 尚未配置', icon: 'none' })
-        try { await requestAccountDeletion(); uni.showToast({ title: '注销申请已提交', icon: 'none' }) } catch (error) { uni.showToast({ title: error.message || '提交失败', icon: 'none' }) }
+        if (!isApiConfigured()) return showNotice({ title: '云端 API 尚未配置', icon: 'none' })
+        try { await requestAccountDeletion(); showNotice({ title: '注销申请已提交', icon: 'none' }) } catch (error) { showNotice({ title: error.message || '提交失败', icon: 'none' }) }
       }})
     },
     logout() {
-      uni.showModal({ title: '退出当前账号？', content: '退出后需要重新登录，云端数据不会被删除。', confirmText: '退出', confirmColor: '#a35d4e', success: res => {
+      showDialog({ title: '退出当前账号？', content: '退出后需要重新登录，云端数据不会被删除。', confirmText: '退出', confirmColor: '#a35d4e', success: res => {
         if (!res.confirm) return
         ;['fire_login_status', 'fire_access_token', 'fire_login_token', 'fire_account_email'].forEach(key => uni.removeStorageSync(key))
         uni.removeStorageSync('fire_client_id')
@@ -141,14 +147,16 @@ export default {
       }})
     },
     confirmReset() {
-      uni.showModal({ title: '清除本机数据？', content: '会清除本机缓存并重新进入引导流程。', success: res => {
+      showDialog({ title: '清除本机数据？', content: '会清除本机缓存并重新进入引导流程。', success: res => {
         if (!res.confirm) return
         uni.clearStorageSync(); reset(); state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' })
       }})
     },
     replayOnboarding() { state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' }) },
   },
-  onBackPress() { if (!this.closing) this.close(); return true },
+  onBackPress() {
+    if (dismissFeedback(this.feedbackOwnerId)) return true
+ if (!this.closing) this.close(); return true },
 }
 </script>
 

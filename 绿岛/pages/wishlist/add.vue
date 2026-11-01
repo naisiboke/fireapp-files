@@ -1,5 +1,6 @@
 <template>
   <view class="add-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="add-head"><view class="back" @tap="back">‹</view><text class="title">添加消费计划</text><view class="head-space"></view></view>
     <scroll-view class="form-scroll" scroll-y>
       <view class="form-content">
@@ -18,6 +19,10 @@
   </view>
 </template>
 <script setup>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { useFeedbackPage } from '@/utils/feedback-page.js'
+import { showNotice } from '@/utils/feedback.js'
+const feedbackOwnerId = useFeedbackPage()
 import { reactive, ref } from 'vue'
 import { state, persist } from '@/store/index.js'
 const form=reactive({name:'',amount:'',category:'other',days:7})
@@ -27,11 +32,11 @@ function back(){uni.navigateBack()}
 function handleSubmit(){
   const name=String(form.name||'').trim()
   const amount=Number(form.amount)
-  if(!name){error.value='请填写消费计划名称';uni.showToast({title:'请填写消费计划名称',icon:'none'});return}
-  if(!Number.isFinite(amount)||amount<=0){error.value='请填写正确的预计金额';uni.showToast({title:'请填写正确的预计金额',icon:'none'});return}
+  if(!name){error.value='请填写消费计划名称';showNotice({title:'请填写消费计划名称',icon:'none'});return}
+  if(!Number.isFinite(amount)||amount<=0){error.value='请填写正确的预计金额';showNotice({title:'请填写正确的预计金额',icon:'none'});return}
   state.items.push({id:'item-'+Date.now(),name,amount,category:form.category,days:form.days,created:Date.now(),status:'active',note:''})
   persist()
-  uni.showToast({title:'消费计划已添加',icon:'success'})
+  showNotice({title:'消费计划已添加',icon:'success'})
   setTimeout(()=>uni.navigateBack(),250)
 }
 </script>

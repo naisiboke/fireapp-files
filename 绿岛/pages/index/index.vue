@@ -1,5 +1,6 @@
 <template>
   <view class="home-view">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <view class="home-masthead">
       <view class="masthead-bg" :style="mastheadBgStyle"></view>
@@ -124,6 +125,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { state, refreshFinance } from '@/store/index.js'
@@ -143,7 +147,9 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs, AnimatedNumber },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components: { AppFeedback,  BottomTabs, AnimatedNumber },
   data() {
     return {
       state,
@@ -405,7 +411,7 @@ export default {
       if (t.id === 'wishlist') return uni.navigateTo({ url: '/pages/wishlist/index' })
       if (t.id === 'read') return uni.navigateTo({ url: '/pages/reading-library/index' })
       if (t.id === 'savings') return uni.navigateTo({ url: '/pages/calculator/index?mode=goal' })
-      uni.showToast({ title: '这个任务待开发', icon: 'none' })
+      showNotice({ title: '这个任务待开发', icon: 'none' })
     },
   },
 }

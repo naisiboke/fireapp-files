@@ -1,5 +1,6 @@
 <template>
   <view class="member-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="back" @tap="back">‹</text><text class="title">通用会员</text><text class="close" @tap="close">×</text></view>
 
     <view class="hero">
@@ -24,24 +25,31 @@
     </view>
 
     <text class="note">行为建议 AI 只提供记录、消费和生活习惯建议，不提供金融服务、投资建议或理财推荐。会员支付功能正在接入。</text>
-    <view v-if="showUpgradeModal" class="modal-mask" @tap="closeUpgrade">
+    <FireOverlay :visible="showUpgradeModal" :owner-id="feedbackOwnerId" label="开通通用会员" @close="closeUpgrade">
       <view class="upgrade-modal" @tap.stop>
         <text class="modal-kicker">FIRE PRO</text>
-        <text class="modal-title">开通通用会员</text>
+        <view class="fire-modal-heading"><text class="modal-title">开通通用会员</text><button class="fire-modal-close" aria-label="关闭" @tap="closeUpgrade"><view class="fire-close-mark"></view></button></view>
         <text class="modal-price">¥9 <text class="modal-unit">/ 月</text></text>
         <text class="modal-copy">支付功能正在接入，开放后可完成订阅。</text>
-        <button class="modal-close" @tap="closeUpgrade">知道了</button>
+        <button class="fire-modal-action" @tap="closeUpgrade">知道了</button>
       </view>
-    </view>
+    </FireOverlay>
   </view>
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import FireOverlay from '@/components/FireOverlay.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import { fetchMembership, createMembershipCheckout } from '@/utils/api-service.js'
 import { membershipText } from '@/utils/membership.js'
 
 export default {
+  components: { AppFeedback, FireOverlay },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() {
     return {
       showUpgradeModal: false,
@@ -81,7 +89,7 @@ export default {
     closeUpgrade() { this.showUpgradeModal = false },
     async upgrade() {
       if (uni.getStorageSync('fire_login_status') !== true) {
-        uni.showToast({ title: '请先登录后升级', icon: 'none' })
+        showNotice({ title: '请先登录后升级', icon: 'none' })
         setTimeout(() => uni.reLaunch({ url: '/pages/login/login?redirect=/pages/profile/membership' }), 350)
         return
       }
@@ -94,7 +102,7 @@ export default {
           if (typeof window !== 'undefined') window.location.href = url
           // #endif
           // #ifndef H5
-          uni.setClipboardData({ data: url, success: () => uni.showToast({ title: '支付链接已复制', icon: 'none' }) })
+          uni.setClipboardData({ data: url, success: () => showNotice({ title: '支付链接已复制', icon: 'none' }) })
           // #endif
           return
         }

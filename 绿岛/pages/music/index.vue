@@ -1,5 +1,6 @@
 <template>
   <view class="music-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="topbar"><text class="brand">音乐</text><view class="tabs"><text class="tab active">推荐</text><text class="tab">音乐库</text></view><text class="close" @tap="close">×</text></view>
 
     <view v-if="loading" class="loading">正在准备音乐…</view>
@@ -31,6 +32,9 @@
 </template>
 
 <script>
+import { dismissFeedback } from '@/utils/feedback.js'
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { getMediaURL } from '@/utils/cloudbase-auth.js'
 
 const FILES = [
@@ -40,6 +44,9 @@ const FILES = [
 ]
 
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() { return { tracks: [], currentIndex: 0, playing: false, loading: true, error: '', currentTime: 0, duration: 0, audio: null } },
   computed: { currentTrack() { return this.tracks[this.currentIndex] || { name: 'Fire生活音乐' } }, progress() { return this.duration ? Math.min(100, this.currentTime / this.duration * 100) : 0 } },
   async onLoad() {

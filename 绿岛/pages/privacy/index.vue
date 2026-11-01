@@ -1,5 +1,6 @@
 <template>
   <view class="privacy-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="title">隐私政策</text><view class="close" role="button" aria-label="关闭" @tap="close">×</view></view>
     <view class="content"><text class="h2">FIRE Fire生活隐私政策</text><text class="date">版本：v1.1 · 生效日期：2026-10-25 · 最后更新时间：2026-10-25</text>
       <view v-for="section in sections" :key="section.title" class="section"><text class="h3">{{ section.title }}</text><text class="p">{{ section.text }}</text></view>
@@ -9,7 +10,12 @@
 </template>
 
 <script>
-export default { data() { return { sections: [
+import { dismissFeedback } from '@/utils/feedback.js'
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin], data() { return { sections: [
 { title: '一、隐私政策概述', text: 'FIRE Fire生活帮助你记录生活计划、财务目标、消费选择、成长行动、社区内容和阅读状态。本政策说明我们会处理哪些数据、为什么处理、怎样保存以及你可以如何管理。政策内容以当前实际数据流和已配置的云端服务为准。' },
 { title: '二、适用范围', text: '本政策适用于 FIRE Fire生活移动端、H5 和小程序版本，以及通过本应用访问的页面、工具和云端接口。若某项功能单独提供补充说明，补充说明与本政策一并适用。' },
 { title: '三、我们收集的数据类型', text: '数据包括账户和登录信息、个人资料、财务与资产数据、收入和消费记录、躺平倒计时与自由日目标、记账和拔草计划、英雄传成长数据、社区内容与互动、阅读记录和书架、设备和运行日志，以及你主动选择的设置。我们只处理功能所需的数据。' },
@@ -37,7 +43,9 @@ export default { data() { return { sections: [
 { title: '二十五、会员兑换码和奖励', text: '会员兑换码由服务端验证并记录使用状态。兑换时可能记录兑换码、账号标识、兑换时间、会员时长和权益状态。同一兑换码原则上只能使用一次。通过反馈问题获得的会员奖励需要人工核实，不代表提交任何内容都必然获得奖励。' },
 { title: '二十六、账号安全和异常处理', text: '你应妥善保管登录设备、验证码和访问凭证，不要转发或截图。发现账号异常登录、数据异常、令牌泄露或兑换码滥用时，请立即联系维护人员并停止继续使用相关凭证。我们会根据安全需要限制请求、暂停异常会话、修复数据或要求重新登录。' },
 { title: '二十七、生效日期和最后更新时间', text: '本政策 v1.1 于 2026-10-25 生效，最后更新时间为 2026-10-25。后续版本会在本页更新版本号和时间。' },
-] } }, methods: { close() { uni.reLaunch({ url: '/pages/profile/index' }) } }, onBackPress() { this.close(); return true } }
+] } }, methods: { close() { uni.reLaunch({ url: '/pages/profile/index' }) } }, onBackPress() {
+    if (dismissFeedback(this.feedbackOwnerId)) return true
+ this.close(); return true } }
 </script>
 
 <style>

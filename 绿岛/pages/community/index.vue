@@ -1,5 +1,6 @@
 <template>
   <view class="community-view">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 头 -->
     <view class="community-head">
@@ -153,23 +154,23 @@
     </view>
 
     <!-- 弹窗：升级会员 -->
-    <view v-if="modal === 'upgrade'" class="backdrop" @tap="closeModal">
+    <FireOverlay :visible="modal === 'upgrade'" :owner-id="feedbackOwnerId" label="升级会员" wide @close="closeModal">
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">升级会员</text>
-          <view class="modal-close" @tap="closeModal"><text class="close-icon">×</text></view>
+          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
         </view>
         <text class="modal-p">完整查看关键转折、资产配比，并套用适合你的配置。</text>
         <view class="btn" @tap="closeModal"><text class="btn-text">知道了</text></view>
       </view>
-    </view>
+    </FireOverlay>
 
     <!-- 弹窗：我的收藏 -->
-    <view v-if="modal === 'favorites'" class="backdrop" @tap="closeModal">
+    <FireOverlay :visible="modal === 'favorites'" :owner-id="feedbackOwnerId" label="我的收藏" wide @close="closeModal">
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">我的收藏</text>
-          <view class="modal-close" @tap="closeModal"><text class="close-icon">×</text></view>
+          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
         </view>
 
         <view v-if="favorites.length === 0" class="empty-fav">
@@ -204,14 +205,14 @@
           </view>
         </view>
       </view>
-    </view>
+    </FireOverlay>
 
     <!-- 弹窗：套用配置 -->
-    <view v-if="modal === 'apply'" class="backdrop" @tap="closeModal">
+    <FireOverlay :visible="modal === 'apply'" :owner-id="feedbackOwnerId" label="他的资产配置" wide @close="closeModal">
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">他的资产配置</text>
-          <view class="modal-close" @tap="closeModal"><text class="close-icon">×</text></view>
+          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
         </view>
 
         <template v-if="applyPost">
@@ -280,14 +281,14 @@
           </view>
         </template>
       </view>
-    </view>
+    </FireOverlay>
 
     <!-- 弹窗：发帖 -->
-    <view v-if="modal === 'post'" class="post-backdrop">
+    <FireOverlay :visible="modal === 'post'" :owner-id="feedbackOwnerId" label="分享我的经历" wide @close="closePost">
       <view class="post-modal">
         <view class="post-head">
           <text class="post-h2">分享我的经历</text>
-          <view class="post-close" @tap="closePost"><text class="close-icon">✕</text></view>
+          <view class="post-close" @tap="closePost"><view class="fire-close-mark"></view></view>
         </view>
 
         <scroll-view scroll-y class="post-scroll">
@@ -354,12 +355,16 @@
           <text class="post-hint">提交后由 AI 审核，通过后才会展示</text>
         </view>
       </view>
-    </view>
+    </FireOverlay>
     <BottomTabs v-if="modal !== 'post'" current="community" />
   </view>
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import FireOverlay from '@/components/FireOverlay.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { COMMUNITY_OFFICIAL, COMMUNITY_UGC_SEED, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
@@ -375,7 +380,9 @@ const EMPTY_DRAFT = () => ({
 })
 
 export default {
-  components: { BottomTabs },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components: { AppFeedback, FireOverlay,  BottomTabs },
   data() {
     return {
       POST_TAGS: COMMUNITY_POST_TAGS,
@@ -448,7 +455,7 @@ export default {
       const latest = CS.draft()
       if (latest) this.postDraft = { ...EMPTY_DRAFT(), ...latest, timeline: (latest.timeline && latest.timeline.length) ? latest.timeline : [{ year: '', title: '' }] }
     } catch (error) {
-      uni.showToast({ title: error.message || '云端社区数据读取失败，请重试', icon: 'none' })
+      showNotice({ title: error.message || '云端社区数据读取失败，请重试', icon: 'none' })
     }
   },
 
@@ -492,7 +499,7 @@ export default {
       const idx = list.findIndex(x => x.postId === post.id)
       if (idx >= 0) {
         list.splice(idx, 1)
-        uni.showToast({ title: '已取消收藏', icon: 'none' })
+        showNotice({ title: '已取消收藏', icon: 'none' })
       } else {
         list.push({
           postId: post.id,
@@ -508,7 +515,7 @@ export default {
             displayName: post.displayName || '',
           },
         })
-        uni.showToast({ title: '已收藏', icon: 'none' })
+        showNotice({ title: '已收藏', icon: 'none' })
       }
       this.favorites = list
       CS.saveFavorites(list)
@@ -551,7 +558,7 @@ export default {
     submitNetWorth() {
       const n = Number(this.netWorthInput)
       if (!Number.isFinite(n) || n <= 0) {
-        uni.showToast({ title: '请输入有效金额', icon: 'none' })
+        showNotice({ title: '请输入有效金额', icon: 'none' })
         return
       }
       CS.setNetWorth(n)
@@ -577,7 +584,7 @@ export default {
       }
       const idx = list.findIndex(x => x.modelId === c.id)
       if (idx < 0 && list.length >= 5) {
-        uni.showToast({ title: '最多保存 5 套配置', icon: 'none' })
+        showNotice({ title: '最多保存 5 套配置', icon: 'none' })
         return
       }
       if (idx >= 0) list[idx] = record
@@ -594,7 +601,7 @@ export default {
       const list = CS.applied().filter(x => x.modelId !== this.applyPost.id)
       CS.saveApplied(list)
       this.applyResult = null
-      uni.showToast({ title: '已撤销', icon: 'none' })
+      showNotice({ title: '已撤销', icon: 'none' })
     },
 
     openPost() {
@@ -631,12 +638,12 @@ export default {
 
     saveDraft() {
       CS.saveDraft(this.postDraft)
-      uni.showToast({ title: '草稿已保存', icon: 'none' })
+      showNotice({ title: '草稿已保存', icon: 'none' })
     },
 
     async submitPost() {
       if (!this.postReady || this.publishing) {
-        if (!this.postReady) uni.showToast({ title: '请填写完整', icon: 'none' })
+        if (!this.postReady) showNotice({ title: '请填写完整', icon: 'none' })
         return
       }
       this.publishing = true
@@ -658,7 +665,7 @@ export default {
       list.unshift(post)
       if (!CS.saveUGC(list)) {
         this.publishing = false
-        uni.showToast({ title: '保存失败', icon: 'none' })
+        showNotice({ title: '保存失败', icon: 'none' })
         return
       }
       try {
@@ -671,11 +678,11 @@ export default {
         this.tab = 'doing'
         this.communityLoaded = 10
         this.modal = null
-        uni.showToast({ title: verdict.approved ? '审核通过，经历已发布' : '审核未通过：' + verdict.reason, icon: 'none', duration: 3000 })
+        showNotice({ title: verdict.approved ? '审核通过，经历已发布' : '审核未通过：' + verdict.reason, icon: 'none', duration: 3000 })
       } catch (error) {
         const target = CS.ugc().find(x => x.id === post.id)
         if (target) { target.status = 'review_failed'; target.reviewStatus = 'review_failed'; target.reviewReason = error.message || '审核服务暂时不可用'; CS.saveUGC(CS.ugc()) }
-        uni.showToast({ title: '审核失败，请到我的社区设置查看状态', icon: 'none' })
+        showNotice({ title: '审核失败，请到我的社区设置查看状态', icon: 'none' })
       } finally { this.publishing = false }
     },
 

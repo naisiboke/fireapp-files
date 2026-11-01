@@ -33,6 +33,7 @@ export default {
 </script>
 
 <style>
+@import './styles/feedback.scss';
 .app-shell { min-height: 100vh; }
 
 button {

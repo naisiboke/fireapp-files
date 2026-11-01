@@ -1,5 +1,6 @@
 <template>
   <view class="curve-page" :class="{ dark: darkMode }">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="topbar">
       <view><text class="eyebrow">FIRE 工具</text><text class="title">普通人一生存款曲线</text></view>
       <text class="close" @tap="close">×</text>
@@ -31,14 +32,14 @@
       <button class="primary" @tap="beginQuestions">进入第 1 题</button>
     </view>
 
-    <view v-if="generating" class="generating-mask">
+    <FireOverlay :visible="generating" :owner-id="feedbackOwnerId" :dismissible="false" label="正在整理你的人生计划"><view class="fire-loading-content">
       <view class="spinner"></view>
       <text class="generating-title">正在整理你的人生计划…</text>
       <text class="generating-sub">沿着年龄线，计算每一个重要节点</text>
       <text class="generating-time">预计需要 5 秒</text>
-    </view>
+    </view></FireOverlay>
 
-    <view v-else-if="started && !profileStep && !draftPanel && !historyPanel">
+    <view v-if="!generating && started && !profileStep && !draftPanel && !historyPanel">
       <view v-if="!showResult">
       <view class="progress-row"><text>第 {{ questionIndex + 1 }} / {{ visibleQuestions.length }} 题</text><text>{{ Math.round((questionIndex + 1) / visibleQuestions.length * 100) }}%</text></view>
       <view class="question-card" v-if="currentQuestion">
@@ -105,12 +106,18 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import FireOverlay from '@/components/FireOverlay.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state, persist, syncStateToServer } from '@/store/index.js'
 import { SAVINGS_QUESTIONS } from '@/utils/savings-questions.js'
 
 export default {
-  components: { BottomTabs },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components: { AppFeedback, FireOverlay,  BottomTabs },
   data() { return { age: '', lifeExpectancy: '', started: false, profileStep: false, draftPanel: false, historyPanel: false, draftData: null, historyItems: [], questionIndex: 0, answers: {}, customAnswers: {}, customEditing: '', customDraft: '', showResult: false, darkMode: false, generating: false, generationTimer: null, chartTimer: null, chartProgress: 0, customEvents: [], questions: SAVINGS_QUESTIONS, curve: [], aiAnalysis: '', analysisLoading: false } },
   computed: {
     visibleQuestions() {
@@ -250,24 +257,24 @@ export default {
       if (!this.currentQuestion || this.customEditing !== this.currentQuestion.id) return
       const value = Number(this.customDraft)
       if (!Number.isFinite(value)) {
-        uni.showToast({ title: '请输入有效数字', icon: 'none' })
+        showNotice({ title: '请输入有效数字', icon: 'none' })
         return
       }
       const type = this.currentQuestion.type
       if ((type === 'ratio' || type === 'percent') && (value < 0 || value > 100)) {
-        uni.showToast({ title: '百分比需在 0 到 100 之间', icon: 'none' })
+        showNotice({ title: '百分比需在 0 到 100 之间', icon: 'none' })
         return
       }
       if (type === 'years' && (value < 0 || value > 100)) {
-        uni.showToast({ title: '年数需在 0 到 100 之间', icon: 'none' })
+        showNotice({ title: '年数需在 0 到 100 之间', icon: 'none' })
         return
       }
       if (type === 'retirement_age' && (value < 18 || value > 100)) {
-        uni.showToast({ title: '退休年龄需在 18 到 100 岁之间', icon: 'none' })
+        showNotice({ title: '退休年龄需在 18 到 100 岁之间', icon: 'none' })
         return
       }
       if (type !== 'event' && type !== 'ratio' && type !== 'percent' && type !== 'years' && value < 0) {
-        uni.showToast({ title: '金额不能小于 0', icon: 'none' })
+        showNotice({ title: '金额不能小于 0', icon: 'none' })
         return
       }
       this.customAnswers = Object.assign({}, this.customAnswers, { [this.currentQuestion.id]: value })
@@ -280,8 +287,8 @@ export default {
     beginQuestions() {
       const age = Number(this.age)
       const life = Number(this.lifeExpectancy)
-      if (!Number.isFinite(age) || age < 8 || age > 90) { uni.showToast({ title: '请输入正确的当前年龄', icon: 'none' }); return }
-      if (!Number.isFinite(life) || life <= age || life > 110) { uni.showToast({ title: '请输入正确的预计寿命', icon: 'none' }); return }
+      if (!Number.isFinite(age) || age < 8 || age > 90) { showNotice({ title: '请输入正确的当前年龄', icon: 'none' }); return }
+      if (!Number.isFinite(life) || life <= age || life > 110) { showNotice({ title: '请输入正确的预计寿命', icon: 'none' }); return }
       this.age = age; this.lifeExpectancy = life; this.profileStep = false
     },
     openDraftPanel() { this.draftData = uni.getStorageSync('fire_savings_curve_draft_v1') || null; this.draftPanel = true },
@@ -307,7 +314,7 @@ export default {
       if (!this.currentQuestion) return
       const answered = Object.prototype.hasOwnProperty.call(this.answers, this.currentQuestion.id)
       if (!answered && this.currentQuestion.required !== false) {
-        uni.showToast({ title: '请先选择一个答案', icon: 'none' })
+        showNotice({ title: '请先选择一个答案', icon: 'none' })
         return
       }
       if (this.questionIndex < this.visibleQuestions.length - 1) {
@@ -410,19 +417,19 @@ export default {
       persist()
       const result = await syncStateToServer()
       if (!showToast) return result
-      if (result && result.synced) uni.showToast({ title: '草稿已保存', icon: 'success' })
-      else if (result && result.configured === false) uni.showToast({ title: '已保存本机，云端未配置', icon: 'none' })
-      else uni.showToast({ title: '云端保存失败，请重试', icon: 'none' })
+      if (result && result.synced) showNotice({ title: '草稿已保存', icon: 'success' })
+      else if (result && result.configured === false) showNotice({ title: '已保存本机，云端未配置', icon: 'none' })
+      else showNotice({ title: '云端保存失败，请重试', icon: 'none' })
       return result
     },
     loadDraft() {
       const draft = uni.getStorageSync('fire_savings_curve_draft_v1')
-      if (!draft) { uni.showToast({ title: '还没有草稿', icon: 'none' }); return }
+      if (!draft) { showNotice({ title: '还没有草稿', icon: 'none' }); return }
       this.age = draft.age; this.lifeExpectancy = draft.lifeExpectancy; this.answers = draft.answers || {}; this.customAnswers = draft.customAnswers || {}; this.questionIndex = draft.questionIndex || 0; this.customEvents = draft.events || []; this.started = true; this.profileStep = false; this.draftPanel = false
     },
     loadHistory() {
       const history = uni.getStorageSync('fire_savings_curve_history_v1')
-      if (!Array.isArray(history) || !history.length) { uni.showToast({ title: '还没有历史测算', icon: 'none' }); return }
+      if (!Array.isArray(history) || !history.length) { showNotice({ title: '还没有历史测算', icon: 'none' }); return }
       const latest = history[history.length - 1]
       this.age = latest.age; this.lifeExpectancy = latest.lifeExpectancy; this.answers = latest.answers || {}; this.customAnswers = latest.customAnswers || {}; this.customEvents = latest.events || []; this.curve = latest.curve || []; this.started = true; this.showResult = true; this.chartProgress = 1
     },

@@ -1,5 +1,6 @@
 <template>
   <view class="onboarding">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="noise">
       <text v-for="(word,i) in words" :key="i" class="word" :class="{core:word.core,bg:word.bg}" :style="word.style">{{ word.text }}</text>
     </view>
@@ -13,8 +14,14 @@
   </view>
 </template>
 <script>
+import { dismissFeedback } from '@/utils/feedback.js'
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { state, persist } from '@/store/index.js'
 export default {
+  components: { AppFeedback },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data(){return{state, revealing:false, timer:null, words:[]}},
   onLoad(){this.makeWords()},
   onUnload(){if(this.timer)clearTimeout(this.timer)},

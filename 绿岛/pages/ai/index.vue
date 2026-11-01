@@ -1,7 +1,8 @@
 <template>
   <view class="ai-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
-    <view v-if="drawerOpen" class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><text @tap="drawerOpen=false">×</text></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view>
+    <FireOverlay :visible="drawerOpen" :owner-id="feedbackOwnerId" label="历史聊天" wide @close="drawerOpen=false"><view class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><button class="fire-modal-close" aria-label="关闭" @tap="drawerOpen=false"><view class="fire-close-mark"></view></button></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view></FireOverlay>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
       <text class="setup-title">让 AI 更了解你</text>
@@ -34,6 +35,10 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import FireOverlay from '@/components/FireOverlay.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import { state, persist } from '@/store/index.js'
 import { hasValidFinance, freedomResult } from '@/utils/finance-plan.js'
 import { LocalDay } from '@/utils/engine.js'
@@ -42,6 +47,9 @@ import { isMembershipActive } from '@/utils/membership.js'
 import { loadAIChats, saveAIChats } from '@/utils/ai-chat-store.js'
 
 export default {
+  components: { AppFeedback, FireOverlay },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
   data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false } },
   async onLoad() {
     this.isMember = isMembershipActive(state)
@@ -72,7 +80,7 @@ export default {
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
-    goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + encodeURIComponent(kind || ''), fail: () => uni.showToast({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }) }) },
+    goPersonality(kind) { uni.navigateTo({ url: '/pages/personality/index?type=' + encodeURIComponent(kind || ''), fail: () => showNotice({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }) }) },
     goMembership() { uni.navigateTo({ url: '/pages/profile/membership?upgrade=1&feature=ai' }) },
     quotaText() { return this.freeUsed >= 3 ? '今日免费额度已用完，升级会员后可继续使用' : '免费用户今日剩余 ' + (3 - this.freeUsed) + ' 次，会员无限使用' },
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
@@ -122,7 +130,7 @@ export default {
     },
     async send() {
       if (!this.isMember && this.freeUsed >= 3) {
-        uni.showToast({ title: '今日免费额度已用完，请升级会员继续使用', icon: 'none', duration: 2600 })
+        showNotice({ title: '今日免费额度已用完，请升级会员继续使用', icon: 'none', duration: 2600 })
         return
       }
       const question = this.question.trim()

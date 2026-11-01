@@ -1,5 +1,6 @@
 <template>
   <view class="profile-page">
+    <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部标题 -->
     <view class="page-head">
@@ -93,6 +94,9 @@
 </template>
 
 <script>
+import AppFeedback from '@/components/AppFeedback.vue'
+import { feedbackPageMixin } from '@/utils/feedback-page.js'
+import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
 import { isMembershipActive, membershipText } from '@/utils/membership.js'
@@ -119,7 +123,9 @@ function svgUri(svg) {
 }
 
 export default {
-  components: { BottomTabs },
+  mixins: [feedbackPageMixin],
+  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
+  components: { AppFeedback,  BottomTabs },
   data() {
     return {
     }
@@ -165,20 +171,20 @@ export default {
     goPersonality() {
       uni.navigateTo({
         url: '/pages/personality/index',
-        fail: () => uni.showToast({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }),
+        fail: () => showNotice({ title: '人格测试页面暂未部署，请重新构建 APP', icon: 'none' }),
       })
     },
 
     copyContact() {
       uni.setClipboardData({
         data: 'naisiboke520',
-        success: () => uni.showToast({ title: '微信号已复制', icon: 'none' }),
-        fail: () => uni.showModal({ title: '问题反馈与奖励', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
+        success: () => showNotice({ title: '微信号已复制', icon: 'none' }),
+        fail: () => showDialog({ title: '问题反馈与奖励', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
       })
     },
 
     comingSoon(name) {
-      uni.showToast({ title: name + ' 开发中', icon: 'none' })
+      showNotice({ title: name + ' 开发中', icon: 'none' })
     },
   },
 }
