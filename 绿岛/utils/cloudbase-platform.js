@@ -28,6 +28,8 @@ export function accountTransportError(cause,stage='invoke') {
     user_not_found:'该邮箱尚未注册，请重新获取验证码',
     rate_limit_exceeded:'操作过于频繁，请稍后再试',
     captcha_required:'需要图形验证，请先使用网页版登录或稍后重试',
+    invalid_grant:'登录已过期，本机记录已保留，请重新登录以恢复同步',
+    access_token_expired:'登录凭证已过期，请重新登录以恢复同步',
     invalid_refresh_token:'登录已过期，请重新获取邮箱验证码',
     refresh_token_expired:'登录已过期，请重新获取邮箱验证码',
     AUTH_REQUIRED:'登录已失效，请重新登录',

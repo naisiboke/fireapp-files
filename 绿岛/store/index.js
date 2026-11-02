@@ -82,6 +82,7 @@ function applySaved(saved) {
       state.financeEntered = hasValidFinance({ financeEntered: true, finance: state.finance })
     }
   } else Object.assign(state, defaults)
+  delete state.__fireLocalSync
   for (const key of ['items', 'completed', 'ledger', 'assetHistory']) {
     if (!Array.isArray(state[key])) state[key] = []
   }
@@ -119,7 +120,7 @@ function ensureFreedomPlan() {
 
 export function bootstrap() {
   preserveLegacyCache()
-  const savedMeta=readAccountCache('fire_sync_meta_v1',{})||{}
+  const savedMeta=localSyncMeta(storage.get('state',null))
   revision=Number(savedMeta.revision)||0;dirty=!!savedMeta.dirty;changeVersion=Number(savedMeta.changeVersion)||0
   applySaved(storage.get('state', null))
   const wishlist = readWishlist()
@@ -153,11 +154,12 @@ function serializableState() {
   const plain = JSON.parse(JSON.stringify(toRaw(state)))
   delete plain.ready
   delete plain.cloudSync
+  delete plain.__fireLocalSync
   return plain
 }
 
 function writeLocal(plain) {
-  const success = storage.set('state', plain)
+  const success = storage.set('state', {...plain,__fireLocalSync:meta()})
   if (success) writeWishlist(plain.items)
   return success
 }
@@ -171,10 +173,15 @@ let changeVersion = 0
 let restoreTask = null
 let writeQueue = Promise.resolve()
 
+function localSyncMeta(local) {
+  // Keep pending edits and their base revision in the same atomic storage value.
+  const embedded=local?.__fireLocalSync
+  return embedded&&Number.isSafeInteger(embedded.revision)&&Number.isSafeInteger(embedded.changeVersion)?embedded:(readAccountCache('fire_sync_meta_v1',{})||{})
+}
 function meta() { return {revision,dirty,changeVersion} }
 function saveMeta() { writeAccountCache('fire_sync_meta_v1',meta()) }
 function equivalentState(left,right){
-  const ignored=new Set(['membership','ready','cloudSync'])
+  const ignored=new Set(['membership','ready','cloudSync','__fireLocalSync'])
   const normalize=value=>{
     if(Array.isArray(value))return value.map(normalize)
     if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,normalize(value[key])]))
@@ -224,7 +231,7 @@ export async function syncStateToServer() {
       if(accountId()!==uid||epoch!==sessionEpoch)return {synced:false,blocked:true}
       revision=result.revision
       if(changeVersion===version)dirty=false
-      saveMeta()
+      saveMeta();writeLocal(serializableState())
       state.cloudSync=dirty?{status:'pending',message:'还有本机修改等待同步'}:{status:'synced',message:'已与账号云端同步'}
       return {synced:!dirty}
     }catch(error){
@@ -278,7 +285,7 @@ export async function hydrateFromServer() {
       const adopted=adoptVerifiedLegacyCache(remote.uid,remote.email)
       activateAccount(remote.uid)
       const local=storage.get('state',null)
-      const localMeta=readAccountCache('fire_sync_meta_v1',{})||{}
+      const localMeta=localSyncMeta(local)
       // A response may not replace local edits made while the request was in flight.
       if(beforeOwner===remote.uid && changeVersion!==beforeVersion){
         writeLocal(serializableState());dirty=true;saveMeta()
@@ -318,9 +325,13 @@ function saveLocalChange() {
   if(!accountId())return false
   const plain=serializableState()
   const previous=storage.get('state',null)
+  if(previous)delete previous.__fireLocalSync
   if(JSON.stringify(previous)===JSON.stringify(plain))return true
+  const oldDirty=dirty,oldVersion=changeVersion
   dirty=true;changeVersion++
-  const success=writeLocal(plain);saveMeta()
+  const success=writeLocal(plain)
+  if(!success){dirty=oldDirty;changeVersion=oldVersion;return false}
+  saveMeta()
   if(success)state.cloudSync={status:'pending',message:'本机已保存，等待云端确认'}
   return success
 }
@@ -335,9 +346,10 @@ export function persistNow() {
 export function persist() {
   clearTimeout(saveTimer)
   // Commit to the account-scoped cache immediately; do not lose edits on a quick page exit.
-  try{if(!saveLocalChange())return}catch(error){console.warn('[persist-local]',error);return}
+  try{if(!saveLocalChange())return false}catch(error){console.warn('[persist-local]',error);return false}
   const epoch=sessionEpoch
   saveTimer=setTimeout(()=>{saveTimer=null;if(epoch===sessionEpoch)syncStateToServer()},120)
+  return true
 }
 export function reset() {
   // This operation clears local state only. It must never erase the cloud account.

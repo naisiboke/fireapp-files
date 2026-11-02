@@ -1,3 +1,4 @@
+import { reportSessionExpiry } from './session-recovery.js'
 import { accountTransportError } from './cloudbase-platform.js'
 
 let cloudbaseModule = null
@@ -11,7 +12,7 @@ async function getAuth() {
   authTask=(async()=>{
     // #ifdef APP-PLUS
     const { createNativeCloudbase }=await import('./cloudbase-native.js')
-    app=createNativeCloudbase(uni)
+    app=createNativeCloudbase(uni,()=>Date.now(),reportSessionExpiry)
     // #endif
     // #ifndef APP-PLUS
     if(!cloudbaseModule){
@@ -77,7 +78,7 @@ export async function getMediaURL(fileID) {
   return item && (item.tempFileURL || item.tempFileUrl || '')
 }
 
-export async function callAccountData(data) {
+async function invokeAccountData(data) {
   const client = await getAuth()
   const login = await client.getLoginState()
   if (!login || !login.user || !login.user.uid) {
@@ -113,6 +114,38 @@ export async function callAccountData(data) {
     const error=new Error('账号数据归属校验失败，已停止同步');error.code='ACCOUNT_MISMATCH';throw error
   }
   return result
+}
+export async function callAccountData(data) {
+  const owner=String(uni.getStorageSync('fire_account_uid')||'')
+  try {
+    if(uni.getStorageSync('fire_reauth_pending_v1') && uni.getStorageSync('fire_login_status')!==true)throw accountTransportError({code:'AUTH_REQUIRED'},'session')
+    return await invokeAccountData(data)
+  }
+  catch(cause) {
+    const error=accountTransportError(cause,cause?.stage||'invoke')
+    reportSessionExpiry(error,owner)
+    throw error
+  }
+}
+export async function getAccountAccessToken() {
+  const owner=String(uni.getStorageSync('fire_account_uid')||'')
+  try {
+    if(uni.getStorageSync('fire_reauth_pending_v1')&&uni.getStorageSync('fire_login_status')!==true)throw accountTransportError({code:'AUTH_REQUIRED'},'session')
+    const client=await getAuth(),login=await client.getLoginState()
+    const uid=String(login?.user?.uid||'')
+    if(!uid)throw accountTransportError({code:'AUTH_REQUIRED'},'session')
+    if(owner&&uid!==owner)throw accountTransportError({code:'ACCOUNT_MISMATCH'},'session')
+    const token=await client.getAccessToken()
+    if(String((await client.getLoginState())?.user?.uid||'')!==uid)throw accountTransportError({code:'ACCOUNT_MISMATCH'},'session')
+    const value=typeof token==='string'?token:token?.accessToken||token?.access_token
+    if(!value)throw accountTransportError({code:'AUTH_REQUIRED'},'session')
+    uni.setStorageSync('fire_access_token',value)
+    return value
+  } catch(cause) {
+    const error=accountTransportError(cause,cause?.stage||'auth')
+    reportSessionExpiry(error,owner)
+    throw error
+  }
 }
 export async function signOutAccountSession() {
   try { await (await getAuth()).signOut() } catch(error){ console.warn('[auth-signout]',error.code||'') }

@@ -1,5 +1,5 @@
 <template>
-  <view class="add-page">
+  <view class="add-page fire-page-wishlist-add" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="add-head"><view class="back" @tap="back">‹</view><text class="title">添加消费计划</text><view class="head-space"></view></view>
     <scroll-view class="form-scroll" scroll-y>
@@ -19,6 +19,8 @@
   </view>
 </template>
 <script setup>
+import { useSessionDraft } from '@/utils/session-drafts.js'
+import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice } from '@/utils/feedback.js'
@@ -35,13 +37,17 @@ function handleSubmit(){
   if(!name){error.value='请填写消费计划名称';showNotice({title:'请填写消费计划名称',icon:'none'});return}
   if(!Number.isFinite(amount)||amount<=0){error.value='请填写正确的预计金额';showNotice({title:'请填写正确的预计金额',icon:'none'});return}
   state.items.push({id:'item-'+Date.now(),name,amount,category:form.category,days:form.days,created:Date.now(),status:'active',note:''})
-  persist()
+  if(persist())formDraft.clear()
   showNotice({title:'消费计划已添加',icon:'success'})
   setTimeout(()=>uni.navigateBack(),250)
 }
+const formDraft=useSessionDraft(()=>({...form}),draft=>{for(const key of Object.keys(form))if(key in (draft||{}))form[key]=draft[key]})
 </script>
 <style lang="scss">
-.add-page{position:fixed;inset:0;background:#f8f9f5;color:#173d35;display:flex;flex-direction:column;box-sizing:border-box;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);overflow:hidden}
+.add-page{position:fixed;inset:0;background:#f8f9f5;color:#173d35;display:flex;flex-direction:column;box-sizing:border-box;padding-top:var(--fire-status-top, env(safe-area-inset-top));padding-bottom:env(safe-area-inset-bottom);overflow:hidden}
 .add-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;border-bottom:1px solid #e1e7de}.back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:32px}.title{font-size:20px;font-weight:600}.head-space{width:44px}
 .form-scroll{flex:1;height:0;min-height:0;width:100%;pointer-events:auto}.form-content{padding:8px 24px calc(112px + env(safe-area-inset-bottom));box-sizing:border-box}.label{display:block;margin-top:22px;color:#737e76;font-size:13px}.field-input{display:block;width:100%;height:54px;margin-top:10px;padding:0 16px;border:1px solid #e1e7de;border-radius:13px;background:#fff;box-sizing:border-box;color:#173d35;font-size:16px;pointer-events:auto}.field-input:focus{border-color:#4f8068;outline:none}.placeholder{color:#a2afa5}.choices{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.choice{min-width:58px;min-height:44px;padding:0 16px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:#edf0e9;color:#737e76;font-size:13px;box-sizing:border-box}.choice.active{background:#e5eee4;color:#173d35;font-weight:600}.error{display:block;margin-top:18px;color:#a35d4e;font-size:13px}.submit-bar{position:relative;z-index:20;flex-shrink:0;padding:12px 24px calc(16px + env(safe-area-inset-bottom));background:#f8f9f5;border-top:1px solid #e1e7de;pointer-events:auto}.submit{position:relative;z-index:21;width:100%;min-height:50px;margin:0;border-radius:13px;background:#173d35;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;pointer-events:auto}.submit:active{transform:scale(.98)}.submit:after{border:0}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-wishlist-add{padding-top:var(--fire-page-top)}
 </style>

@@ -144,6 +144,9 @@ client.store.state.ledger.push({id:'offline-entry',type:'expense',category:'food
 client.store.persistNow();await client.store.syncStateToServer()
 check('failed restore blocks subsequent cloud writes',(await handler({action:'bootstrap'})).state.ledger.length===1)
 check('offline edit is durable in the account cache',client.cache.readAccountCache('fire_forge_state').ledger.length===2)
+clientTimers.clear();deviceStorage.delete(client.cache.accountKey('fire_sync_meta_v1'))
+client=createClient();client.store.bootstrap()
+check('pending changes survive restart even if the separate metadata value was lost',client.store.state.ledger.length===2&&client.cache.readAccountCache('fire_forge_state').__fireLocalSync.dirty===true)
 transport='online';restored=await client.store.hydrateFromServer()
 check('reconnection restores and uploads the pending same-version edit',restored.loaded&&(await handler({action:'bootstrap'})).state.ledger.length===2)
 transport='malformed';restored=await client.store.hydrateFromServer()
@@ -220,6 +223,7 @@ const loginScript=source('pages/login/login.vue').match(/<script setup>([\s\S]*?
   .replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'')
   .replace(/import\.meta/g,'({env:{DEV:false}})')
 const loginDependencies={
+ safeReturnRoute:value=>value||'/pages/index/index',finishSessionRecovery:(uid,target)=>target||'/pages/index/index',
  ref:value=>({value}),watch(){},onMounted(){},onBeforeUnmount(){},AppFeedback:{},useFeedbackPage:()=>1,showNotice(){},
  state:client.store.state,persist:client.store.persist,hydrateFromServer:client.store.hydrateFromServer,endAccountSession:client.store.endAccountSession,
  signInWithCode:async()=>{trustedUid='account-B';return {}},saveAuthToken:async()=>{},sendVerificationCode:async()=>({}),uni,

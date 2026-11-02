@@ -50,7 +50,7 @@ export default {
 .fire-dialog-primary{background:#173d35!important;color:#fff!important}
 .fire-dialog-secondary{background:#f0f3ee!important;color:#52635b!important}
 .fire-dialog-danger{background:#a35d4e!important;color:#fff!important}
-.fire-notice{position:fixed;z-index:500000;top:calc(76px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 40px);display:flex;align-items:center;gap:8px;padding:12px 16px;box-sizing:border-box;border:1px solid #e3e9e1;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(20,35,29,.12);pointer-events:none}
+.fire-notice{position:fixed;z-index:500000;top:calc(76px + var(--fire-status-top, env(safe-area-inset-top)));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 40px);display:flex;align-items:center;gap:8px;padding:12px 16px;box-sizing:border-box;border:1px solid #e3e9e1;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(20,35,29,.12);pointer-events:none}
 .fire-notice-check{font-size:16px;color:#315f4a;flex-shrink:0}
 .fire-notice-text{font-size:13px;line-height:1.6;color:#243830;overflow-wrap:anywhere}
 </style>

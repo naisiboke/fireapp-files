@@ -1,5 +1,5 @@
 <template>
-  <view class="home-view" :class="{ 'page-entry-reset': pageEntryReset }">
+  <view class="home-view fire-page-index-index" :style="pageLayoutStyle" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <view class="home-masthead">
@@ -8,17 +8,13 @@
 
       <view class="masthead-title">
         <text class="masthead-h1">我的自由计划</text>
-        <text class="masthead-date">{{ todayText }}</text>
+        <text class="masthead-date">fireday.cn</text>
       </view>
 
       <view v-if="!financeConfigured" class="home-unconfigured">
-        <text class="unconfigured-label">从了解自己开始</text>
-        <text class="unconfigured-sub">自由日：待填写 · 剩余年份：待填写</text>
-        <text class="unconfigured-sub">当前资产：待填写</text>
-        <text class="unconfigured-h2">先填写你的财务数据</text>
-        <text class="unconfigured-sub">填写资产、每月存入和退休后消费，就能看到你的自由日与计划进度。</text>
+        <text class="unconfigured-sub">填写资料，看看离自由还有多远。</text>
         <view class="btn-primary" @tap="goCalculator">
-          <text class="btn-primary-text">填写财务数据</text>
+          <text class="btn-primary-text">填写资料</text>
         </view>
       </view>
 
@@ -68,7 +64,7 @@
     </view>
 
     <view class="home-content">
-      <view v-if="state.cloudSync && ['error','pending','restoring','empty','synced'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
+      <view v-if="state.cloudSync && ['error','pending','restoring','synced','auth-required'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
         <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
       </view>
 
@@ -135,9 +131,9 @@ import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
-import { state, refreshFinance, hydrateFromServer, syncStateToServer } from '@/store/index.js'
+import { state, refreshFinance, hydrateFromServer, syncStateToServer, persistNow } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
-import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts } from '@/utils/engine.js'
+import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts, HeroDay } from '@/utils/engine.js'
 
 const TASK_ICONS = {
   ledger:   'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
@@ -276,6 +272,7 @@ export default {
     this.pageVisible = true
     this.ledgerMonth = LocalDay().slice(0, 7)
     refreshFinance()
+    if(HeroDay(state))persistNow()
     const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
     if (Array.isArray(savedWishlist)) state.items = savedWishlist
     this.startCountdown()
@@ -397,7 +394,7 @@ export default {
       return !!state.hero.slots.find(s => s.id === id)?.done
     },
     taskLabel(t) {
-      return { ledger: '记账', assets: '我的基础数据', savings: '我的基础数据', wishlist: '极简拔草', read: '自由笔记' }[t.id] || '行动'
+      return { ledger: '记账', assets: '资产记录', savings: '我的基础数据', wishlist: '极简拔草', read: '自由笔记' }[t.id] || '行动'
     },
     taskIcon(id) {
       const p = TASK_ICONS[id] || TASK_ICONS.assets
@@ -408,8 +405,7 @@ export default {
       if(state.cloudSync?.status==='restoring')return
       const restored=await hydrateFromServer()
       if(!restored.loaded){
-        if(restored.error?.code==='AUTH_REQUIRED')uni.navigateTo({url:'/pages/login/login?redirect=/pages/index/index'})
-        else showNotice({title:state.cloudSync.message,icon:'none'})
+        if(uni.getStorageSync('fire_login_status')===true)showNotice({title:state.cloudSync.message,icon:'none'})
         return
       }
       const result=await syncStateToServer()
@@ -455,7 +451,7 @@ export default {
 .goal-card-mini .goal-card-progress { height: 3px; margin: 7px 0 0; }
 .btn-primary:active,.task-row:active,.metric:active { transform: scale(.98); transition: transform .12s ease; }
 
-.home-masthead { position: relative; padding: calc(24px + env(safe-area-inset-top)) 20px 20px; overflow: hidden; }
+.home-masthead { position: relative; padding: calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px 20px; overflow: hidden; }
 .masthead-bg { position: absolute; left: 0; top: 0; right: 0; height: 375px; background-size: cover; background-position: center; z-index: 0; }
 .masthead-fade {
   position: absolute; left: 0; top: 0; right: 0; height: 375px; z-index: 1;
@@ -534,8 +530,8 @@ export default {
 
 .guardian-scene{position:absolute;z-index:2;left:0;right:0;top:126px;height:218px;overflow:hidden;pointer-events:none}.guardian-island{position:absolute;left:50%;bottom:2px;width:184px;height:48px;transform:translateX(-50%);border-radius:50% 50% 42% 42%;background:linear-gradient(180deg,#709b75,#315f49);box-shadow:0 9px 0 rgba(13,43,36,.14),0 0 22px rgba(132,186,130,.25)}.guardian-island:before{content:'';position:absolute;left:24px;right:24px;top:9px;height:7px;border-radius:50%;background:rgba(190,224,171,.38)}.guardian-person{position:absolute;left:50%;bottom:30px;width:72px;height:112px;transform:translateX(-50%);animation:guardianBreathe 2.8s ease-in-out infinite}.guardian-head{position:absolute;left:26px;top:0;width:21px;height:21px;border-radius:50%;background:#f1e3c9;border:2px solid #173d35}.guardian-body{position:absolute;left:22px;top:25px;width:30px;height:69px;border-radius:16px 16px 9px 9px;background:#173d35;border:0;box-shadow:7px 7px 0 rgba(23,61,53,.12)}.guardian-arm{position:absolute;left:39px;top:37px;width:27px;height:7px;border-radius:8px;background:#173d35;border:0;transform:rotate(-18deg);transform-origin:left center}.guardian-sword{position:absolute;left:59px;top:31px;width:5px;height:58px;border-radius:5px;background:linear-gradient(90deg,#d7f4dc,#fff,#8bb99a);border:1px solid #173d35;transform:rotate(35deg);transform-origin:bottom center;animation:swordGuard 3.2s ease-in-out infinite}.guardian-sword:after{content:'';position:absolute;left:-7px;bottom:-7px;width:18px;height:5px;border-radius:5px;background:#c99655;transform:rotate(-35deg)}.guardian-word{position:absolute;z-index:2;left:50%;top:7px;color:#ff6b63;font-size:14px;font-weight:700;white-space:nowrap;text-shadow:0 2px 5px rgba(80,15,20,.2);opacity:0;animation:pressureFly 4.8s cubic-bezier(.22,.61,.36,1) infinite}@keyframes pressureFly{0%{opacity:0;transform:translate(-50%,0) scale(.3)}18%{opacity:.72}55%{opacity:1;transform:translate(-50%,55px) scale(1.08)}69%{opacity:1;transform:translate(-50%,78px) scale(1.2) rotate(-5deg)}78%{opacity:0;transform:translate(-50%,78px) scale(1.55) rotate(9deg)}100%{opacity:0;transform:translate(-50%,78px) scale(1.55)}}@keyframes swordGuard{0%,58%{transform:rotate(35deg)}66%{transform:rotate(-35deg)}76%{transform:rotate(24deg)}100%{transform:rotate(35deg)}}@keyframes guardianBreathe{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}@media(prefers-reduced-motion:reduce){.guardian-word,.guardian-person,.guardian-sword{animation:none}.guardian-word{display:none}}
 
-@media screen and (max-width:390px){.home-view{padding-bottom:calc(78px + env(safe-area-inset-bottom))}.home-masthead{padding:calc(18px + env(safe-area-inset-top)) 16px 18px}.masthead-title{min-height:118px}.masthead-h1{font-size:20px}.calendar-num{font-size:34px}.calendar-label{font-size:13px}.home-content{padding:0 16px}.home-metrics{gap:8px;padding:16px 0}.metric-label{font-size:11px}.metric-value{font-size:15px}.section{margin-top:20px}.section-title{font-size:16px}.task-row{padding:11px 0;gap:9px}.task-icon{width:30px;height:30px;border-radius:9px}.task-icon-img{width:17px;height:17px}.task-title{font-size:13px}.task-sub{font-size:10px}.task-reward{font-size:11px}}
-@media screen and (max-width:430px){.home-masthead{padding:calc(12px + env(safe-area-inset-top)) 14px 14px}.masthead-title{min-height:94px}.masthead-h1{font-size:18px}.masthead-date{font-size:11px;margin-top:5px}.home-unconfigured{padding:8px 0 14px}.unconfigured-label{font-size:15px}.unconfigured-h2{font-size:20px;margin:10px 0 6px}.unconfigured-sub{font-size:12px;line-height:1.55}.btn-primary{margin-top:16px;padding:12px 14px}.btn-primary-text{font-size:13px}.home-content{padding:0 14px}.home-metrics{gap:6px;padding:13px 0}.metric-label{font-size:10px}.metric-value{font-size:14px}.section{margin-top:16px}.section-title{font-size:15px}.section-count{font-size:12px}.task-row{padding:9px 0}.task-title{font-size:12px}.task-sub{font-size:9px}.calendar-num{font-size:30px}.calendar-label{font-size:11px}.countdown-target{font-size:10px;margin-bottom:13px}}
+@media screen and (max-width:390px){.home-view{padding-bottom:calc(78px + env(safe-area-inset-bottom))}.home-masthead{padding:calc(18px + var(--fire-status-top, env(safe-area-inset-top))) 16px 18px}.masthead-title{min-height:118px}.masthead-h1{font-size:20px}.calendar-num{font-size:34px}.calendar-label{font-size:13px}.home-content{padding:0 16px}.home-metrics{gap:8px;padding:16px 0}.metric-label{font-size:11px}.metric-value{font-size:15px}.section{margin-top:20px}.section-title{font-size:16px}.task-row{padding:11px 0;gap:9px}.task-icon{width:30px;height:30px;border-radius:9px}.task-icon-img{width:17px;height:17px}.task-title{font-size:13px}.task-sub{font-size:10px}.task-reward{font-size:11px}}
+@media screen and (max-width:430px){.home-masthead{padding:calc(12px + var(--fire-status-top, env(safe-area-inset-top))) 14px 14px}.masthead-title{min-height:94px}.masthead-h1{font-size:18px}.masthead-date{font-size:11px;margin-top:5px}.home-unconfigured{padding:8px 0 14px}.unconfigured-label{font-size:15px}.unconfigured-h2{font-size:20px;margin:10px 0 6px}.unconfigured-sub{font-size:12px;line-height:1.55}.btn-primary{margin-top:16px;padding:12px 14px}.btn-primary-text{font-size:13px}.home-content{padding:0 14px}.home-metrics{gap:6px;padding:13px 0}.metric-label{font-size:10px}.metric-value{font-size:14px}.section{margin-top:16px}.section-title{font-size:15px}.section-count{font-size:12px}.task-row{padding:9px 0}.task-title{font-size:12px}.task-sub{font-size:9px}.calendar-num{font-size:30px}.calendar-label{font-size:11px}.countdown-target{font-size:10px;margin-bottom:13px}}
 /* Reset only entry animations; page nodes and scroll position stay intact. */
 .home-view.page-entry-reset{animation:none;opacity:0}
 .home-view.page-entry-reset .home-masthead,.home-view.page-entry-reset .home-metrics,.home-view.page-entry-reset .task-row,.home-view.page-entry-reset .goal-card{animation:none}
@@ -545,4 +541,8 @@ export default {
 .account-sync-banner text:first-child{flex:1;min-width:0}
 .account-sync-banner text:last-child{white-space:nowrap}
 .account-sync-banner.synced{padding:4px 0 8px;margin-bottom:4px;border:0;background:transparent;color:#718078;font-size:11px}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-index-index .home-masthead{padding-top:var(--fire-page-top)}
+ .fire-page-index-index .home-unconfigured{padding-top:30px;padding-bottom:24px} .fire-page-index-index .home-unconfigured .btn-primary{margin-top:18px} .fire-page-index-index .account-sync-banner{padding:10px 12px;font-size:12px;line-height:1.6}
 </style>

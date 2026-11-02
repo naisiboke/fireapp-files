@@ -1,5 +1,5 @@
 <template>
-  <view class="launch-page">
+  <view class="launch-page fire-page-launch-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="launch-glow"></view>
     <view class="launch-card">
@@ -74,4 +74,7 @@ export default {
 .launch-mark{width:60px;height:60px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:#173d35;color:#f3f7ef;font-size:26px;font-weight:700;box-shadow:0 14px 35px rgba(23,61,53,.2)}
 .launch-title{font-size:22px;font-weight:700;letter-spacing:.12em}
 .launch-status{font-size:13px;color:#7a8b82}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-launch-index{padding-top:var(--fire-page-top);padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
 </style>

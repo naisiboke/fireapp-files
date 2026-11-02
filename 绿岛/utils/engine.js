@@ -98,7 +98,17 @@ export function HeroDay(s, day) {
     return true
   }
   const h = s.hero
-  if (day <= h.day) return false
+  if (!Array.isArray(h.log)) h.log=[]
+  if (!Array.isArray(h.actionDays)) h.actionDays=[]
+  if (!Number.isFinite(h.totalCompleted)) h.totalCompleted=h.log.length
+  if (day === h.day) return false
+  if (day < h.day) {
+    // A corrected device clock must not lock today's task behind a cached future date.
+    h.day=day
+    h.slots.forEach(slot=>{slot.done=h.log.some(row=>row.day===day&&row.id===slot.id)})
+    h.ledgerDone=h.log.some(row=>row.day===day&&row.id==='ledger')
+    return true
+  }
   h.slots.forEach(function (slot, index) {
     if (slot.done) {
       const other = h.slots[1 - index].id
@@ -124,7 +134,9 @@ export function HeroComplete(s, id, day) {
     if (!slot || slot.done) return false
     slot.done = true
   }
-  s.exp += 10
+  // Repair stale done flags without granting the same day's reward twice.
+  if (h.log.some(row=>row.id===id&&row.day===day)) return false
+  s.exp = (Number.isFinite(s.exp) ? s.exp : 0) + 10
   h.totalCompleted++
   if (h.actionDays.indexOf(day) < 0) h.actionDays.push(day)
   h.log.push({ id: id, day: day, reward: 10 })

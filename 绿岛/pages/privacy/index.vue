@@ -1,5 +1,5 @@
 <template>
-  <view class="privacy-page">
+  <view class="privacy-page fire-page-privacy-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="title">隐私政策</text><view class="close" role="button" aria-label="关闭" @tap="close">×</view></view>
     <view class="content"><text class="h2">FIRE Fire生活隐私政策</text><text class="date">版本：v1.1 · 生效日期：2026-10-25 · 最后更新时间：2026-10-25</text>
@@ -49,5 +49,9 @@ export default {
 </script>
 
 <style>
-.privacy-page{min-height:100vh;padding:0 24px calc(48px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:30;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 16px 0 24px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;background:rgba(253,253,251,.97);border-bottom:1px solid #edf1eb}.title{font-size:18px;font-weight:600;color:#243830}.close{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:27px;line-height:1;color:#243830;border-radius:50%}.close:active{background:#edf2e9}.content{padding-top:calc(84px + env(safe-area-inset-top))}.h2{display:block;font-size:22px;font-weight:700;color:#143e37}.date{display:block;font-size:13px;color:#71807a;margin-top:8px}.section{margin-top:22px}.h3{display:block;font-size:16px;font-weight:600;color:#243830;margin-bottom:7px}.p{display:block;font-size:14px;line-height:1.85;color:#52605a;white-space:pre-line}.contact-card{margin-top:28px;padding:16px;background:#eff2e9;border-left:2px solid #bfd0b5;border-radius:0 14px 14px 0}.contact-title{display:block;font-size:15px;font-weight:600;color:#243830;margin-bottom:5px}
+.privacy-page{min-height:100vh;padding:0 24px calc(48px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:30;top:0;left:0;right:0;height:calc(58px + var(--fire-status-top, env(safe-area-inset-top)));padding:var(--fire-status-top, env(safe-area-inset-top)) 16px 0 24px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;background:rgba(253,253,251,.97);border-bottom:1px solid #edf1eb}.title{font-size:18px;font-weight:600;color:#243830}.close{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:27px;line-height:1;color:#243830;border-radius:50%}.close:active{background:#edf2e9}.content{padding-top:calc(84px + var(--fire-status-top, env(safe-area-inset-top)))}.h2{display:block;font-size:22px;font-weight:700;color:#143e37}.date{display:block;font-size:13px;color:#71807a;margin-top:8px}.section{margin-top:22px}.h3{display:block;font-size:16px;font-weight:600;color:#243830;margin-bottom:7px}.p{display:block;font-size:14px;line-height:1.85;color:#52605a;white-space:pre-line}.contact-card{margin-top:28px;padding:16px;background:#eff2e9;border-left:2px solid #bfd0b5;border-radius:0 14px 14px 0}.contact-title{display:block;font-size:15px;font-weight:600;color:#243830;margin-bottom:5px}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-privacy-index > .head{height:var(--fire-header-height);padding-top:var(--fire-page-top);box-sizing:border-box}
+ .fire-page-privacy-index .content{padding-top:var(--fire-content-top)}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <view class="ledger-page">
+  <view class="ledger-page fire-page-ledger-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部：返回 + 标题 -->
@@ -638,4 +638,7 @@ export default {
 /* 自定义底部 TabBar */
 .ledger-page .ov-status{display:block;margin-top:6px;font-size:12px;line-height:1.4;color:#a35d4e;font-weight:600}
 .ledger-page .ov-num.over-budget{color:#a35d4e}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-ledger-index{padding-top:var(--fire-page-top)}
 </style>

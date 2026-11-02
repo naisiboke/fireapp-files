@@ -1,5 +1,5 @@
 <template>
-  <view class="ai-page" :style="pageStyle" :class="{'keyboard-open':keyboardHeight>0 || inputFocused}">
+  <view class="ai-page fire-page-ai-index" :style="[pageLayoutStyle, pageStyle]" :class="{'keyboard-open':keyboardHeight>0 || inputFocused}">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
     <FireOverlay :visible="drawerOpen" :owner-id="feedbackOwnerId" label="历史聊天" wide @close="drawerOpen=false"><view class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><button class="fire-modal-close" aria-label="关闭" @tap="drawerOpen=false"><view class="fire-close-mark"></view></button></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view></FireOverlay>
@@ -46,6 +46,7 @@
 </template>
 
 <script>
+import { accountId } from '@/utils/account-cache.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import FireOverlay from '@/components/FireOverlay.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
@@ -60,7 +61,7 @@ export default {
   components: { AppFeedback, FireOverlay },
   mixins: [feedbackPageMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  data() { return { state, ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false, viewportHeight: 0, baseWindowHeight: 0, keyboardHeight: 0, inputFocused: false, keyboardListener: null } },
+  data() { return { state, accountUid:accountId(), ready: false, financeReady: false, personalityReady: false, question: '', messages: [], loading: false, lastMessageId: '', isMember: false, freeUsed: 0, chats: [], currentChatId: '', drawerOpen: false, viewportHeight: 0, baseWindowHeight: 0, keyboardHeight: 0, inputFocused: false, keyboardListener: null } },
   computed: { pageStyle() { return this.viewportHeight>0?{height:this.viewportHeight+'px'}:{} } },
   async onLoad() {
     this.setupViewport()
@@ -128,7 +129,7 @@ export default {
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
     newChat() { this.drawerOpen=false; this.currentChatId='chat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); this.messages=[]; this.question=''; this.lastMessageId='' },
     selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x})):[]; this.drawerOpen=false; this.scrollToLast() },
-    async saveCurrentChat() { if(!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)]; this.currentChatId=chat.id; state.aiChats=this.chats; persist(); await saveAIChats(this.chats) },
+    async saveCurrentChat() { if(this.accountUid!==accountId()||!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)]; this.currentChatId=chat.id; state.aiChats=this.chats; persist(); try{await saveAIChats(this.chats)}catch(error){console.warn('[chat-sync]',error.code||'CLOUD_CALL_FAILED')} },
     personalitySummary() { const p=state.personalityTests||{}, names=[]; if(p.bigfive) names.push('大五人格已完成'); if(p.mbti) names.push('MBTI '+String(p.mbti.title||'已完成').replace('你的 MBTI 参考类型：','')); return names.join(' · ') || '尚未完成测试' },
     personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
     countdownText() {
@@ -190,8 +191,8 @@ export default {
 </script>
 
 <style>
-.ai-page{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#eef5ef;box-sizing:border-box;padding-top:calc(48px + env(safe-area-inset-top))}
-.head{position:fixed;z-index:20;top:0;left:0;right:0;height:calc(48px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 14px 0;display:flex;align-items:center;justify-content:space-between;background:#f7fbf6;border-bottom:1px solid #dce9dc;box-sizing:border-box}
+.ai-page{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#eef5ef;box-sizing:border-box;padding-top:calc(48px + var(--fire-status-top, env(safe-area-inset-top)))}
+.head{position:fixed;z-index:20;top:0;left:0;right:0;height:calc(48px + var(--fire-status-top, env(safe-area-inset-top)));padding:var(--fire-status-top, env(safe-area-inset-top)) 14px 0;display:flex;align-items:center;justify-content:space-between;background:#f7fbf6;border-bottom:1px solid #dce9dc;box-sizing:border-box}
 .back,.close{width:36px;height:40px;display:flex;align-items:center;justify-content:center;color:#173d35;font-size:28px}.title{font-size:17px;font-weight:600;color:#173d35}
 .chat-shell{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .chat-meta{flex-shrink:0;display:flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;border-bottom:1px solid #e0e9df;box-sizing:border-box}
@@ -216,4 +217,8 @@ export default {
 .chat-drawer{width:100%;height:65vh;padding:16px;box-sizing:border-box;background:#f7fbf6;border-radius:18px}.drawer-head{display:flex;align-items:center;justify-content:space-between;color:#173d35;font-size:17px;font-weight:600}
 .new-drawer{margin-top:14px;padding:12px;border-radius:11px;background:#e3f0df;color:#315f4a;font-size:13px}.chat-list{height:calc(100% - 110px);margin-top:12px}.chat-item{padding:12px;border-radius:10px;margin-bottom:6px}.chat-item.active{background:#e3f0df}.chat-item text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-item text:first-child{font-size:13px;color:#243830}.chat-item text:last-child{margin-top:4px;font-size:10px;color:#8b9489}.chat-empty{display:block;padding:30px 10px;text-align:center;color:#8b9489;font-size:12px}
 @media screen and (max-width:350px){.chat-meta{gap:4px;padding:0 8px}.meta-note{display:none}.quota-link{margin-left:auto}.message-list{padding-left:9px;padding-right:9px}}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-ai-index > .head{height:var(--fire-header-height);padding-top:var(--fire-page-top);box-sizing:border-box}
+ .fire-page-ai-index{padding-top:var(--fire-header-height)}
 </style>

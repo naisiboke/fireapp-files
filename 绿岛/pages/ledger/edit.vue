@@ -1,5 +1,5 @@
 <template>
-  <view class="edit-page">
+  <view class="edit-page fire-page-ledger-edit" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部 -->
@@ -104,6 +104,7 @@
 </template>
 
 <script>
+import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
@@ -304,7 +305,7 @@ export default {
         }
       } catch (e) { /* ignore */ }
 
-      persist()
+      if(persist())clearOptionsDraft(this)
       showNotice({ title: this.editing ? '已保存' : '已记账', icon: 'success' })
 
       if (this.editing) {
@@ -583,4 +584,7 @@ export default {
   justify-content: center;
 }
 .save-btn-text { color: #f2f5e9; font-size: 15px; font-weight: 500; }
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-ledger-edit{padding-top:var(--fire-page-top)}
 </style>

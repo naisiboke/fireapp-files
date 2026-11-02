@@ -4,7 +4,7 @@ import { accountTransportError } from './cloudbase-platform.js'
 // No browser globals, administrator keys, mobile app secrets, or anonymous login.
 const BASE='https://ziyoukedu-d0gyrczqk4de53b87.api.tcloudbasegateway.com'
 const SESSION_KEY='fire_native_auth_v1'
-export function createNativeCloudbase(runtime, now=()=>Date.now()) {
+export function createNativeCloudbase(runtime, now=()=>Date.now(), onExpired=()=>{}) {
   let session=runtime.getStorageSync(SESSION_KEY)||null
   if(!session||typeof session.uid!=='string'||!session.accessToken)session=null
   let generation=0, refreshTask=null
@@ -43,10 +43,18 @@ export function createNativeCloudbase(runtime, now=()=>Date.now()) {
     runtime.setStorageSync('fire_access_token',next.accessToken)
     return {user:{uid:next.uid},accessToken:next.accessToken}
   }
-  async function getAccessToken(){
+  function expireSession(error,version,uid) {
+    if (version !== generation || session?.uid !== uid) return
+    // The callback saves account data and page drafts before navigation.
+    try { onExpired(error,uid) } catch (ignore) { console.warn('[session-expired]', 'RECOVERY_FAILED') }
+    generation++;session=null;refreshTask=null
+    runtime.removeStorageSync(SESSION_KEY)
+    runtime.removeStorageSync('fire_access_token')
+  }
+  async function getAccessToken(force=false){
     if(!session)fail('AUTH_REQUIRED','auth')
-    if(Number(session.expiresAt)>now()+60000)return {accessToken:session.accessToken}
-    if(!session.refreshToken)fail('AUTH_REQUIRED','refresh')
+    if(!force && Number(session.expiresAt)>now()+60000)return {accessToken:session.accessToken}
+    if(!session.refreshToken){const error=accountTransportError({code:'AUTH_REQUIRED'},'refresh');expireSession(error,generation,session.uid);throw error}
     if(refreshTask)return refreshTask
     const version=generation, old=session
     const task=(async()=>{
@@ -55,7 +63,37 @@ export function createNativeCloudbase(runtime, now=()=>Date.now()) {
       return {accessToken:session.accessToken}
     })()
     refreshTask=task
-    try{return await task}finally{if(refreshTask===task)refreshTask=null}
+    try{return await task}catch(error){
+      if(['invalid_grant','invalid_refresh_token','refresh_token_expired','AUTH_REQUIRED'].includes(error.code)){
+        error.stage='refresh'
+        expireSession(error,version,old.uid)
+      }
+      throw error
+    }finally{if(refreshTask===task)refreshTask=null}
+  }
+  async function authorizedRequest(path,data,timeout=20000) {
+    const version=generation,uid=session?.uid
+    let token=await getAccessToken()
+    guard(version)
+    if(!uid||uid!==session?.uid)fail('ACCOUNT_MISMATCH','invoke')
+    try {
+      const result=await request(path,data,token.accessToken,'POST',timeout)
+      guard(version);return result
+    } catch(error) {
+      guard(version)
+      if(error.code!=='AUTH_REQUIRED' && error.code!=='access_token_expired')throw error
+      // A rejected access token may still have a valid refresh token. Retry once.
+      token=await getAccessToken(true)
+      guard(version)
+      try {
+        const result=await request(path,data,token.accessToken,'POST',timeout)
+        guard(version);return result
+      } catch(retryError) {
+        guard(version)
+        if(retryError.code==='AUTH_REQUIRED'||retryError.code==='access_token_expired')expireSession(retryError,version,uid)
+        throw retryError
+      }
+    }
   }
   const client={
     async getVerification({email}){
@@ -95,12 +133,7 @@ export function createNativeCloudbase(runtime, now=()=>Date.now()) {
     auth(){return client},
     async callFunction({name,data}){
       if(name!=='accountData')fail('INVALID_FUNCTION','invoke')
-      const version=generation, uid=session?.uid
-      const {accessToken}=await getAccessToken()
-      guard(version)
-      if(!uid||uid!==session?.uid)fail('ACCOUNT_MISMATCH','invoke')
-      const body=await request('/v1/functions/accountData',data,accessToken,'POST',65000)
-      guard(version)
+      const body=await authorizedRequest('/v1/functions/accountData',data,65000)
       // The REST API returns the function result directly; accept the legacy SDK envelope too.
       let result=body?.result??body
       if(typeof result==='string'){try{result=JSON.parse(result)}catch(ignore){fail('INVALID_FUNCTION_RESPONSE','response')}}
@@ -108,11 +141,7 @@ export function createNativeCloudbase(runtime, now=()=>Date.now()) {
       return {result}
     },
     async getTempFileURL({fileList}){
-      const version=generation
-      const {accessToken}=await getAccessToken()
-      guard(version)
-      const rows=await request('/v1/storages/get-objects-download-info',fileList.map(cloudObjectId=>({cloudObjectId})),accessToken)
-      guard(version)
+      const rows=await authorizedRequest('/v1/storages/get-objects-download-info',fileList.map(cloudObjectId=>({cloudObjectId})))
       if(!Array.isArray(rows))fail('INVALID_FUNCTION_RESPONSE','response')
       return {fileList:rows.map(row=>({fileID:row.cloudObjectId,tempFileURL:row.downloadUrlEncoded||row.downloadUrl||''}))}
     },

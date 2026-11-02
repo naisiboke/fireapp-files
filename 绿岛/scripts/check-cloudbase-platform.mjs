@@ -135,8 +135,8 @@ function wrapper(native,fixture){
  const imports=[]
  const fake={auth:()=>fixture.auth,callFunction:options=>fixture.app.callFunction(options)}
  const code=plain(compile(native)).replace("await import('./cloudbase-native.js')","await load('native')").replace("await import('@cloudbase/js-sdk')","await load('sdk')")
- const api=new Function('accountTransportError','load','uni','console',code+';return {getAuth,sendVerificationCode,signInWithCode,saveAuthToken,callAccountData}')(
- accountTransportError,async name=>{imports.push(name);return name==='native'?{createNativeCloudbase:()=>fixture.app}:{default:{init:()=>fake}}},fixture.runtime,{warn(){}})
+ const api=new Function('accountTransportError','load','uni','console','reportSessionExpiry',code+';return {getAuth,sendVerificationCode,signInWithCode,saveAuthToken,callAccountData}')(
+ accountTransportError,async name=>{imports.push(name);return name==='native'?{createNativeCloudbase:()=>fixture.app}:{default:{init:()=>fake}}},fixture.runtime,{warn(){}},()=>{})
  return {api,imports}
 }
 const wf=fixture();await wf.login();const native=wrapper(true,wf)

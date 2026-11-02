@@ -9,6 +9,7 @@ function check(name,value){assert.ok(value,name);checks.push(name)}
 const engine=new Function(source('utils/engine.js').replace(/\bexport (const|function)/g,'$1')+
  '\nreturn {HeroDay,HeroComplete,SaveAssetRecord,LocalDay,HeroLevel};')()
 const {HeroDay,HeroComplete,SaveAssetRecord,HeroLevel}=engine
+const {commitAssetRecord}=new Function('SaveAssetRecord',source('utils/asset-action.js').replace(/^import .*$/gm,'').replace('export function','function')+'\nreturn {commitAssetRecord};')(SaveAssetRecord)
 const day='2026-11-20'
 function fresh(){const s={finance:{assets:15000},assetHistory:[],exp:0,hero:null};HeroDay(s,day);return s}
 let s=fresh()
@@ -56,15 +57,17 @@ function component(path,deps){
  const script=source(path).match(/<script>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm,'').replace('export default','return')
  return new Function(...Object.keys(deps),script)(...Object.values(deps))
 }
-function assetPage(state,clock){
- const snapshots=[],notices=[],shows=[]
+function assetPage(state,clock,saveWorks=true){
+ const snapshots=[],notices=[],shows=[],routes=[]
  const deps={AppFeedback:{},useFeedbackPage:()=>1,showNotice:value=>notices.push(value),
   ref:value=>({value}),computed:get=>({get value(){return get()}}),onShow:fn=>shows.push(fn),
-  state,persist:()=>snapshots.push(JSON.parse(JSON.stringify(state))),LocalDay:()=>clock.day,SaveAssetRecord,uni:{},
+    state,persistNow:()=>{if(!saveWorks)return false;snapshots.push(JSON.parse(JSON.stringify(state)));return true},
+  LocalDay:()=>clock.day,commitAssetRecord,useSessionDraft:()=>({clear(){}}),
+  uni:{switchTab(options){routes.push(options.url);options.success?.()}},
  }
  const code=source('pages/assets/index.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm,'')
  const page=new Function(...Object.keys(deps),code+'\nreturn {today,date,amount,save};')(...Object.values(deps))
- return {page,snapshots,notices,show:()=>shows.forEach(fn=>fn())}
+ return {page,snapshots,notices,routes,show:()=>shows.forEach(fn=>fn())}
 }
 s=fresh();HeroComplete(s,'ledger',day)
 const clock={day},fixture=assetPage(s,clock)
@@ -94,4 +97,14 @@ check('manually chosen historical date remains historical',explicit.snapshots[0]
 const visibleClock={day:'2026-11-30'},visible=assetPage(fresh(),visibleClock)
 visibleClock.day='2026-12-01';visible.show()
 check('reopening the page refreshes its default date and picker limit',visible.page.today.value==='2026-12-01'&&visible.page.date.value==='2026-12-01')
+check('successful local commit returns to the home tab',fixture.routes[0]==='/pages/index/index')
+s=fresh()
+const failed=assetPage(s,{day},false),beforeFailure=JSON.stringify(s)
+failed.page.amount.value='12345';failed.page.save()
+check('storage failure rolls back assets, tasks and EXP together',JSON.stringify(s)===beforeFailure)
+check('storage failure keeps input and does not navigate',failed.page.amount.value==='12345'&&failed.routes.length===0)
+s=fresh();HeroComplete(s,'assets',day);s.hero.slots[0].done=false
+check('a stale done flag is repaired without another reward',!SaveAssetRecord(s,{amount:'15000',date:day},day).rewarded&&s.exp===10&&s.hero.slots[0].done)
+s=fresh();s.hero.day='2026-12-20'
+check('correcting a future device date cannot lock current asset task',SaveAssetRecord(s,{amount:'100',date:day},day).rewarded&&s.hero.day===day)
 console.log(checks.length+' asset-task checks passed')

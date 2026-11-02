@@ -1,5 +1,5 @@
 <template>
-  <view class="edit-page">
+  <view class="edit-page fire-page-profile-edit" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><text class="title">个人资料</text><text class="close" @tap="close">×</text></view>
     <view class="account-card"><text class="account-label">绑定邮箱</text><text class="account-email">{{ boundEmail || '暂未绑定邮箱' }}</text><text class="account-hint">{{ boundEmail ? '用于登录和接收安全通知' : '请使用邮箱验证码登录后完成绑定' }}</text></view>
@@ -23,6 +23,7 @@
 </template>
 
 <script>
+import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
@@ -69,7 +70,7 @@ export default {
       state.profile = { ...profile, name: result.value, nicknameUpdatedAt: Date.now() }
       delete state.profile.avatarFileID
       delete state.profile.avatarUrl
-      persist()
+      if(persist())clearOptionsDraft(this)
       setTimeout(() => {
         this.saving = false
         showNotice({ title: '个人资料已保存', icon: 'none' })
@@ -81,5 +82,9 @@ export default {
 </script>
 
 <style>
-.edit-page{min-height:100vh;padding:calc(62px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:10;top:0;left:0;right:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 20px 0;display:flex;align-items:center;justify-content:space-between;background:#fdfdfb;border-bottom:1px solid #edf1eb;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#243830}.close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#243830}.account-card{padding:16px 20px;background:#eef3ea;border:1px solid #dce7da;border-radius:14px;margin-bottom:12px}.account-label{display:block;color:#527059;font-size:13px;font-weight:600}.account-email{display:block;color:#173d35;font-size:17px;font-weight:600;margin-top:9px;word-break:break-all}.account-hint{display:block;color:#71807a;font-size:12px;line-height:1.6;margin-top:6px}.card{padding:20px;background:#fff;border:1px solid #e5e9e0;border-radius:14px;margin-bottom:12px}.label{display:block;color:#243830;font-size:16px;font-weight:600;margin-bottom:14px}.name-input{height:52px;border-bottom:1px solid #dce5dc;color:#243830;font-size:18px}.placeholder{color:#a2afa5}.hint{display:block;color:#71807a;font-size:12px;line-height:1.6;margin-top:12px}.limit-hint{display:block;color:#9a6a42;font-size:12px;line-height:1.6;margin-top:7px}.pro-hint{color:#527059}.rules{padding:16px 18px;border-radius:14px;background:#eff3ea;margin-bottom:18px}.rules-title{display:block;color:#243830;font-size:14px;font-weight:600;margin-bottom:7px}.rule{display:block;color:#627269;font-size:12px;line-height:1.8}.save{width:100%;height:50px;border:0;border-radius:12px;background:#173d35;color:#fff;font-size:16px}.save[disabled]{opacity:.65}
+.edit-page{min-height:100vh;padding:calc(62px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(32px + env(safe-area-inset-bottom));background:#fdfdfb;box-sizing:border-box}.head{position:fixed;z-index:10;top:0;left:0;right:0;height:calc(58px + var(--fire-status-top, env(safe-area-inset-top)));padding:var(--fire-status-top, env(safe-area-inset-top)) 20px 0;display:flex;align-items:center;justify-content:space-between;background:#fdfdfb;border-bottom:1px solid #edf1eb;box-sizing:border-box}.title{font-size:18px;font-weight:600;color:#243830}.close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#243830}.account-card{padding:16px 20px;background:#eef3ea;border:1px solid #dce7da;border-radius:14px;margin-bottom:12px}.account-label{display:block;color:#527059;font-size:13px;font-weight:600}.account-email{display:block;color:#173d35;font-size:17px;font-weight:600;margin-top:9px;word-break:break-all}.account-hint{display:block;color:#71807a;font-size:12px;line-height:1.6;margin-top:6px}.card{padding:20px;background:#fff;border:1px solid #e5e9e0;border-radius:14px;margin-bottom:12px}.label{display:block;color:#243830;font-size:16px;font-weight:600;margin-bottom:14px}.name-input{height:52px;border-bottom:1px solid #dce5dc;color:#243830;font-size:18px}.placeholder{color:#a2afa5}.hint{display:block;color:#71807a;font-size:12px;line-height:1.6;margin-top:12px}.limit-hint{display:block;color:#9a6a42;font-size:12px;line-height:1.6;margin-top:7px}.pro-hint{color:#527059}.rules{padding:16px 18px;border-radius:14px;background:#eff3ea;margin-bottom:18px}.rules-title{display:block;color:#243830;font-size:14px;font-weight:600;margin-bottom:7px}.rule{display:block;color:#627269;font-size:12px;line-height:1.8}.save{width:100%;height:50px;border:0;border-radius:12px;background:#173d35;color:#fff;font-size:16px}.save[disabled]{opacity:.65}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-profile-edit > .head{height:var(--fire-header-height);padding-top:var(--fire-page-top);box-sizing:border-box}
+ .fire-page-profile-edit{padding-top:var(--fire-content-top)}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <view class="calculator-page">
+  <view class="calculator-page fire-page-calculator-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="page-head">
       <button class="back" aria-label="返回" @click="back">‹</button>
@@ -91,6 +91,7 @@
 </template>
 
 <script setup>
+import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
@@ -99,11 +100,13 @@ import { computed, reactive, ref, onUnmounted } from 'vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { onLoad, onShow, onHide, onUnload, onBackPress } from '@dcloudio/uni-app'
 import { state, refreshFinance, persistNow } from '@/store/index.js'
-import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts } from '@/utils/engine.js'
+import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts, SaveAssetRecord, LocalDay } from '@/utils/engine.js'
 import { validateFireForm, validateGoalForm, hasValidFinance, freedomResult, createFreedomPlan } from '@/utils/finance-plan.js'
 import { isMembershipActive } from '@/utils/membership.js'
 import { askBehaviorAI } from '@/utils/api-service.js'
 
+import { useSessionDraft } from '@/utils/session-drafts.js'
+const fromAssetTask=ref(false)
 const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false), aiDiagnosis = ref(''), aiLoading = ref(false)
 const fire = reactive({assets:'',monthlyDeposit:'',retirementExpense:'',rate:'4',withdrawal:'4'})
 const goal = reactive({name:'',assets:'',amount:'',monthlyDeposit:'',expectedMonths:'',rate:'4'})
@@ -220,22 +223,31 @@ async function calculate() {
   saving.value = true
   await new Promise(resolve => setTimeout(resolve, 650))
   if (mode.value === 'fire') {
-    const oldFinance = state.finance, oldProfile = state.profile, oldPlan = state.freedomPlan, oldEntered = state.financeEntered
-    state.finance = {...state.finance,...parsed.finance}
-    state.financeEntered = true
-    state.freedomPlan = createFreedomPlan(state.finance)
-    if (persistNow()) {
-      fireResult.value = freedomResult(state)
-      showNotice({title:'自由计划已保存',icon:'none'})
-    } else {
-      state.finance = oldFinance; state.profile = oldProfile; state.freedomPlan = oldPlan; state.financeEntered = oldEntered
-      errors.value = ['保存失败，请检查设备存储后重试']
+    const oldFinance=state.finance,oldProfile=state.profile,oldPlan=state.freedomPlan,oldEntered=state.financeEntered
+    const oldAssets=JSON.parse(JSON.stringify(state.assetHistory||[])),oldHero=JSON.parse(JSON.stringify(state.hero||null)),oldExp=state.exp
+    try {
+      state.finance={...state.finance,...parsed.finance}
+      state.financeEntered=true
+      const assetResult=SaveAssetRecord(state,{amount:String(parsed.finance.assets),date:LocalDay()},LocalDay())
+      if(!assetResult)throw new Error('资产记录无效，请检查金额')
+      state.freedomPlan=createFreedomPlan(state.finance)
+      if(!persistNow())throw new Error('保存失败，请检查设备存储后重试')
+      fireResult.value=freedomResult(state)
+      calculatorDraft.clear()
+      showNotice({title:assetResult.rewarded?'计划已保存，资产任务 +10 EXP':'自由计划已保存',icon:'none'})
+      if(fromAssetTask.value)goHome()
+    } catch(error) {
+      state.finance=oldFinance;state.profile=oldProfile;state.financeEntered=oldEntered
+      if(oldPlan===undefined)delete state.freedomPlan;else state.freedomPlan=oldPlan
+      state.assetHistory=oldAssets;state.hero=oldHero;state.exp=oldExp
+      errors.value=[error.message||'保存失败，请稍后重试']
     }
   } else {
     const old = state.goalDraft
     const plan = {...parsed.plan,calculatedAt:Date.now()}
     state.goalDraft = plan
     if (persistNow()) {
+      calculatorDraft.clear()
       calculatedGoal.value = plan; goalResult.value = GoalEngine(plan)
       showNotice({title:'目标草稿已保存',icon:'none'})
     } else { state.goalDraft = old; errors.value = ['保存失败，请检查设备存储后重试'] }
@@ -255,6 +267,7 @@ function publishGoal() {
 }
 onLoad(options => {
   refreshFinance()
+  fromAssetTask.value=options?.task==='assets'
   mode.value = options && options.mode === 'goal' ? 'goal' : 'fire'
   if (configured.value) {
     for (const key of ['assets','monthlyDeposit','retirementExpense','rate','withdrawal']) fire[key] = String(state.finance[key])
@@ -293,11 +306,15 @@ onBackPress(event => {
   back()
   return true
 })
+const calculatorDraft=useSessionDraft(()=>({mode:mode.value,fire:{...fire},goal:{...goal}}),draft=>{
+ if(draft?.mode==='fire'||draft?.mode==='goal')mode.value=draft.mode
+ for(const [target,saved] of [[fire,draft?.fire],[goal,draft?.goal]])for(const key of Object.keys(target))if(typeof saved?.[key]==='string')target[key]=saved[key]
+})
 </script>
 
 <style lang="scss" scoped>
 .calculation-loading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(243,244,242,.94);backdrop-filter:blur(8px)}.loading-spinner{width:42px;height:42px;border:3px solid #dce8dc;border-top-color:#315f4a;border-radius:50%;animation:calculator-spin .8s linear infinite}.loading-title{margin-top:18px;color:#243830;font-size:18px;font-weight:600}.loading-copy{margin-top:8px;color:#7b8b7e;font-size:13px}@keyframes calculator-spin{to{transform:rotate(360deg)}}
-.calculator-page { min-height:100vh; box-sizing:border-box; padding:calc(24px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom)); background:#f3f4f2; color:#243830; }
+.calculator-page { min-height:100vh; box-sizing:border-box; padding:calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 24px calc(32px + env(safe-area-inset-bottom)); background:#f3f4f2; color:#243830; }
 .page-head { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
 .back,.head-space { width:44px; min-height:44px; flex-shrink:0; }
 .back { display:flex; align-items:center; justify-content:center; padding:0; border:0; background:transparent; color:#173d35; font-size:30px; font-weight:600; }
@@ -349,4 +366,7 @@ button[disabled] { opacity:.5; }
 .diagnosis-title { display:block; color:#173d35; font-size:15px; font-weight:700; }
 .diagnosis-copy { display:block; margin-top:6px; color:#52605a; font-size:13px; line-height:1.8; }
 @media (prefers-reduced-motion:reduce) { button { transition:none; } button:active { transform:none; } .countdown-number { animation:none; } }
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-calculator-index{padding-top:var(--fire-page-top)}
 </style>

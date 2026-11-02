@@ -1,5 +1,5 @@
 <template>
-  <view class="detail-page">
+  <view class="detail-page fire-page-wishlist-detail" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="detail-head"><view class="back" @tap="back">‹</view><text class="title">拔草详情</text><view class="head-space"></view></view>
     <scroll-view v-if="item" class="detail-scroll" scroll-y>
@@ -22,6 +22,7 @@
   </view>
 </template>
 <script setup>
+import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showDialog, showNotice } from '@/utils/feedback.js'
@@ -92,8 +93,12 @@ onMounted(()=>{
 onUnmounted(()=>{if(timer.value)clearInterval(timer.value)})
 </script>
 <style lang="scss">
-.detail-page{min-height:100vh;background:#f8f9f5;color:#173d35;padding-top:env(safe-area-inset-top);box-sizing:border-box}.detail-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e1e7de}.back,.head-space{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px}.title{font-size:20px;font-weight:600}.detail-scroll{height:calc(100vh - 64px - env(safe-area-inset-top));box-sizing:border-box}.hero-card{margin:24px;padding:28px 20px;border-radius:20px;background:#e5eee4;text-align:center}.hero-icon{margin:auto;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;color:#447e70}.name{display:block;margin-top:16px;font-size:25px;font-weight:700}.status{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:14px;background:#d5e6d6;color:#447e70;font-size:12px}.info-card,.progress-card{margin:0 24px 16px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e1e7de}.info-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef1eb;color:#737e76;font-size:13px}.info-row:last-child{border-bottom:0}.info-row .strong{color:#173d35;font-size:18px;font-weight:600}.progress-title{display:block;font-size:15px;font-weight:600}.countdown{display:block;margin-top:10px;color:#447e70;font-size:22px;font-variant-numeric:tabular-nums}.progress-track{height:7px;margin-top:18px;border-radius:5px;background:#edf0e9;overflow:hidden}.progress-fill{height:100%;background:#527059;border-radius:5px}.progress-tip{display:block;margin-top:12px;color:#737e76;font-size:12px}.actions{padding:0 24px calc(32px + env(safe-area-inset-bottom))}.actions button{width:100%;min-height:50px;margin-top:12px;border-radius:13px;font-size:15px}.save{background:#173d35;color:#fff}.buy{background:#fff;color:#527059;border:1px solid #b8cabb}.danger{background:#fff5f2;color:#a35d4e;border:1px solid #efc8be}.missing{text-align:center;padding:80px 24px}.missing button{margin-top:20px;background:#173d35;color:#fff}
+.detail-page{min-height:100vh;background:#f8f9f5;color:#173d35;padding-top:var(--fire-status-top, env(safe-area-inset-top));box-sizing:border-box}.detail-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e1e7de}.back,.head-space{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px}.title{font-size:20px;font-weight:600}.detail-scroll{height:calc(100vh - 64px - var(--fire-status-top, env(safe-area-inset-top)));box-sizing:border-box}.hero-card{margin:24px;padding:28px 20px;border-radius:20px;background:#e5eee4;text-align:center}.hero-icon{margin:auto;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;color:#447e70}.name{display:block;margin-top:16px;font-size:25px;font-weight:700}.status{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:14px;background:#d5e6d6;color:#447e70;font-size:12px}.info-card,.progress-card{margin:0 24px 16px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e1e7de}.info-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef1eb;color:#737e76;font-size:13px}.info-row:last-child{border-bottom:0}.info-row .strong{color:#173d35;font-size:18px;font-weight:600}.progress-title{display:block;font-size:15px;font-weight:600}.countdown{display:block;margin-top:10px;color:#447e70;font-size:22px;font-variant-numeric:tabular-nums}.progress-track{height:7px;margin-top:18px;border-radius:5px;background:#edf0e9;overflow:hidden}.progress-fill{height:100%;background:#527059;border-radius:5px}.progress-tip{display:block;margin-top:12px;color:#737e76;font-size:12px}.actions{padding:0 24px calc(32px + env(safe-area-inset-bottom))}.actions button{width:100%;min-height:50px;margin-top:12px;border-radius:13px;font-size:15px}.save{background:#173d35;color:#fff}.buy{background:#fff;color:#527059;border:1px solid #b8cabb}.danger{background:#fff5f2;color:#a35d4e;border:1px solid #efc8be}.missing{text-align:center;padding:80px 24px}.missing button{margin-top:20px;background:#173d35;color:#fff}
 
 .status.ended{background:#d7eadb;color:#2e7255;font-weight:600}
 .status.failed{background:#f5e0da;color:#a35d4e}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-wishlist-detail{padding-top:var(--fire-page-top)}
+ .fire-page-wishlist-detail .detail-scroll{height:calc(100vh - 64px - var(--fire-page-top));height:calc(100dvh - 64px - var(--fire-page-top))}
 </style>

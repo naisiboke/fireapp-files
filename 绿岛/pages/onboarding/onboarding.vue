@@ -1,5 +1,5 @@
 <template>
-  <view class="onboarding">
+  <view class="onboarding fire-page-onboarding-onboarding" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="noise-layer" aria-hidden="true"></view>
     <view class="word-field" aria-hidden="true">
@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 const feedbackOwnerId = useFeedbackPage()
@@ -122,7 +123,7 @@ function skip() {
   background: #0a0a0a;
   color: #fff;
   box-sizing: border-box;
-  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  padding: var(--fire-status-top, env(safe-area-inset-top)) 0 env(safe-area-inset-bottom);
 }
 .noise-layer {
   position: absolute;
@@ -156,7 +157,7 @@ function skip() {
 .skip-button {
   position: absolute;
   z-index: 5;
-  top: calc(env(safe-area-inset-top) + 16px);
+  top: calc(var(--fire-status-top, env(safe-area-inset-top)) + 16px);
   right: 16px;
   min-width: 88px;
   min-height: 44px;
@@ -246,4 +247,7 @@ function skip() {
   .hope-layer { opacity: 1; }
   .enter-button { opacity: 1; }
 }
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-onboarding-onboarding .skip-button{top:var(--fire-page-top)}
 </style>

@@ -7,7 +7,7 @@ const source = path => readFileSync(new URL('../' + path, import.meta.url), 'utf
 const results = []
 function check(name, value) { assert.ok(value, name); results.push(name) }
 const engineSource = source('utils/engine.js').replace(/\bexport (const|function)/g, '$1')
-const engine = new Function(engineSource + '\nreturn {MonthlyStatus,SaveMonthlyTargets,SaveExpense,DeleteExpense};')()
+const engine = new Function(engineSource + '\nreturn {MonthlyStatus,SaveMonthlyTargets,SaveExpense,DeleteExpense,HeroDay};')()
 const { MonthlyStatus, SaveMonthlyTargets, SaveExpense, DeleteExpense } = engine
 const month = '2026-11'
 let currentDay = month + '-20'
@@ -18,7 +18,7 @@ function loadPage(path, dependencies) {
     .replace('export default', 'return')
   return new Function(...Object.keys(dependencies), script)(...Object.values(dependencies))
 }
-const common = { state, MonthlyStatus, LocalDay: () => currentDay, feedbackPageMixin: {}, AppFeedback: {} }
+const common = { state, HeroDay:engine.HeroDay,persistNow:()=>true, MonthlyStatus, LocalDay: () => currentDay, feedbackPageMixin: {}, AppFeedback: {} }
 const Home = loadPage('pages/index/index.vue', {
   ...common, pageEntryMixin: {}, BottomTabs: {}, AnimatedNumber: {}, refreshFinance() {},
   uni: { hideTabBar() {}, getStorageSync() { return null } },

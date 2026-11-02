@@ -1,4 +1,5 @@
-import { callAccountData } from './cloudbase-auth.js'
+import { reportSessionExpiry } from './session-recovery.js'
+import { callAccountData, getAccountAccessToken } from './cloudbase-auth.js'
 import { accountId } from './account-cache.js'
 // 统一云端数据服务入口。未配置地址时明确失败，不伪造保存成功。
 const DEFAULT_API_BASE_URL = 'https://ziyoukedu-d0gyrczqk4de53b87-1311439378.ap-shanghai.app.tcloudbase.com/api'
@@ -25,15 +26,22 @@ function clientId() {
   const uid=accountId() || tokenSubject(accessToken())
   return uid ? 'fire-user-' + uid : ''
 }
-export function apiRequest(path, options = {}) {
+export async function apiRequest(path, options = {}) {
   const base = getApiBaseUrl(); if (!base) return Promise.reject(new ApiUnavailableError())
+  const owner=accountId()
+  const freshToken=await getAccountAccessToken()
+  if(owner!==accountId())throw new Error('账号已切换，旧请求已取消')
   const separator = path.includes('?') ? '&' : '?'
   const url = base + (path.startsWith('/') ? path : '/' + path) + separator + 'clientId=' + encodeURIComponent(clientId())
-  const headers = { Accept: 'application/json', ...(options.header || {}) }; const token = accessToken(); if (token) headers.Authorization = 'Bearer ' + token
+  const headers = { Accept: 'application/json', ...(options.header || {}) }; const token = freshToken; if (token) headers.Authorization = 'Bearer ' + token
   const payload = options.data === undefined ? undefined : JSON.stringify(options.data)
   if (payload !== undefined && !headers['Content-Type']) headers['Content-Type'] = 'text/plain;charset=UTF-8'
   return new Promise((resolve, reject) => uni.request({ url, method: options.method || 'GET', data: payload, header: headers, timeout: options.timeout || 12000,
-    success: (response) => { const code = Number(response.statusCode || 0); if (code >= 200 && code < 300) return resolve(response.data); const message = response.data && (response.data.message || response.data.error); const error = new Error(message || '云端服务请求失败（' + code + '）'); error.statusCode = code; reject(error) },
+    success: (response) => { if(owner!==accountId())return reject(new Error('账号已切换，旧请求已取消')); const code = Number(response.statusCode || 0); if (code >= 200 && code < 300) return resolve(response.data); const message = response.data && (response.data.message || response.data.error); const error = new Error(message || '云端服务请求失败（' + code + '）'); error.statusCode = code;
+      // Only explicit account-auth errors trigger reauthentication. A provider's 401/403 does not.
+      const authCode=response.data?.code||response.data?.errorCode
+      if(['AUTH_REQUIRED','invalid_refresh_token','refresh_token_expired','invalid_grant'].includes(authCode)){error.code=authCode;reportSessionExpiry(error,owner)}
+      reject(error) },
     fail: (error) => reject(new Error(error && error.errMsg ? error.errMsg : '无法连接云端服务')),
   }))
 }

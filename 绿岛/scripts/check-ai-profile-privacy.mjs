@@ -14,7 +14,7 @@ const calls=[],chats=[]
 let windowHeight=800,keyboardHandler=null
 const script=source('pages/ai/index.vue').match(/<script>([\s\S]*?)<\/script>/)[1]
  .replace(/^import .*$/gm,'').replace('export default','return')
-const deps={AppFeedback:{},FireOverlay:{},feedbackPageMixin:{},showNotice(){},dismissFeedback(){},state,persist(){},
+const deps={accountId:()=> 'account-A',AppFeedback:{},FireOverlay:{},feedbackPageMixin:{},showNotice(){},dismissFeedback(){},state,persist(){},
  hasValidFinance:()=>true,freedomResult:()=>({date:'2040-01-01',months:160}),LocalDay:{},
  askBehaviorAI:async payload=>{calls.push(payload);return {reply:'建议先梳理支出，并设置每周复盘时间。'}},
  isMembershipActive:()=>state.membership.active===true,loadAIChats:async()=>[],saveAIChats:async value=>chats.push(JSON.parse(JSON.stringify(value))),

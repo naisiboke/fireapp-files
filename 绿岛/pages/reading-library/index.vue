@@ -1,5 +1,5 @@
 <template>
-  <view class="reading-page">
+  <view class="reading-page fire-page-reading-library-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="reading-head">
       <text class="back" @tap="back">‹</text>
@@ -37,4 +37,7 @@ export default {
 .reading-head{display:flex;align-items:flex-start;gap:14px}.back{font-size:32px;line-height:24px;color:#243830}.title{display:block;font-size:25px;font-weight:700}.sub{display:block;margin-top:7px;font-size:13px;color:#718074}
 .tabs{display:flex;margin-top:30px;border-bottom:1px solid #dfe8dc;gap:28px}.tab{padding:13px 2px;color:#829084;font-size:14px}.tab.active{color:#243830;font-weight:700;border-bottom:2px solid #527059}
 .content{padding-top:28px}.empty-card{padding:52px 22px;text-align:center;background:#fff;border:1px solid #e4ebe0;border-radius:18px}.empty-icon{display:block;font-size:36px;color:#7b9980}.empty-title{display:block;margin-top:18px;font-size:17px;font-weight:700}.empty-sub{display:block;margin-top:9px;font-size:13px;line-height:1.7;color:#718074}.primary{display:inline-flex;margin-top:24px;padding:12px 20px;border-radius:10px;background:#243830;color:#fff;font-size:13px}.safe-note{display:block;margin-top:42px;text-align:center;font-size:11px;color:#8b9489}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-reading-library-index{padding-top:var(--fire-page-top)}
 </style>

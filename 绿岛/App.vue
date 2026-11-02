@@ -1,10 +1,20 @@
 <script>
-import { bootstrap, hydrateFromServer, persist } from './store/index.js'
+import { bootstrap, hydrateFromServer, persist, persistNow, suspendAccountSync, state } from './store/index.js'
+
+import { configureSessionRecovery, safeReturnRoute } from './utils/session-recovery.js'
+import { currentPageRoute } from './utils/session-drafts.js'
+import { showNotice } from './utils/feedback.js'
 
 const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register', 'pages/guide/index'])
 
 export default {
   onLaunch() {
+    configureSessionRecovery({
+      suspend:suspendAccountSync,
+      preserve:persistNow,
+      expired() { state.cloudSync={status:'auth-required',message:'登录已过期，本机记录已保留，请重新登录以恢复同步'} },
+      failed() { showNotice({title:'登录已过期，但本机保存失败。请先检查设备存储，当前输入已保留在页面。',icon:'none'}) },
+    })
     try { bootstrap() } catch (error) { console.error('[app-bootstrap]', error) }
     // 配置云端 API 后以服务端数据为正式来源；未配置时保持本地过渡缓存。
     if (uni.getStorageSync('fire_login_status') === true) {
@@ -26,7 +36,7 @@ export default {
     if (app.__fireAuthRedirecting) return
     app.__fireAuthRedirecting = true
     uni.reLaunch({
-      url: '/pages/login/login?redirect=/' + route,
+      url: '/pages/login/login?redirect=' + encodeURIComponent(safeReturnRoute(currentPageRoute())),
       complete: () => { app.__fireAuthRedirecting = false },
     })
   },

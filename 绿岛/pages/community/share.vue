@@ -1,5 +1,5 @@
 <template>
-  <view class="share-page">
+  <view class="share-page fire-page-community-share" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="share-head"><view class="back" @tap="back">‹</view><text class="title">{{ editId ? "编辑我的经历" : "分享我的经历" }}</text><view class="close" @tap="close">×</view></view>
     <scroll-view class="share-scroll" scroll-y>
@@ -16,6 +16,8 @@
   </view>
 </template>
 <script setup>
+import { useSessionDraft } from '@/utils/session-drafts.js'
+import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice } from '@/utils/feedback.js'
@@ -36,6 +38,7 @@ onLoad(async (options) => {
  editId.value=id
  let post=CS.ugc().find(x=>String(x.id)===id)
  if(!post){await CS.hydrate();post=CS.ugc().find(x=>String(x.id)===id)}
+ if(shareDraft.restored())return
  if(!post){showNotice({title:'未能恢复这段经历，请联网后重试',icon:'none'});return}
  form.tags=[...(post.tags||String(post.category||'').split(' · ').filter(Boolean))]
  form.journey=post.journey||'doing'
@@ -72,6 +75,7 @@ async function publish(){
   const saved=await CS.submitPost(post)
   if(saved.status==='approved'){
    CS.clearDraft()
+   shareDraft.clear()
    showNotice({title:'云端审核通过，经历已发布',icon:'none'})
    setTimeout(()=>uni.reLaunch({url:'/pages/community/index?tab=doing'}),500)
   }else{
@@ -83,9 +87,13 @@ async function publish(){
  }finally{publishing.value=false}
 }
 
+const shareDraft=useSessionDraft(()=>({form:{...form},editId:editId.value}),draft=>{if(draft?.form)Object.assign(form,draft.form);if(typeof draft?.editId==='string')editId.value=draft.editId})
 </script>
 <style lang="scss">
-.share-page{position:fixed;inset:0;background:#fff;color:#243830;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);overflow:hidden}.share-head{height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e8efe4}.back,.close{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px;color:#52605a}.close{font-size:30px;color:#52605a}.title{font-size:18px;font-weight:600}.share-scroll{flex:1;height:0;min-height:0;width:100%;pointer-events:auto}.share-content{padding:20px 20px 120px;box-sizing:border-box}.block{margin-bottom:24px}.label{display:block;margin-bottom:10px;color:#52605a;font-size:13px;font-weight:500}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{min-height:44px;padding:0 14px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#eff3eb;color:#52605a;font-size:13px}.tag.active{background:#e8efe4;border:1px solid #243830;color:#243830}.text-input,.text-area,.year,.event{position:relative;z-index:2;pointer-events:auto!important;background:#f7f9f4;border:1px solid #e5e9e0;border-radius:10px;color:#243830;box-sizing:border-box}.text-input{width:100%;height:52px;padding:0 12px;font-size:15px}.text-area{width:100%;min-height:140px;padding:12px;font-size:14px;line-height:1.6}.text-input:focus,.text-area:focus,.year:focus,.event:focus{border-color:#4f8068;outline:none;box-shadow:0 0 0 2px rgba(79,128,104,.12)}.counter{display:block;text-align:right;margin-top:5px;color:#66736a;font-size:11px}.timeline-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.year{width:78px;height:44px;padding:0 8px}.event{flex:1;height:44px;padding:0 8px}.remove{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#a35d4e;font-size:22px}.add-row{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;border:1px dashed #b8c6b3;border-radius:10px;color:#243830;font-size:13px}.preview{padding-top:18px;border-top:1px solid #e8efe4}.preview-title{display:block;font-size:16px;font-weight:600;margin-bottom:8px}.preview-body{display:block;color:#426052;font-size:13px;line-height:1.75;white-space:pre-wrap}.share-foot{position:relative;z-index:20;flex-shrink:0;padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #e8efe4;background:#fff;pointer-events:auto}.actions{display:flex;gap:10px}.actions button{flex:1;min-height:48px;border-radius:10px;font-size:14px}.draft{background:#f7f9f4;color:#243830;border:1px solid #dce4d7}.publish{background:#243830;color:#fff}.publish[disabled]{opacity:.4}.hint{display:block;text-align:center;margin-top:8px;color:#66736a;font-size:11px}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.share-page{position:fixed;inset:0;background:#fff;color:#243830;display:flex;flex-direction:column;padding-top:var(--fire-status-top, env(safe-area-inset-top));padding-bottom:env(safe-area-inset-bottom);overflow:hidden}.share-head{height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e8efe4}.back,.close{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px;color:#52605a}.close{font-size:30px;color:#52605a}.title{font-size:18px;font-weight:600}.share-scroll{flex:1;height:0;min-height:0;width:100%;pointer-events:auto}.share-content{padding:20px 20px 120px;box-sizing:border-box}.block{margin-bottom:24px}.label{display:block;margin-bottom:10px;color:#52605a;font-size:13px;font-weight:500}.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{min-height:44px;padding:0 14px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#eff3eb;color:#52605a;font-size:13px}.tag.active{background:#e8efe4;border:1px solid #243830;color:#243830}.text-input,.text-area,.year,.event{position:relative;z-index:2;pointer-events:auto!important;background:#f7f9f4;border:1px solid #e5e9e0;border-radius:10px;color:#243830;box-sizing:border-box}.text-input{width:100%;height:52px;padding:0 12px;font-size:15px}.text-area{width:100%;min-height:140px;padding:12px;font-size:14px;line-height:1.6}.text-input:focus,.text-area:focus,.year:focus,.event:focus{border-color:#4f8068;outline:none;box-shadow:0 0 0 2px rgba(79,128,104,.12)}.counter{display:block;text-align:right;margin-top:5px;color:#66736a;font-size:11px}.timeline-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.year{width:78px;height:44px;padding:0 8px}.event{flex:1;height:44px;padding:0 8px}.remove{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#a35d4e;font-size:22px}.add-row{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;border:1px dashed #b8c6b3;border-radius:10px;color:#243830;font-size:13px}.preview{padding-top:18px;border-top:1px solid #e8efe4}.preview-title{display:block;font-size:16px;font-weight:600;margin-bottom:8px}.preview-body{display:block;color:#426052;font-size:13px;line-height:1.75;white-space:pre-wrap}.share-foot{position:relative;z-index:20;flex-shrink:0;padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #e8efe4;background:#fff;pointer-events:auto}.actions{display:flex;gap:10px}.actions button{flex:1;min-height:48px;border-radius:10px;font-size:14px}.draft{background:#f7f9f4;color:#243830;border:1px solid #dce4d7}.publish{background:#243830;color:#fff}.publish[disabled]{opacity:.4}.hint{display:block;text-align:center;margin-top:8px;color:#66736a;font-size:11px}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .status-options{display:flex;gap:10px}.status-option{flex:1;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#eff3eb;color:#52605a;font-size:14px}.status-option.active{background:#e8efe4;border:1px solid #243830;color:#243830;font-weight:600}
+
+/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
+ .fire-page-community-share{padding-top:var(--fire-page-top)}
 </style>
