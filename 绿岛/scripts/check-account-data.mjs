@@ -102,7 +102,7 @@ const uni={
  removeStorageSync:key=>deviceStorage.delete(key),
  request(){throw Error('Unexpected legacy HTTP request')},
 }
-let transport='online',holdAction='',releaseHeld=null
+let transport='online',holdAction='',releaseHeld=null,beforeStateSave=null
 const silent={warn(){},error(){}}
 let clientTimers=new Map(),timerId=0
 function createClient(){
@@ -110,6 +110,7 @@ function createClient(){
  const storage=moduleOf(source('utils/storage.js'),['storage'],cache).storage
  const callAccountData=async event=>{
   if(transport==='offline')throw Object.assign(Error('模拟网络失败'),{code:'OFFLINE'})
+  if(event.action==='state.save'&&beforeStateSave){const hook=beforeStateSave;beforeStateSave=null;await hook()}
   const result=await handler(event)
   if(event.action===holdAction)await new Promise(resolve=>{releaseHeld=resolve})
   if(!result.ok)throw Object.assign(Error(result.message),{code:result.code})
@@ -117,7 +118,7 @@ function createClient(){
   return result
  }
  const api=moduleOf(source('utils/api-service.js'),['fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
- const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
+ const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','getAccountConflictSummary','readAccountConflictBackup','resolveAccountConflict','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
   ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname(){return {ok:true}},
   console:silent,setTimeout:callback=>{const id=++timerId;clientTimers.set(id,callback);return id},clearTimeout:id=>clientTimers.delete(id),
  })
@@ -157,7 +158,7 @@ await handler({action:'state.save',revision:cloudBeforeConflict.revision,state:{
 client.store.state.finance.assets=15000
 client.store.persistNow()
 restored=await client.store.hydrateFromServer()
-check('conflicting device versions keep local edits rather than replacing them',!restored.loaded&&client.store.state.finance.assets===15000)
+check('conflicting device versions keep local edits rather than replacing them',restored.loaded&&restored.conflict&&client.store.state.finance.assets===15000)
 check('conflicting local state does not overwrite remote changes',(await handler({action:'bootstrap'})).state.finance.assets===99999)
 client.store.endAccountSession()
 trustedUid='account-B';await client.store.hydrateFromServer()
@@ -166,7 +167,7 @@ check('switching accounts preserves A separate local backup',client.cache.readAc
 client.store.endAccountSession()
 trustedUid='account-A'
 restored=await client.store.hydrateFromServer()
-check('conflict remains protected after sign-out and sign-in',!restored.loaded&&(await handler({action:'bootstrap'})).state.finance.assets===99999&&client.store.state.finance.assets===15000)
+check('conflict remains protected after sign-out and sign-in',restored.loaded&&restored.conflict&&(await handler({action:'bootstrap'})).state.finance.assets===99999&&client.store.state.finance.assets===15000)
 check('conflict does not advance the unacknowledged local base revision',client.cache.readAccountCache('fire_sync_meta_v1').revision< (await handler({action:'bootstrap'})).revision)
 client.cache.activateAccount('account-A')
 transport='offline'
@@ -265,5 +266,136 @@ releaseHeld();const oldMembershipResult=await lateMembership
 check('late redemption does not grant membership to a newly active account',oldMembershipResult instanceof Error&&!client.store.state.membership.active&&client.cache.accountId()==='member-B')
 client.store.endAccountSession();trustedUid='member-A';await client.store.hydrateFromServer()
 check('old account grant remains recoverable after an account switch',client.store.state.membership.active&&client.store.state.membership.expiresAt===redeemed.membership.expiresAt+3*86400000)
+
+
+clientTimers.clear();deviceStorage=new Map();trustedUid='conflict-user';transport='online';holdAction=''
+client=createClient();client.store.bootstrap();await client.store.hydrateFromServer()
+client.store.state.finance={...client.store.state.finance,assets:10000};client.store.state.financeEntered=true
+client.store.persistNow();await client.store.syncStateToServer()
+async function conflictFixture(localAssets,cloudAssets){
+ await client.store.hydrateFromServer()
+ client.store.suspendAccountSync()
+ client.store.state.finance.assets=localAssets;client.store.persistNow()
+ const cloud=await handler({action:'bootstrap'})
+ await handler({action:'state.save',revision:cloud.revision,state:{...cloud.state,finance:{...cloud.state.finance,assets:cloudAssets}}})
+ return client.store.hydrateFromServer()
+}
+restored=await conflictFixture(15000,20000)
+check('conflicting archives allow the verified user to enter in local mode',restored.loaded&&restored.conflict&&client.store.state.finance.assets===15000)
+let summary=client.store.getAccountConflictSummary()
+check('conflict screen receives both balances and record counts',summary.local.assets===15000&&summary.cloud.assets===20000&&summary.local.ledgerCount===0)
+const backup=client.store.readAccountConflictBackup(summary.id)
+check('both original archives are backed up before any choice',summary.backupReady&&backup.pair.local.finance.assets===15000&&backup.pair.cloud.finance.assets===20000)
+await client.store.syncStateToServer()
+check('deferred conflict remains visible and blocks implicit cloud writes',client.store.state.cloudSync.status==='conflict'&&(await handler({action:'bootstrap'})).state.finance.assets===20000)
+const cloudChoice=await client.store.resolveAccountConflict('cloud',summary)
+check('explicit cloud choice restores sync and uses cloud records',cloudChoice.resolved&&cloudChoice.synced&&client.store.state.finance.assets===20000)
+check('cloud choice keeps the prior local backup accessible',client.store.readAccountConflictBackup(cloudChoice.backupId).pair.local.finance.assets===15000)
+check('cloud choice does not rewrite the server archive',(await handler({action:'bootstrap'})).state.finance.assets===20000)
+const revisionBeforeReorder=(await handler({action:'bootstrap'})).revision
+client.store.state.finance=Object.fromEntries(Object.entries(client.store.state.finance).reverse())
+client.store.persistNow();await client.store.syncStateToServer()
+check('object key order alone does not create a dirty edit or new cloud revision',(await handler({action:'bootstrap'})).revision===revisionBeforeReorder&&!client.cache.readAccountCache('fire_sync_meta_v1').dirty)
+await conflictFixture(21000,22000)
+summary=client.store.getAccountConflictSummary()
+const localChoice=await client.store.resolveAccountConflict('local',summary)
+check('explicit local choice synchronizes against the reviewed current revision',localChoice.resolved&&localChoice.synced&&(await handler({action:'bootstrap'})).state.finance.assets===21000)
+check('local choice keeps the replaced cloud archive in a backup',client.store.readAccountConflictBackup(localChoice.backupId).pair.cloud.finance.assets===22000)
+await conflictFixture(23000,24000)
+summary=client.store.getAccountConflictSummary()
+let newer=await handler({action:'bootstrap'})
+await handler({action:'state.save',revision:newer.revision,state:{...newer.state,finance:{...newer.state.finance,assets:25000}}})
+const staleChoice=await client.store.resolveAccountConflict('local',summary)
+check('cloud changes after review require another review instead of overwrite',!staleChoice.resolved&&staleChoice.changed&&(await handler({action:'bootstrap'})).state.finance.assets===25000&&client.store.state.finance.assets===23000)
+summary=client.store.getAccountConflictSummary()
+client.store.state.finance.assets=23100;client.store.persistNow()
+let staleError
+try{await client.store.resolveAccountConflict('cloud',summary)}catch(error){staleError=error}
+check('local edits after review invalidate the choice safely',staleError?.code==='CONFLICT_CHANGED'&&client.store.state.finance.assets===23100)
+summary=client.store.getAccountConflictSummary()
+const writeStorage=uni.setStorageSync
+uni.setStorageSync=(key,value)=>{if(key.includes('fire_sync_conflict_backup'))throw Error('full');writeStorage(key,value)}
+client.store.state.finance.assets=23200;client.store.persistNow()
+summary=client.store.getAccountConflictSummary()
+let backupFailure
+try{await client.store.resolveAccountConflict('cloud',summary)}catch(error){backupFailure=error}
+check('backup storage failure blocks version switching and preserves local records',backupFailure?.code==='BACKUP_FAILED'&&client.store.state.finance.assets===23200&&(await handler({action:'bootstrap'})).state.finance.assets===25000)
+uni.setStorageSync=writeStorage
+summary=client.store.getAccountConflictSummary()
+const activeStorage=uni.setStorageSync
+uni.setStorageSync=(key,value)=>{if(key.startsWith('fire_forge_state:account:'))throw Error('full');activeStorage(key,value)}
+let cacheFailure
+try{await client.store.resolveAccountConflict('cloud',summary)}catch(error){cacheFailure=error}
+check('active cache storage failure rolls back the version choice',cacheFailure?.code==='LOCAL_SAVE_FAILED'&&client.store.state.finance.assets===23200&&client.store.getAccountConflictSummary()!==null)
+uni.setStorageSync=activeStorage
+summary=client.store.getAccountConflictSummary()
+transport='offline'
+let offlineChoice
+try{await client.store.resolveAccountConflict('local',summary)}catch(error){offlineChoice=error}
+check('offline choice does not overwrite either archive',offlineChoice&&client.store.state.finance.assets===23200&&(await handler({action:'bootstrap'})).state.finance.assets===25000)
+transport='online'
+summary=client.store.getAccountConflictSummary()
+holdAction='bootstrap';releaseHeld=null
+const delayedResolution=client.store.resolveAccountConflict('cloud',summary).catch(error=>error)
+for(let turn=0;turn<100&&!releaseHeld;turn++)await Promise.resolve()
+check('resolution can pause for a remote ownership check',typeof releaseHeld==='function')
+client.store.endAccountSession();trustedUid='other-conflict-user';holdAction=''
+await client.store.hydrateFromServer()
+releaseHeld()
+const switchedResolution=await delayedResolution
+check('switching accounts cancels an old account conflict choice',switchedResolution.code==='ACCOUNT_MISMATCH'&&client.cache.accountId()==='other-conflict-user'&&client.store.state.finance.assets===0)
+check('new account cannot read another account conflict backup',client.store.readAccountConflictBackup(backup.id)===null)
+client.store.endAccountSession();trustedUid='conflict-user';await client.store.hydrateFromServer()
+
+await conflictFixture(26000,27000)
+summary=client.store.getAccountConflictSummary()
+beforeStateSave=async()=>{
+ const concurrent=await handler({action:'bootstrap'})
+ await handler({action:'state.save',revision:concurrent.revision,state:{...concurrent.state,finance:{...concurrent.state.finance,assets:28000}}})
+}
+const racedChoice=await client.store.resolveAccountConflict('local',summary)
+check('CAS rejects cloud changes between review fetch and local-version upload',!racedChoice.resolved&&racedChoice.changed&&(await handler({action:'bootstrap'})).state.finance.assets===28000&&client.store.state.finance.assets===26000)
+check('a failed CAS returns to a reviewable conflict rather than false success',client.store.getAccountConflictSummary()?.cloud.assets===28000&&client.store.state.cloudSync.status==='conflict')
+
+
+
+clientTimers.clear();deviceStorage=new Map();trustedUid='login-conflict-user';transport='online';holdAction=''
+client=createClient();client.store.bootstrap();await client.store.hydrateFromServer()
+client.store.state.finance={...client.store.state.finance,assets:10000};client.store.state.financeEntered=true
+client.store.persistNow();await client.store.syncStateToServer()
+await conflictFixture(11000,12000)
+const loginRoutes=[];let signInCalls=0
+uni.reLaunch=options=>{loginRoutes.push(options.url);options.success?.()}
+const conflictLoginDeps={...loginDependencies,state:client.store.state,persist:client.store.persist,
+ hydrateFromServer:client.store.hydrateFromServer,endAccountSession:client.store.endAccountSession,
+ signInWithCode:async()=>{signInCalls++;return {}},
+}
+const resumableLoginScript=loginScript.replace("import('@/utils/community-store.js')","Promise.resolve({CS:{hydrate:async()=>{}}})")
+const conflictLogin=new Function(...Object.keys(conflictLoginDeps),resumableLoginScript+'\nreturn {email,code,login,resumeLogin,canResume,allowCode(){verificationInfo={};sentEmail=account()}};')(...Object.values(conflictLoginDeps))
+conflictLogin.email.value='login-conflict@example.com';conflictLogin.code.value='123456';conflictLogin.allowCode()
+await conflictLogin.login()
+check('actual login handler enters the conflict chooser after verified sign-in',loginRoutes.at(-1).startsWith('/pages/sync-conflict/index?next='))
+check('conflicted login keeps both versions and a valid login flag',uni.getStorageSync('fire_login_status')===true&&client.store.state.finance.assets===11000&&(await handler({action:'bootstrap'})).state.finance.assets===12000)
+await conflictLogin.resumeLogin()
+check('retrying verified restore does not request another sign-in',signInCalls===1&&conflictLogin.canResume.value&&loginRoutes.at(-1).startsWith('/pages/sync-conflict/index?next='))
+const chooserHooks={},dialogDecision={confirm:false}
+const chooserDeps={
+ ref:value=>({value}),onLoad:fn=>chooserHooks.load=fn,onShow:fn=>chooserHooks.show=fn,
+ useFeedbackPage:()=>1,AppFeedback:{},showNotice(){},showDialog:async()=>dialogDecision,
+ getAccountConflictSummary:client.store.getAccountConflictSummary,resolveAccountConflict:client.store.resolveAccountConflict,
+ readAccountConflictBackup:client.store.readAccountConflictBackup,hydrateFromServer:client.store.hydrateFromServer,
+ safeReturnRoute:value=>value||'/pages/index/index',uni,
+}
+const chooserScript=source('pages/sync-conflict/index.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1]
+ .replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'')
+const chooser=new Function(...Object.keys(chooserDeps),chooserScript+'\nreturn {choose,leave,busy,summary};')(...Object.values(chooserDeps))
+chooserHooks.load({});chooserHooks.show()
+await chooser.choose('cloud')
+check('canceling the real chooser leaves both archives unchanged',client.store.state.finance.assets===11000&&(await handler({action:'bootstrap'})).state.finance.assets===12000&&!chooser.busy.value)
+chooser.leave()
+check('postponing version selection enters the app without syncing either version',loginRoutes.at(-1)==='/pages/index/index'&&client.store.state.cloudSync.status==='conflict')
+dialogDecision.confirm=true
+await chooser.choose('cloud')
+check('confirmed real chooser resumes home with selected records',loginRoutes.at(-1)==='/pages/index/index'&&client.store.state.finance.assets===12000&&chooser.summary.value===null)
 
 console.log(checks.length+' account data safety checks passed')

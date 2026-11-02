@@ -195,6 +195,13 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "音乐"
       }
+    },
+    {
+      "path": "pages/sync-conflict/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "选择同步版本"
+      }
     }
   ],
   "tabBar": {

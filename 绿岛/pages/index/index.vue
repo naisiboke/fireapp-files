@@ -64,8 +64,8 @@
     </view>
 
     <view class="home-content">
-      <view v-if="state.cloudSync && ['error','pending','restoring','synced','auth-required'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
-        <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
+      <view v-if="state.cloudSync && ['error','pending','restoring','synced','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
+        <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'conflict' ? '选择版本 ›' : state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
       </view>
 
       <view class="home-metrics">
@@ -402,12 +402,14 @@ export default {
       return svgUri(svg)
     },
     async retryAccountSync() {
+      if(state.cloudSync?.status==='conflict'){uni.navigateTo({url:'/pages/sync-conflict/index'});return}
       if(state.cloudSync?.status==='restoring')return
       const restored=await hydrateFromServer()
       if(!restored.loaded){
         if(uni.getStorageSync('fire_login_status')===true)showNotice({title:state.cloudSync.message,icon:'none'})
         return
       }
+      if(restored.conflict){uni.navigateTo({url:'/pages/sync-conflict/index'});return}
       const result=await syncStateToServer()
       if(!result.synced&&!result.skipped)showNotice({title:state.cloudSync.message,icon:'none'})
     },

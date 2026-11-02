@@ -2,8 +2,8 @@ import { feedbackState, showDialog, showNotice } from './feedback.js'
 import { currentPageRoute } from './session-drafts.js'
 
 export const UPDATE_URL='https://fireday.cn/app-update.json'
-export const BUILD_VERSION='1.0.1'
-export const BUILD_CODE=101
+export const BUILD_VERSION='1.0.2'
+export const BUILD_CODE=102
 const APP_ID='__UNI__6A9B0BE'
 const DAY=86400000
 export function validateUpdate(document,installed,platform) {
@@ -66,7 +66,7 @@ export function installedVersion() {
 }
 const check=createUpdateChecker({
   isNative:nativeRuntime,now:()=>Date.now(),installed:installedVersion,
-  eligible:()=>uni.getStorageSync('fire_login_status')===true&&feedbackState.owner!==null&&!uni.getStorageSync('fire_reauth_pending_v1')&&!/^\/pages\/(login|register|guide|launch|onboarding)\//.test(currentPageRoute()),
+  eligible:()=>uni.getStorageSync('fire_login_status')===true&&feedbackState.owner!==null&&!uni.getStorageSync('fire_reauth_pending_v1')&&!/^\/pages\/(login|register|guide|launch|onboarding|sync-conflict)\//.test(currentPageRoute()),
   owner:()=>feedbackState.owner,
   read:key=>uni.getStorageSync(key),write:(key,value)=>uni.setStorageSync(key,value),
   fetch:()=>new Promise((resolve,reject)=>uni.request({

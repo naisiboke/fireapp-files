@@ -197,6 +197,6 @@ check('manual update network failure gives useful feedback',noticeCount===1)
 native=false
 await checkUpdate(true)
 check('H5 does not invoke native download code',openCount===1&&noticeCount===2)
-check('release manifest uses the new identifiable build',source('manifest.json').includes('"versionCode" : "101"'))
+check('release manifest uses the new identifiable build',source('manifest.json').includes('"versionCode" : "102"'))
 check('repository release metadata remains unpublished until APK upload',JSON.parse(readFileSync(new URL('../../app-update.json',import.meta.url),'utf8')).android.published===false)
 console.log(checks.length+' release recovery, spacing and update checks passed')

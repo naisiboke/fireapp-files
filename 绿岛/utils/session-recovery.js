@@ -1,6 +1,6 @@
 import { currentPageRoute, flushSessionDrafts } from './session-drafts.js'
 
-const ALLOWED_ROUTES = new Set(["/pages/community/share","/pages/wishlist/detail","/pages/wishlist/add","/pages/assets/index","/pages/index/index","/pages/tools/index","/pages/reading-library/index","/pages/community/index","/pages/community/manage","/pages/profile/index","/pages/ledger/index","/pages/ledger/edit","/pages/privacy/index","/pages/settings/index","/pages/wishlist/index","/pages/hero/index","/pages/calculator/index","/pages/savings-curve/index","/pages/profile/edit","/pages/profile/membership","/pages/personality/index","/pages/ai/index","/pages/music/index"])
+const ALLOWED_ROUTES = new Set(["/pages/sync-conflict/index","/pages/community/share","/pages/wishlist/detail","/pages/wishlist/add","/pages/assets/index","/pages/index/index","/pages/tools/index","/pages/reading-library/index","/pages/community/index","/pages/community/manage","/pages/profile/index","/pages/ledger/index","/pages/ledger/edit","/pages/privacy/index","/pages/settings/index","/pages/wishlist/index","/pages/hero/index","/pages/calculator/index","/pages/savings-curve/index","/pages/profile/edit","/pages/profile/membership","/pages/personality/index","/pages/ai/index","/pages/music/index"])
 const PENDING_KEY = 'fire_reauth_pending_v1'
 let handlers = null, redirecting = false
 export function safeReturnRoute(value) {

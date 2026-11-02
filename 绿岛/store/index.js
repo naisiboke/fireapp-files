@@ -171,6 +171,8 @@ let revision = 0
 let dirty = false
 let changeVersion = 0
 let restoreTask = null
+let activeConflict = null
+let resolvingConflict = false
 let writeQueue = Promise.resolve()
 
 function localSyncMeta(local) {
@@ -197,6 +199,7 @@ function meaningful(value) {
     Object.keys(value.personalityTests||{}).length || value.profile?.nicknameUpdatedAt)
 }
 export function suspendAccountSync() {
+  activeConflict=null
   sessionEpoch++
   restoreReady=false
   restoreTask=null
@@ -212,6 +215,10 @@ export function endAccountSession() {
 }
 export async function syncStateToServer() {
   const uid=accountId(),epoch=sessionEpoch
+  if(activeConflict?.uid===uid && activeConflict.epoch===epoch){
+    state.cloudSync={status:'conflict',message:'本机与云端版本不同，暂用本机记录。点此选择同步版本'}
+    return {synced:false,blocked:true,conflict:true}
+  }
   if(!uid || !restoreReady){
     state.cloudSync={status:'error',message:'尚未恢复账号数据，本机记录已保留，请先重试恢复'}
     return {synced:false,blocked:true}
@@ -299,9 +306,13 @@ export async function hydrateFromServer() {
         else{
           revision=Number(localMeta.revision)||0
           applySaved(local);state.ready=true;writeWishlist(state.items)
-          throw new Error('另一设备也更新了存档，已保留本机与云端两份资料，请联系客服核对后合并')
+          if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
+          captureAccountConflict(remote,localMeta,epoch)
+          state.cloudSync={status:'conflict',message:'本机与云端版本不同，暂用本机记录。点此选择同步版本'}
+          return {loaded:true,conflict:true,exists:true,uid:remote.uid,email:remote.email}
         }
       }
+      activeConflict=null
       revision=remoteRevision
       applySaved(dirty&&local ? local : remote.exists ? remote.state : local)
       if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
@@ -311,7 +322,7 @@ export async function hydrateFromServer() {
       restoreReady=true
       state.cloudSync=dirty?{status:'pending',message:'本机修改已保留，等待同步'}:remote.exists?{status:'synced',message:'已恢复当前账号的数据'}:{status:'empty',message:'尚无财务存档，填写资料后会自动同步'}
       if(dirty)await syncStateToServer()
-      return {loaded:true,exists:remote.exists,uid:remote.uid}
+      return {loaded:true,exists:remote.exists,uid:remote.uid,email:remote.email}
     }catch(error){
       if(epoch===sessionEpoch)state.cloudSync={status:'error',message:error.message||'恢复失败，本机数据已保留'}
       console.warn('[account-restore]',error.code||error.message)
@@ -321,18 +332,113 @@ export async function hydrateFromServer() {
   restoreTask={epoch,promise}
   try{return await promise}finally{if(restoreTask?.promise===promise)restoreTask=null}
 }
+
+function conflictError(code,message) { const error=new Error(message);error.code=code;return error }
+function conflictPair(local,remote,localRevision) {
+  const clean=value=>{const plain=JSON.parse(JSON.stringify(value));delete plain.__fireLocalSync;delete plain.ready;delete plain.cloudSync;return plain}
+  return {uid:remote.uid,localRevision,cloudRevision:remote.revision,local:clean(local),cloud:clean(remote.state)}
+}
+function preserveConflictPair(pair) {
+  const indexKey='fire_sync_conflict_backups_v1'
+  const savedIndex=readAccountCache(indexKey,[])
+  const index=Array.isArray(savedIndex)?savedIndex:[]
+  const previous=index.length?readAccountCache('fire_sync_conflict_backup_v1:'+index[index.length-1].id):null
+  if(previous && JSON.stringify(previous.pair)===JSON.stringify(pair))return {id:previous.id,saved:true}
+  const id=Date.now()+'-'+Math.random().toString(36).slice(2,10)
+  const record={id,savedAt:Date.now(),pair}
+  if(!writeAccountCache('fire_sync_conflict_backup_v1:'+id,record))return {id,saved:false}
+  if(!writeAccountCache(indexKey,[...index,{id,savedAt:record.savedAt}]))return {id,saved:false}
+  return {id,saved:true}
+}
+function captureAccountConflict(remote,localMeta,epoch) {
+  const backup=preserveConflictPair(conflictPair(serializableState(),remote,Number(localMeta.revision)||0))
+  activeConflict={uid:remote.uid,epoch,remote:JSON.parse(JSON.stringify(remote)),id:backup.id,backupReady:backup.saved,capturedVersion:changeVersion}
+}
+function snapshotSummary(value) {
+  return {
+    assets:Number.isFinite(Number(value?.finance?.assets))?Number(value.finance.assets):null,
+    ledgerCount:Array.isArray(value?.ledger)?value.ledger.length:0,
+    assetCount:Array.isArray(value?.assetHistory)?value.assetHistory.length:0,
+    wishlistCount:Array.isArray(value?.items)?value.items.length:0,
+    chatCount:Array.isArray(value?.aiChats)?value.aiChats.length:0,
+    testCount:Object.keys(value?.personalityTests||{}).length,
+  }
+}
+export function getAccountConflictSummary() {
+  if(!activeConflict || activeConflict.uid!==accountId() || activeConflict.epoch!==sessionEpoch)return null
+  if(activeConflict.capturedVersion!==changeVersion){
+    const backup=preserveConflictPair(conflictPair(serializableState(),activeConflict.remote,revision))
+    Object.assign(activeConflict,{id:backup.id,backupReady:backup.saved,capturedVersion:changeVersion})
+  }
+  return {id:activeConflict.id,localVersion:changeVersion,backupReady:activeConflict.backupReady,
+    localRevision:revision,cloudRevision:activeConflict.remote.revision,
+    local:snapshotSummary(state),cloud:snapshotSummary(activeConflict.remote.state)}
+}
+export function readAccountConflictBackup(id) {
+  const record=readAccountCache('fire_sync_conflict_backup_v1:'+String(id||''))
+  return record?.pair?.uid===accountId()?record:null
+}
+export async function resolveAccountConflict(choice,reviewed={}) {
+  if(!['local','cloud'].includes(choice))throw conflictError('INVALID_CHOICE','请选择本机或云端版本')
+  if(resolvingConflict)throw conflictError('RESOLUTION_BUSY','正在处理，请稍候')
+  const conflict=activeConflict,uid=accountId(),epoch=sessionEpoch
+  if(!conflict || conflict.uid!==uid || conflict.epoch!==epoch)throw conflictError('NO_CONFLICT','请先刷新同步状态')
+  if(reviewed.id!==conflict.id || reviewed.localVersion!==changeVersion)throw conflictError('CONFLICT_CHANGED','本机资料刚有修改，请重新核对')
+  resolvingConflict=true
+  try {
+    if(!saveLocalChange())throw conflictError('LOCAL_SAVE_FAILED','本机保存失败，请检查设备存储后重试')
+    const version=changeVersion
+    const remote=await fetchAccountBootstrap()
+    if(accountId()!==uid || epoch!==sessionEpoch)throw conflictError('ACCOUNT_MISMATCH','账号已切换，旧操作已取消')
+    if(changeVersion!==version)throw conflictError('CONFLICT_CHANGED','读取期间有本机修改，请重新核对')
+    if(remote.uid!==uid || !remote.exists || !Number.isSafeInteger(remote.revision) ||
+      !remote.state?.finance || !Array.isArray(remote.state.ledger))throw conflictError('INVALID_ARCHIVE','云端资料未能完整读取，未切换版本')
+    if(remote.revision!==conflict.remote.revision || !equivalentState(remote.state,conflict.remote.state)){
+      captureAccountConflict(remote,meta(),epoch)
+      state.cloudSync={status:'conflict',message:'云端刚有更新，请重新核对两份资料'}
+      return {resolved:false,changed:true}
+    }
+    const before=serializableState(),oldMeta=meta()
+    const backup=preserveConflictPair(conflictPair(before,remote,revision))
+    if(!backup.saved)throw conflictError('BACKUP_FAILED','备份保存失败，尚未切换版本，请检查设备存储')
+    const selected=choice==='cloud'?remote.state:before
+    const membership=remote.membership && typeof remote.membership.active==='boolean'?remote.membership:state.membership
+    revision=remote.revision;dirty=choice==='local';changeVersion++
+    applySaved({...selected,membership});state.ready=true
+    if(!writeLocal(serializableState())){
+      revision=oldMeta.revision;dirty=oldMeta.dirty;changeVersion=oldMeta.changeVersion
+      applySaved(before);state.ready=true
+      throw conflictError('LOCAL_SAVE_FAILED','本机保存失败，原资料已保留，尚未切换版本')
+    }
+    saveMeta()
+    activeConflict=null;restoreReady=true
+    if(choice==='cloud'){
+      state.cloudSync={status:'synced',message:'已采用云端版本，本机原记录已备份'}
+      return {resolved:true,synced:true,backupId:backup.id}
+    }
+    state.cloudSync={status:'pending',message:'已采用本机版本，等待同步'}
+    const result=await syncStateToServer()
+    if(accountId()!==uid || epoch!==sessionEpoch)throw conflictError('ACCOUNT_MISMATCH','账号已切换，旧操作已取消')
+    if(result.error?.code==='SYNC_CONFLICT'){
+      const restored=await hydrateFromServer()
+      return {resolved:false,changed:!!restored.conflict,error:restored.error}
+    }
+    return {resolved:true,synced:result.synced,backupId:backup.id}
+  } finally { resolvingConflict=false }
+}
+
 function saveLocalChange() {
   if(!accountId())return false
   const plain=serializableState()
   const previous=storage.get('state',null)
   if(previous)delete previous.__fireLocalSync
-  if(JSON.stringify(previous)===JSON.stringify(plain))return true
+  if(previous&&equivalentState(previous,plain))return true
   const oldDirty=dirty,oldVersion=changeVersion
   dirty=true;changeVersion++
   const success=writeLocal(plain)
   if(!success){dirty=oldDirty;changeVersion=oldVersion;return false}
   saveMeta()
-  if(success)state.cloudSync={status:'pending',message:'本机已保存，等待云端确认'}
+  if(success)state.cloudSync=activeConflict?{status:'conflict',message:'本机与云端版本不同，暂用本机记录。点此选择同步版本'}:{status:'pending',message:'本机已保存，等待云端确认'}
   return success
 }
 export function persistNow() {

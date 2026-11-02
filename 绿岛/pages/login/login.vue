@@ -4,6 +4,7 @@
     <text class="brand">Fire生活</text><view class="avatar"><text>岛</text></view>
     <view class="intro"><text class="title">欢迎回到Fire生活</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
     <view v-if="sessionExpired" class="expired-note">登录已过期，本机记录已保留。登录原邮箱即可恢复同步。</view>
+    <button v-if="canResume" class="resume-button" :disabled="loading" @tap="resumeLogin">已验证邮箱，继续进入</button>
     <view class="email-heading">邮箱验证码登录</view>
     <view class="form" aria-live="polite">
       <view class="field"><input v-model="email" :disabled="loading || sending" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/></view>
@@ -26,13 +27,14 @@ import { state, persist, hydrateFromServer, endAccountSession } from '@/store/in
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
 const email=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref(''), redirect=ref('')
 import { safeReturnRoute, finishSessionRecovery } from '@/utils/session-recovery.js'
-const sessionExpired=ref(false)
+const sessionExpired=ref(false),canResume=ref(false)
 const isDev = import.meta.env.DEV
 const ADMIN_TEST_EMAIL = '3263383331@qq.com'
 let noticeTimer=null, countdownTimer=null, verificationInfo=null, sentEmail=''
 onMounted(()=>{
  const pages=getCurrentPages(); const current=pages[pages.length-1]; const options=(current&&current.options)||{}; redirect.value=safeReturnRoute(options.redirect);sessionExpired.value=options.expired==='1';if(sessionExpired.value)email.value=String(uni.getStorageSync('fire_account_email')||'');
- if(uni.getStorageSync('fire_login_status')===true&&state.cloudSync?.status==='synced') uni.reLaunch({url:redirect.value||'/pages/index/index'})
+ canResume.value=uni.getStorageSync('fire_login_status')===true
+ if(canResume.value&&['synced','conflict'].includes(state.cloudSync?.status))resumeLogin()
 })
 onBeforeUnmount(()=>{clearTimeout(noticeTimer);clearInterval(countdownTimer)})
 watch(email,()=>{code.value='';verificationInfo=null;sentEmail=''})
@@ -48,6 +50,26 @@ async function sendCode(){
  catch(error){toast(error.message||'验证码发送失败，请重试')}
  finally{sending.value=false}
 }
+async function enterAccount(value){
+ const restored=await hydrateFromServer()
+ if(!restored.loaded){toast(restored.error?.message||'账号资料暂未恢复，本机记录已保留，请重试');return}
+ value=String(restored.email||value||state.profile?.email||'')
+ if(value)uni.setStorageSync('fire_account_email',value)
+ uni.removeStorageSync('fire_guest_mode')
+ state.profile={...(state.profile||{}),email:value};state.started=true;persist()
+ await import('@/utils/community-store.js').then(({CS})=>CS.hydrate()).catch(()=>{})
+ const target=finishSessionRecovery(restored.uid,redirect.value)
+ const guideDone=uni.getStorageSync('fire_app_guide_done')===true
+ const destination=restored.conflict?'/pages/sync-conflict/index?next='+encodeURIComponent(target):guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target)
+ uni.reLaunch({url:destination})
+}
+async function resumeLogin(){
+ if(loading.value)return
+ loading.value=true
+ try{await enterAccount(String(uni.getStorageSync('fire_account_email')||email.value||''))}
+ catch(error){toast(error.message||'恢复失败，本机记录已保留，请重试')}
+ finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false}
+}
 async function login(){
  if(loading.value)return
  const value=account()
@@ -55,9 +77,17 @@ async function login(){
  if(!code.value.trim())return toast('请输入验证码')
  if(!verificationInfo||sentEmail!==value)return toast('请先获取当前邮箱的验证码')
  loading.value=true
- try{const loginState=await signInWithCode('email',value,code.value.trim(),verificationInfo);endAccountSession();uni.setStorageSync('fire_login_status',false);await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true);const restored=await hydrateFromServer();if(!restored.loaded){toast(restored.error?.message||'账号数据恢复失败，本机记录已保留，请稍后重试');return}uni.setStorageSync('fire_account_email',value);uni.removeStorageSync('fire_guest_mode');state.profile={...(state.profile||{}),email:value};state.started=true;persist();await import('@/utils/community-store.js').then(({CS})=>CS.hydrate()).catch(()=>{});const target=finishSessionRecovery(restored.uid,redirect.value);const guideDone=uni.getStorageSync('fire_app_guide_done')===true;const destination=guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target);uni.reLaunch({url:destination})}
- catch(error){const detail=error&& (error.message||error.errMsg||error.error_description||error.error);toast(detail||'登录失败，请重新获取验证码后重试');console.error('[email-login]',error)}
- finally{loading.value=false}
+ try{
+   const loginState=await signInWithCode('email',value,code.value.trim(),verificationInfo)
+   endAccountSession();uni.setStorageSync('fire_login_status',false)
+   await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true)
+   canResume.value=true
+   await enterAccount(value)
+ }catch(error){
+   const detail=error&&(error.message||error.errMsg||error.error_description||error.error)
+   toast(detail||'登录失败，请重新获取验证码后重试')
+   console.error('[email-login]',error)
+ }finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false}
 }
 </script>
 <style lang="scss">
@@ -66,4 +96,5 @@ async function login(){
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-login-login{padding-top:var(--fire-page-top)}
 .expired-note{width:100%;box-sizing:border-box;margin-top:20px;padding:12px 14px;border-radius:12px;background:#e5eee2;color:#3c604d;font-size:13px;line-height:1.6}
+.resume-button{width:100%;min-height:44px;margin-top:18px;padding:10px 14px;border-radius:12px;background:#e5eee2;color:#315f4a;font-size:14px}
 </style>

@@ -79,6 +79,7 @@ export default {
     membershipStatus() { return membershipText(state) },
     syncText() {
       if (!isApiConfigured()) return '未配置云端 API，当前使用本机缓存'
+      if(state.cloudSync?.status==='conflict')return '存档版本不同，点此选择同步版本'
       if (state.cloudSync && state.cloudSync.status === 'error') return '同步失败：' + state.cloudSync.message
       if (state.cloudSync && state.cloudSync.status === 'synced') return state.cloudSync.message || '已同步'
       return '等待同步'
@@ -121,6 +122,7 @@ export default {
       if (!isApiConfigured()) return showNotice({ title: '请先完成云端配置', icon: 'none' })
       const restored=await hydrateFromServer()
       if(!restored.loaded)return showNotice({title:state.cloudSync.message,icon:'none'})
+      if(restored.conflict){uni.navigateTo({url:'/pages/sync-conflict/index'});return}
       const result = await syncStateToServer()
       const community=await CS.hydrate()
       showNotice({ title: result.synced && community.ok ? '云端同步完成' : (!community.ok ? '部分内容尚未同步，本机副本已保留，请重试' : ((state.cloudSync && state.cloudSync.message) || '同步失败')), icon: 'none' })
