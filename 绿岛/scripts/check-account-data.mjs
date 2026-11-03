@@ -41,9 +41,11 @@ function memoryDatabase(){
 }
 const db=memoryDatabase()
 let trustedUid='account-A',decision={approved:true,reason:'正常经历'}
+const actionModule={exports:{}}
+new Function('require','module',serverSource('action-rewards.js'))(name=>{if(name==='node:crypto')return crypto;throw Error(name)},actionModule)
 const serverModule={exports:{}}
 new Function('require','module','Buffer','process','console',serverSource('service.js'))(
- name=>{if(name==='node:crypto')return crypto;throw Error(name)},serverModule,Buffer,{env:{}},{error(){}},
+ name=>{if(name==='node:crypto')return crypto;if(name==='./action-rewards.js')return actionModule.exports;throw Error(name)},serverModule,Buffer,{env:{}},{error(){}},
 )
 const handler=serverModule.exports.createHandler({db,identity:async()=>trustedUid?{uid:trustedUid,email:trustedUid.toLowerCase()+'@example.com'}:null,moderate:async()=>copy(decision)})
 const stateA={financeEntered:true,finance:{assets:12000,monthlyDeposit:2000,retirementExpense:1000},ledger:[{id:'entry-1',date:'2026-11-01',type:'expense',category:'food',cents:12345}],items:[],assetHistory:[],monthlyTargets:{'2026-11':{expense:200000,income:800000}},personalityTests:{},profile:{name:'测试用户'}}
@@ -117,7 +119,7 @@ function createClient(){
   if(transport==='malformed'&&event.action==='bootstrap')return {...result,exists:true,state:{}}
   return result
  }
- const api=moduleOf(source('utils/api-service.js'),['fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
+ const api=moduleOf(source('utils/api-service.js'),['fetchActionRewards','onActionRewards','fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
  const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','getAccountConflictSummary','readAccountConflictBackup','resolveAccountConflict','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
   ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname(){return {ok:true}},
   console:silent,setTimeout:callback=>{const id=++timerId;clientTimers.set(id,callback);return id},clearTimeout:id=>clientTimers.delete(id),

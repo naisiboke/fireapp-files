@@ -11,7 +11,8 @@
         <text class="masthead-date">fireday.cn</text>
       </view>
 
-      <view v-if="!financeConfigured" class="home-unconfigured">
+      <view v-if="state.goalPlan && state.goalPlan.name" class="countdown-tabs"><button :class="{active:!activeGoal}" @tap.stop="selectCountdown('fire')">自由日</button><button :class="{active:activeGoal}" @tap.stop="selectCountdown('goal')">我的目标</button></view>
+      <view v-if="!displayConfigured" class="home-unconfigured">
         <text class="unconfigured-sub">填写资料，看看离自由还有多远。</text>
         <view class="btn-primary" @tap="goCalculator">
           <text class="btn-primary-text">填写资料</text>
@@ -20,11 +21,11 @@
 
       <view v-else class="freedom-summary" @tap="goResult">
         <view class="freedom-head">
-          <text class="freedom-label">预计自由日</text>
+          <text class="freedom-label">{{activeGoal ? state.goalPlan.name+'目标倒计时' : '预计自由日'}}</text>
           <text class="plan-link">查看计划 ›</text>
         </view>
 
-        <view v-if="fireResult.date" class="day-countdown">
+        <view v-if="displayResult.date" class="day-countdown">
           <view class="calendar-unit">
             <AnimatedNumber class="calendar-num" :value="years" />
             <text class="calendar-label">年</text>
@@ -39,29 +40,24 @@
           </view>
         </view>
 
-        <view v-if="fireResult.date" class="countdown-clock">
+        <view v-if="displayResult.date" class="countdown-clock">
           <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(hours)" /><text class="clock-label">时</text></view>
           <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(minutes)" /><text class="clock-label">分</text></view>
           <view class="clock-unit"><AnimatedNumber class="clock-num" :value="pad(seconds)" /><text class="clock-label">秒</text></view>
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
-        <text class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text>
+        <text v-if="!activeGoal" class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text>
 
-        <view class="progress"><view class="progress-fill" :style="{ width: fireResult.progress + '%' }"></view></view>
+        <view class="progress"><view class="progress-fill" :style="{ width: displayResult.progress + '%' }"></view></view>
 
         <view class="freedom-foot">
-          <text class="foot-left">当前资产 ¥ {{ formatMoney(state.finance.assets) }}</text>
-          <text class="foot-right">进度 {{ fireResult.progress.toFixed(1) }}%</text>
+          <text class="foot-left">{{activeGoal ? '已准备 ¥ '+formatMoney(state.goalPlan.assets)+' / '+formatMoney(state.goalPlan.amount) : '当前资产 ¥ '+formatMoney(state.finance.assets)}}</text>
+          <text class="foot-right">进度 {{ displayResult.progress.toFixed(1) }}%</text>
         </view>
       </view>
     </view>
 
-    <view v-if="homeGoal && homeGoal.name" class="goal-card goal-card-mini" @tap="goGoal">
-      <text class="goal-card-name">{{ homeGoal.name }}</text>
-      <text class="goal-card-meta">{{ homeGoal.remainingDays !== null ? '还剩 ' + homeGoal.remainingDays + ' 天' : '目标进度 ' + homeGoal.progress.toFixed(0) + '%' }}</text>
-      <view class="goal-card-progress"><view class="goal-card-progress-fill" :style="{ width: (homeGoal.progress || 0) + '%' }"></view></view>
-    </view>
 
     <view class="home-content">
       <view v-if="state.cloudSync && ['error','pending','restoring','synced','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
@@ -95,7 +91,7 @@
       <view class="section">
         <view class="section-head">
           <text class="section-title">今日行动</text>
-          <text class="section-count">{{ todayCount }} / 3</text>
+          <text class="section-count">{{ todayCount }} / {{todayTasks.length}}</text>
         </view>
 
         <view
@@ -110,10 +106,10 @@
           </view>
           <view class="task-text">
             <text class="task-title">{{ t.title }}</text>
-            <text class="task-sub">{{ taskLabel(t) }} · {{ taskDone(t.id) ? '今天已完成' : '完成操作后自动记录' }}</text>
+            <text class="task-sub">{{taskDone(t.id)?'今天已完成':t.desc}}</text>
           </view>
           <text class="task-reward" :class="{ done: taskDone(t.id) }">
-            {{ taskDone(t.id) ? '✓ +10 EXP' : '去完成 ›' }}
+            {{taskDone(t.id)?'✓ +'+t.xp+' EXP':'+'+t.xp+' EXP ›'}}
           </text>
         </view>
       </view>
@@ -131,16 +127,21 @@ import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
-import { state, refreshFinance, hydrateFromServer, syncStateToServer, persistNow } from '@/store/index.js'
+import { state, refreshFinance, hydrateFromServer, syncStateToServer, persistNow, refreshActions } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
-import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts, HeroDay } from '@/utils/engine.js'
+import { todayActions } from '@/utils/action-tasks.js'
+import { CS } from '@/utils/community-store.js'
+import { isMembershipActive } from '@/utils/membership.js'
+import { wishlistBucket, wishlistDue, wishlistReason, coolingEnd } from '@/utils/wishlist.js'
+import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts } from '@/utils/engine.js'
 
 const TASK_ICONS = {
   ledger:   'M5 3h14v18l-3-2-4 2-4-2-3 2zM8 7h8M8 11h8M8 15h5',
   assets:   'm3 10 9-7 9 7v10H3zM9 20v-7h6v7',
-  savings:  'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
-  wishlist: 'M7 7V5a5 5 0 0 1 10 0v2M3 7h18v14H3zm5 7 3 3 5-5',
-  read:     'M12 22V12M12 16C3 16 3 8 3 8s9-1 9 8M12 12c0-9 9-9 9-9s1 9-9 9',
+  goal:     'M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5M12 12l9-9M16 3h5v5',
+  favorite: 'm12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z',
+  publish:  'M4 4h12v16H4zM8 8h4M8 12h5M17 3l4 4-8 8-4 1 1-4z',
+  edit:     'M15 4l5 5-10 10-6 1 1-6zM12 7l5 5',
 }
 
 function svgUri(svg) {
@@ -154,6 +155,7 @@ export default {
   data() {
     return {
       state,
+      actionPosts: [], actionNow: Date.now(),
       ledgerMonth: LocalDay().slice(0, 7),
       years: 0, months: 0, days: 0,
       hours: 0, minutes: 0, seconds: 0,
@@ -198,16 +200,14 @@ export default {
     },
     financeConfigured() { return hasValidFinance(state) },
     fireResult() { return freedomResult(state) },
-    homeGoal() {
-      const plan = state.goalPlan
-      if (!plan) return null
-      const r = GoalEngine(plan)
-      return { ...plan, progress: r.progress, targetDate: r.date ? r.date.toLocaleDateString('zh-CN') : '100年内暂未可达', remainingDays: r.date ? Math.max(0, Math.ceil((r.date.getTime() - Date.now()) / 86400000)) : null }
-    },
+    activeGoal(){return state.homeCountdown==='goal'&&!!state.goalPlan?.name},
+    displayConfigured(){return this.activeGoal||this.financeConfigured},
+    displayResult(){return this.activeGoal?GoalEngine(state.goalPlan):this.fireResult},
     targetText() {
-      const r = this.fireResult
+      const r = this.displayResult
       if (r.months === 0) return '已达到当前目标'
-      if (r.date) return '预计到达 ' + this.formatDateCN(r.date)
+      if(this.activeGoal&&r.date&&r.date.getTime()<=this.actionNow)return '预计日期已到，请更新目标进度'
+      if (r.date) return (this.activeGoal?'预计完成 ':'预计到达 ') + this.formatDateCN(r.date)
       return '调整收入、支出或计算假设，重新规划'
     },
     monthlyStatus() { return MonthlyStatus(state, this.ledgerMonth) },
@@ -218,33 +218,18 @@ export default {
     expenseOverBudget() { return this.monthlyStatus.expense.status === '已超额' },
     wishlistSaved() {
       return (state.items || [])
-        .filter(x => (x.status === 'abandoned' || x.status === 'ended') && Number(x.amount) > 0)
+        .filter(x => wishlistBucket(x) === 'success' && Number(x.amount) > 0)
         .reduce((sum, x) => sum + Number(x.amount), 0)
     },
     wishlistCount() {
-      return (state.items || []).filter(x => x.status === 'active').length
+      return (state.items || []).filter(x => wishlistBucket(x) === 'active').length
     },
     wishlistPreview() {
-      return (state.items || []).filter(x => x.status === 'active').slice(0, 3)
+      return (state.items || []).filter(x => wishlistBucket(x) === 'active').slice(0, 3)
     },
-    todayCount() {
-      if (!state.hero) return 0
-      return state.hero.slots.filter(s => s.done).length + Number(state.hero.ledgerDone)
-    },
-    todayTasks() {
-      if (!state.hero) return []
-      const all = {
-        ledger:   { id: 'ledger',   title: '记录今天的消费' },
-        assets:   { id: 'assets',   title: '记录本月资产' },
-        savings:  { id: 'savings',  title: '检视储蓄目标' },
-        wishlist: { id: 'wishlist', title: '处理一笔待消费计划' },
-        read:     { id: 'read',     title: '阅读10分钟' },
-      }
-      return [
-        ...state.hero.slots.map(s => all[s.id]).filter(Boolean),
-        all.ledger,
-      ]
-    },
+    todayCount(){return this.todayTasks.filter(t=>t.done).length},
+    todayTasks(){return todayActions(state,{posts:this.actionPosts,member:isMembershipActive(state),at:this.actionNow})},
+
   },
 
   onLoad() {
@@ -272,9 +257,7 @@ export default {
     this.pageVisible = true
     this.ledgerMonth = LocalDay().slice(0, 7)
     refreshFinance()
-    if(HeroDay(state))persistNow()
-    const savedWishlist = uni.getStorageSync('fire_wishlist_v1')
-    if (Array.isArray(savedWishlist)) state.items = savedWishlist
+    this.actionPosts=CS.ugc();this.actionNow=Date.now();refreshActions().catch(()=>{})
     this.startCountdown()
     this.startGuardian()
   },
@@ -328,10 +311,9 @@ export default {
       if (typeof document !== 'undefined' && document.hidden) return
       // #endif
       this.tick()
-      if (!this.financeConfigured || !this.fireResult.date) return
       this.timer = setInterval(() => {
         this.tick()
-      }, 1000)
+      }, this.displayConfigured && this.displayResult.date ? 1000 : 60000)
     },
     stopCountdown() {
       this.clearCountdownTasks()
@@ -373,8 +355,9 @@ export default {
       this.pageHideHandler = null
     },
     tick() {
+      this.actionNow=Date.now()
       this.ledgerMonth = LocalDay().slice(0, 7)
-      const r = this.fireResult
+      const r = this.displayResult
       if (!r.date) { this.years = this.months = this.days = 0; this.hours = this.minutes = this.seconds = 0; return }
       const p = ReelCalendarParts(r.date)
       this.years = p.years; this.months = p.months; this.days = p.days
@@ -388,14 +371,7 @@ export default {
       if (!Number.isFinite(v)) return '0.00'
       return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
-    taskDone(id) {
-      if (!state.hero) return false
-      if (id === 'ledger') return !!state.hero.ledgerDone
-      return !!state.hero.slots.find(s => s.id === id)?.done
-    },
-    taskLabel(t) {
-      return { ledger: '记账', assets: '资产记录', savings: '我的基础数据', wishlist: '极简拔草', read: '自由笔记' }[t.id] || '行动'
-    },
+    taskDone(id){return !!this.todayTasks.find(t=>t.id===id)?.done},
     taskIcon(id) {
       const p = TASK_ICONS[id] || TASK_ICONS.assets
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#769383" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${p}"/></svg>`
@@ -414,26 +390,14 @@ export default {
       if(!result.synced&&!result.skipped)showNotice({title:state.cloudSync.message,icon:'none'})
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
-    goResult() { uni.navigateTo({ url: '/pages/calculator/index' }) },
-    goGoal() { uni.navigateTo({ url: '/pages/calculator/index?mode=goal' }) },
+    selectCountdown(mode){state.homeCountdown=mode;persistNow();this.startCountdown()},
+    goResult() { uni.navigateTo({ url: this.activeGoal?'/pages/calculator/index?mode=goal&from=home':'/pages/calculator/index' }) },
+    goGoal() { uni.navigateTo({ url: '/pages/calculator/index?mode=goal&from=home' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
-    wishlistStatus(item) {
-      if (item.status === 'ended') return '已提前结束（挑战成功）'
-      if (item.status === 'abandoned') return '已放弃购买 · 已计入省下金额'
-      if (item.status === 'failed') return '挑战失败'
-      if (item.status === 'bought') return '已购买'
-      const left = Math.max(0, Math.ceil((Number(item.created || Date.now()) + Number(item.days || 7) * 86400000 - Date.now()) / 86400000))
-      return left ? '冷静期剩余 ' + left + ' 天' : '冷静期已结束'
-    },
-    goTask(t) {
-      if (t.id === 'ledger') return uni.navigateTo({ url: '/pages/ledger/index' })
-      if (t.id === 'assets') return uni.navigateTo({ url: '/pages/assets/index' })
-      if (t.id === 'wishlist') return uni.navigateTo({ url: '/pages/wishlist/index' })
-      if (t.id === 'read') return uni.navigateTo({ url: '/pages/reading-library/index' })
-      if (t.id === 'savings') return uni.navigateTo({ url: '/pages/calculator/index?mode=goal' })
-      showNotice({ title: '这个任务待开发', icon: 'none' })
-    },
+    wishlistStatus(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买';if(wishlistDue(item,this.actionNow))return '待确认是否购买';return '冷静期剩余 '+Math.ceil((coolingEnd(item)-this.actionNow)/86400000)+' 天'},
+    goTask(t){if(t.url)uni.navigateTo({url:t.url})},
+
   },
 }
 </script>
@@ -547,4 +511,5 @@ export default {
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-index-index .home-masthead{padding-top:var(--fire-page-top)}
  .fire-page-index-index .home-unconfigured{padding-top:30px;padding-bottom:24px} .fire-page-index-index .home-unconfigured .btn-primary{margin-top:18px} .fire-page-index-index .account-sync-banner{padding:10px 12px;font-size:12px;line-height:1.6}
+.countdown-tabs{position:relative;z-index:4;display:inline-flex;gap:6px;padding:4px;border-radius:16px;background:rgba(255,255,255,.18);margin-top:14px}.countdown-tabs button{min-height:36px;font-size:13px;padding:8px 16px;background:transparent;color:#dce7db;border-radius:12px}.countdown-tabs .active{background:#f3f6ec;color:#173d35;font-weight:600}
 </style>

@@ -34,8 +34,10 @@ function database(){
  }
  return db
 }
+const actionModule={exports:{}}
+new Function('require','module',source('action-rewards.js'))(name=>{if(name==='node:crypto')return crypto;throw Error(name)},actionModule)
 const mod={exports:{}}
-new Function('require','module','Buffer','console','process',source('service.js'))(name=>{if(name==='node:crypto')return crypto;throw Error(name)},mod,Buffer,{error(){},warn(){}},{env:{}})
+new Function('require','module','Buffer','console','process',source('service.js'))(name=>{if(name==='node:crypto')return crypto;if(name==='./action-rewards.js')return actionModule.exports;throw Error(name)},mod,Buffer,{error(){},warn(){}},{env:{}})
 const db=database();let at=1800000000000
 const make=uid=>mod.exports.createHandler({db,identity:async()=>uid?{uid,email:uid+'@example.com'}:null,now:()=>at})
 const a=make('user-A'),b=make('user-B')

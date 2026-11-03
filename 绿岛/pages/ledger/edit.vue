@@ -108,7 +108,7 @@ import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showNotice, dismissFeedback } from '@/utils/feedback.js'
-import { state, persist } from '@/store/index.js'
+import { state, persistNow } from '@/store/index.js'
 import {
   LocalDay, LedgerCategories, SaveExpense, HeroDay, HeroComplete,
 } from '@/utils/engine.js'
@@ -293,19 +293,14 @@ export default {
         necessity: this.draft.necessity,
       }
 
-      if (!SaveExpense(state, payload)) {
+      const before=JSON.parse(JSON.stringify({ledger:state.ledger,hero:state.hero,exp:state.exp}))
+      if (!SaveExpense(state, payload, LocalDay(), false)) {
         this.errorText = '保存失败，请检查金额和日期'
         return
       }
 
-      try {
-        HeroDay(state)
-        if (this.draft.type === 'expense' && this.draft.date === LocalDay()) {
-          HeroComplete(state, 'ledger')
-        }
-      } catch (e) { /* ignore */ }
-
-      if(persist())clearOptionsDraft(this)
+      if(!persistNow()){state.ledger=before.ledger;state.hero=before.hero;state.exp=before.exp;this.errorText='保存失败，请检查设备存储后重试';return}
+      clearOptionsDraft(this)
       showNotice({ title: this.editing ? '已保存' : '已记账', icon: 'success' })
 
       if (this.editing) {

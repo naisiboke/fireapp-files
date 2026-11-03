@@ -15,7 +15,7 @@
         <text v-if="error" class="error">{{error}}</text>
       </view>
     </scroll-view>
-    <view class="submit-bar"><button class="submit fire-button-primary fire-button-lg" type="button" @click="handleSubmit">完成</button></view>
+    <view class="submit-bar"><button class="submit fire-button-primary fire-button-lg" type="button" @click="handleSubmit" :disabled="saving">{{saving?'保存中…':'完成'}}</button></view>
   </view>
 </template>
 <script setup>
@@ -26,20 +26,19 @@ import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice } from '@/utils/feedback.js'
 const feedbackOwnerId = useFeedbackPage()
 import { reactive, ref } from 'vue'
-import { state, persist } from '@/store/index.js'
+import { state, persistNow } from '@/store/index.js'
+import {createWishlist} from '@/utils/wishlist.js'
 const form=reactive({name:'',amount:'',category:'other',days:7})
-const error=ref('')
+const error=ref(''),saving=ref(false)
 const categories=[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}]
 function back(){uni.navigateBack()}
 function handleSubmit(){
-  const name=String(form.name||'').trim()
-  const amount=Number(form.amount)
-  if(!name){error.value='请填写消费计划名称';showNotice({title:'请填写消费计划名称',icon:'none'});return}
-  if(!Number.isFinite(amount)||amount<=0){error.value='请填写正确的预计金额';showNotice({title:'请填写正确的预计金额',icon:'none'});return}
-  state.items.push({id:'item-'+Date.now(),name,amount,category:form.category,days:form.days,created:Date.now(),status:'active',note:''})
-  if(persist())formDraft.clear()
-  showNotice({title:'消费计划已添加',icon:'success'})
-  setTimeout(()=>uni.navigateBack(),250)
+ if(saving.value)return
+ saving.value=true;error.value=''
+ const result=createWishlist(state,form,persistNow)
+ if(!result){saving.value=false;error.value='请检查名称、金额和冷静期，并确认设备存储可用';showNotice({title:error.value,icon:'none'});return}
+ formDraft.clear();showNotice({title:'消费计划已添加',icon:'success'})
+ uni.navigateBack({fail:()=>uni.redirectTo({url:'/pages/wishlist/index',fail:()=>showNotice({title:'计划已保存，请返回列表查看',icon:'none'})})})
 }
 const formDraft=useSessionDraft(()=>({...form}),draft=>{for(const key of Object.keys(form))if(key in (draft||{}))form[key]=draft[key]})
 </script>

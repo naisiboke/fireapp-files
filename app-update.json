@@ -2,13 +2,13 @@
   "appId": "__UNI__6A9B0BE",
   "android": {
     "published": false,
-    "versionCode": 103,
-    "versionName": "1.0.3",
-    "downloadUrl": "https://fireday.cn/fireday-1.0.3.apk",
+    "versionCode": 104,
+    "versionName": "1.0.4",
+    "downloadUrl": "https://fireday.cn/fireday-1.0.4.apk",
     "notes": [
-      "更新提醒可直接前往官网下载最新版",
-      "官网自动读取最新发布版本的下载链接",
-      "保留存档冲突处理、资产任务和统一页面间距修复"
+      "极简拔草简化为三个状态，新增到期确认和删除提醒",
+      "首页支持目标倒计时，删除目标保留自由日计划",
+      "行动任务按真实功能显示，单次最高10经验"
     ],
     "websiteUrl": "https://fireday.cn/#download"
   },

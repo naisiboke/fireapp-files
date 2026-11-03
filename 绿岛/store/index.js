@@ -3,7 +3,7 @@ import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
-import { isApiConfigured, fetchAccountBootstrap, saveUserState, fetchMembership, redeemMembershipCode } from '../utils/api-service.js'
+import { isApiConfigured, fetchAccountBootstrap, saveUserState, fetchMembership, redeemMembershipCode, fetchActionRewards, onActionRewards } from '../utils/api-service.js'
 import { validateNickname } from '../utils/nickname.js'
 
 export const STATE_VERSION = 4
@@ -35,8 +35,11 @@ const seed = () => ({
   profile: { name: '自由的旅人', passive: null, goal: '工作自由' },
   membership: { active: false, status: 'inactive', plan: 'fire-life-monthly', name: 'Fire生活通用会员', price: 9, expiresAt: 0, updatedAt: 0 },
   items: [],
+  deletions: [],
   completed: [],
   exp: 0,
+  actionRewards:{version:1,events:[],counters:{},loaded:false},
+  homeCountdown:'fire',
   started: false,
   financeEntered: false,
   goalPlan: null,
@@ -123,8 +126,10 @@ export function bootstrap() {
   const savedMeta=localSyncMeta(storage.get('state',null))
   revision=Number(savedMeta.revision)||0;dirty=!!savedMeta.dirty;changeVersion=Number(savedMeta.changeVersion)||0
   applySaved(storage.get('state', null))
-  const wishlist = readWishlist()
-  if (wishlist) state.items = wishlist
+  const rewards=readAccountCache('fire_action_rewards_v1')
+  if(rewards&&Number.isSafeInteger(rewards.exp)){state.actionRewards=rewards;state.exp=rewards.exp}
+  const saved=storage.get('state',null),wishlist=readWishlist()
+  if(!Array.isArray(saved?.items)&&wishlist)state.items=wishlist
   uni.setStorageSync(WISHLIST_KEY,state.items)
   HeroDay(state)
   state.ready = true
@@ -155,6 +160,7 @@ function serializableState() {
   delete plain.ready
   delete plain.cloudSync
   delete plain.__fireLocalSync
+  delete plain.actionRewards
   return plain
 }
 
@@ -183,7 +189,7 @@ function localSyncMeta(local) {
 function meta() { return {revision,dirty,changeVersion} }
 function saveMeta() { writeAccountCache('fire_sync_meta_v1',meta()) }
 function equivalentState(left,right){
-  const ignored=new Set(['membership','ready','cloudSync','__fireLocalSync'])
+  const ignored=new Set(['membership','ready','cloudSync','__fireLocalSync','exp','actionRewards'])
   const normalize=value=>{
     if(Array.isArray(value))return value.map(normalize)
     if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,normalize(value[key])]))
@@ -194,7 +200,7 @@ function equivalentState(left,right){
 }
 function meaningful(value) {
   return !!(value.financeEntered || ['assets','monthlyDeposit','retirementExpense','income','expense','goal'].some(key=>Number(value.finance?.[key])>0) || value.ledger?.length || value.items?.length || value.assetHistory?.length ||
-    value.aiChats?.length || value.completed?.length || value.goalPlan || value.goalDraft || value.reading || value.personality?.completed ||
+    value.deletions?.length || value.aiChats?.length || value.completed?.length || value.goalPlan || value.goalDraft || value.reading || value.personality?.completed ||
     Object.keys(value.monthlyTargets||{}).length || value.soundEnabled===false || value.privacySettings?.cloudSync===false ||
     Object.keys(value.personalityTests||{}).length || value.profile?.nicknameUpdatedAt)
 }
@@ -309,6 +315,7 @@ export async function hydrateFromServer() {
           if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
           captureAccountConflict(remote,localMeta,epoch)
           state.cloudSync={status:'conflict',message:'本机与云端版本不同，暂用本机记录。点此选择同步版本'}
+          refreshActions().catch(()=>{})
           return {loaded:true,conflict:true,exists:true,uid:remote.uid,email:remote.email}
         }
       }
@@ -322,6 +329,7 @@ export async function hydrateFromServer() {
       restoreReady=true
       state.cloudSync=dirty?{status:'pending',message:'本机修改已保留，等待同步'}:remote.exists?{status:'synced',message:'已恢复当前账号的数据'}:{status:'empty',message:'尚无财务存档，填写资料后会自动同步'}
       if(dirty)await syncStateToServer()
+      refreshActions().catch(()=>{})
       return {loaded:true,exists:remote.exists,uid:remote.uid,email:remote.email}
     }catch(error){
       if(epoch===sessionEpoch)state.cloudSync={status:'error',message:error.message||'恢复失败，本机数据已保留'}
@@ -461,4 +469,26 @@ export function reset() {
   // This operation clears local state only. It must never erase the cloud account.
   suspendAccountSync()
   applySaved(null);state.ready=true
+}
+
+function acceptRewards(rewards,uid){
+ if(accountId()!==uid||!rewards||!Number.isSafeInteger(rewards.exp)||rewards.exp<0||!Array.isArray(rewards.events))return
+ if(state.actionRewards?.loaded&&rewards.exp<state.actionRewards.exp)return
+ state.actionRewards={...rewards,loaded:true};state.exp=rewards.exp
+ writeLocal(serializableState());writeAccountCache('fire_action_rewards_v1',state.actionRewards)
+}
+onActionRewards(acceptRewards)
+export async function refreshActions(){
+ const uid=accountId(),epoch=sessionEpoch;if(!uid)return null
+ const rewards=await fetchActionRewards()
+ if(accountId()!==uid||epoch!==sessionEpoch)return null
+ acceptRewards(rewards,uid);return rewards
+}
+export function deleteGoalPlan(){
+ const old={plan:state.goalPlan,draft:state.goalDraft,home:state.homeCountdown,deletions:state.deletions},id=String(state.goalPlan?.id||state.goalPlan?.name||'goal')
+ state.goalPlan=null
+ if(!state.goalDraft||(state.goalDraft.id&&state.goalDraft.id===old.plan?.id)||state.goalDraft.name===old.plan?.name)state.goalDraft=null
+ state.homeCountdown='fire';state.deletions=[...(state.deletions||[]),{kind:'goal',id,at:Date.now()}]
+ if(persistNow())return true
+ state.goalPlan=old.plan;state.goalDraft=old.draft;state.homeCountdown=old.home;state.deletions=old.deletions;return false
 }

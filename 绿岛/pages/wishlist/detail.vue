@@ -1,104 +1,59 @@
 <template>
-  <view class="detail-page fire-page-wishlist-detail" :style="pageLayoutStyle">
-    <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="detail-head"><view class="back" @tap="back">‹</view><text class="title">拔草详情</text><view class="head-space"></view></view>
-    <scroll-view v-if="item" class="detail-scroll" scroll-y>
-      <view class="hero-card"><view class="hero-icon">{{ categoryIcon(item.category) }}</view><text class="name">{{ item.name }}</text><text class="status" :class="item.status">{{ statusLabel }}</text></view>
-      <view class="info-card">
-        <view class="info-row"><text>预计金额</text><text class="strong">¥ {{ money(item.amount) }}</text></view>
-        <view class="info-row"><text>分类</text><text>{{ categoryName(item.category) }}</text></view>
-        <view class="info-row"><text>创建时间</text><text>{{ createdText }}</text></view>
-        <view class="info-row"><text>冷静期</text><text>默认 {{ item.days || 7 }} 天</text></view>
-      </view>
-      <view class="progress-card"><text class="progress-title">{{ item.status !== 'active' ? statusLabel : (coolingFinished ? '冷静期已结束' : '冷静期进行中') }}</text><text class="countdown">{{ item.status === 'ended' ? '已提前结束（挑战成功）' : item.status === 'failed' ? '挑战失败' : (coolingFinished ? '可以做出最终决定' : countdownText) }}</text><view class="progress-track"><view class="progress-fill" :style="{width:progress+'%'}"></view></view><text class="progress-tip">{{ item.status === 'ended' ? '你主动结束挑战，已成功留住这笔钱。' : item.status === 'failed' ? '这次挑战已结束，可以重新开始。' : (coolingFinished ? '你已经完成了这次冷静期挑战。' : '先给自己一点时间，再决定是否购买。') }}</text></view>
-      <view v-if="item.status === 'active' && coolingFinished" class="actions"><button class="save fire-button-primary" @tap="finish('abandoned')">挑战成功，放弃购买</button><button class="buy fire-button-outline" @tap="finish('bought')">挑战失败，已购买</button></view>
-      <view v-if="item.status === 'active' && !coolingFinished" class="actions"><button class="save" @tap="endEarly">提前结束</button><button class="buy" @tap="finish('failed')">放弃挑战（挑战失败）</button></view>
-      <view class="actions">
-        <button v-if="item.status !== 'active'" class="buy" @tap="back">返回列表</button>
-        <button class="danger" @tap="removeItem">删除此计划</button>
-      </view>
-    </scroll-view>
-    <view v-else class="missing"><text>拔草项目不存在或已删除</text><button @tap="back">返回列表</button></view>
+ <view class="detail-page" :style="pageLayoutStyle">
+  <AppFeedback :owner-id="feedbackOwnerId" />
+  <view class="head"><button class="back" @tap="back">‹</button><text>消费计划</text><button v-if="item" class="delete" :disabled="busy" @tap="removeItem">删除</button></view>
+  <view v-if="item">
+   <view class="card hero"><text class="name">{{item.name}}</text><text class="amount">¥ {{money(item.amount)}}</text><text class="status">{{statusLabel}}</text></view>
+   <view class="card"><view class="line"><text>冷静期</text><text>{{item.days||7}} 天</text></view><view class="line"><text>创建于</text><text>{{createdText}}</text></view><text class="countdown">{{bucket==='active'?(due?'等待你的决定':countdownText):statusLabel}}</text><view class="track"><view :style="{width:progress+'%'}"></view></view><text class="tip">{{bucket==='active'?'到期后由你确认，不会自动算作成功。':bucket==='success'?'这笔钱，留给更重要的事。':'如实记录，也是了解自己的开始。'}}</text></view>
+   <view v-if="bucket==='active'" class="actions"><button class="primary" :disabled="busy" @tap="finish(false)">{{due?'没买，挑战成功':'提前结束，决定不买'}}</button><button class="secondary" :disabled="busy" @tap="finish(true)">已购买，挑战失败</button></view>
+   <button v-else class="secondary full" @tap="back">返回列表</button>
   </view>
+  <view v-else class="missing"><text>{{missingText}}</text><button v-if="state.cloudSync.status==='error'" class="secondary" @tap="retry">重试恢复</button><button class="secondary" @tap="back">返回列表</button></view>
+ </view>
 </template>
 <script setup>
-import { pageLayoutStyle } from '@/utils/page-layout.js'
+import {computed,ref} from 'vue'
+import {onLoad,onShow,onHide,onUnload} from '@dcloudio/uni-app'
+import {pageLayoutStyle} from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
-import { useFeedbackPage } from '@/utils/feedback-page.js'
-import { showDialog, showNotice } from '@/utils/feedback.js'
-const feedbackOwnerId = useFeedbackPage()
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { state, persist } from '@/store/index.js'
-const item=ref(null), now=ref(Date.now()), timer=ref(null)
-const categories={shopping:'购物',food:'饮食',travel:'旅行',life:'生活',other:'其他'}
-const id=ref('')
-const coolingEnd=computed(()=>item.value ? Number(item.value.created||Date.now())+Number(item.value.days||7)*86400000 : 0)
-const coolingFinished=computed(()=>now.value>=coolingEnd.value)
-const remaining=computed(()=>Math.max(0,coolingEnd.value-now.value))
-const progress=computed(()=>item.value ? Math.min(100,Math.max(0,(1-remaining.value/(Number(item.value.days||7)*86400000))*100)) : 0)
-const countdownText=computed(()=>{const s=Math.ceil(remaining.value/1000);const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;return d+'天 '+String(h).padStart(2,'0')+'时 '+String(m).padStart(2,'0')+'分 '+String(sec).padStart(2,'0')+'秒'})
-const statusLabel=computed(()=>{const status=item.value?.status;return status==='active'?'进行中':status==='abandoned'?'已放弃购买':status==='ended'?'已提前结束（挑战成功）':status==='failed'?'挑战失败':'已购买'})
-const createdText=computed(()=>item.value?new Date(Number(item.value.created)).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'')
+import {useFeedbackPage} from '@/utils/feedback-page.js'
+import {showDialog,showNotice} from '@/utils/feedback.js'
+import {state,persistNow,hydrateFromServer} from '@/store/index.js'
+import {accountId} from '@/utils/account-cache.js'
+import {wishlistBucket,wishlistDue,wishlistReason,coolingEnd,decideWishlist,removeWishlist} from '@/utils/wishlist.js'
+const feedbackOwnerId=useFeedbackPage(),id=ref(''),now=ref(Date.now()),busy=ref(false)
+let timer=null
+onLoad(options=>{id.value=String(options?.id??'')})
+onShow(()=>{now.value=Date.now();clearInterval(timer);timer=setInterval(()=>{now.value=Date.now()},1000)})
+onHide(()=>clearInterval(timer));onUnload(()=>clearInterval(timer))
+const item=computed(()=>(state.items||[]).find(x=>String(x.id)===id.value)||null)
+const bucket=computed(()=>wishlistBucket(item.value))
+const due=computed(()=>!!item.value&&wishlistDue(item.value,now.value))
+const remaining=computed(()=>Math.max(0,coolingEnd(item.value)-now.value))
+const progress=computed(()=>item.value?Math.min(100,Math.max(0,100*(1-remaining.value/(Math.max(1,Number(item.value.days)||7)*86400000)))):0)
+const countdownText=computed(()=>{let s=Math.ceil(remaining.value/1000);return Math.floor(s/86400)+' 天 '+Math.floor(s%86400/3600)+' 时 '+Math.floor(s%3600/60)+' 分 '+s%60+' 秒'})
+const statusLabel=computed(()=>bucket.value==='success'?'挑战成功 · '+wishlistReason(item.value):bucket.value==='bought'?'已购买 · 挑战失败':due.value?'待确认是否购买':'进行中')
+const createdText=computed(()=>item.value?new Date(Number(item.value.created)).toLocaleDateString('zh-CN'):'')
+const missingText=computed(()=>!id.value?'未找到项目编号':!state.ready||state.cloudSync.status==='restoring'?'正在恢复消费计划…':state.cloudSync.status==='error'?'暂未恢复此项目，请重试云端连接':'此项目不存在或已删除')
 function money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})}
-function categoryName(v){return categories[v]||'其他'}
-function categoryIcon(v){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[v]||'＋'}
-function back(){uni.navigateBack()}
-function endEarly(){
-  if(!item.value||item.value.status!=='active')return
-  const target=state.items.find(x=>x.id===item.value.id)
-  if(!target)return back()
-  target.status='ended'
-  target.updated=Date.now()
-  target.endedAt=Date.now()
-  persist()
-  showNotice({title:'已提前结束冷静期',icon:'success'})
-  setTimeout(()=>uni.navigateBack(),350)
+function back(){uni.navigateBack({fail:()=>uni.redirectTo({url:'/pages/wishlist/index'})})}
+function retry(){hydrateFromServer().catch(()=>showNotice({title:'恢复失败，本机记录已保留',icon:'none'}))}
+async function finish(purchased){
+ if(busy.value||!item.value||bucket.value!=='active')return
+ busy.value=true;const uid=accountId(),target=id.value
+ try{
+  if(!due.value){const result=await showDialog({title:purchased?'确认已购买？':'提前结束挑战？',content:purchased?'将记为已购买，本次挑战失败。':'确认不再购买，将记为挑战成功。',confirmText:'确认'});if(!result.confirm)return}
+  if(uid!==accountId())return
+  const ok=decideWishlist(state,target,purchased,persistNow)
+  showNotice({title:ok?(purchased?'已记录购买':'挑战成功'):'保存失败，请重试',icon:ok?'success':'none'})
+ }finally{busy.value=false}
 }
-function removeItem(){
-  if(!item.value) return
-  showDialog({
-    title:'删除消费计划',
-    content:'删除后无法恢复，确定要删除吗？',
-    confirmText:'删除',
-    confirmColor:'#a35d4e',
-    success:({confirm})=>{
-      if(!confirm) return
-      const index=state.items.findIndex(x=>x.id===item.value.id)
-      if(index<0){ showNotice({title:'项目不存在',icon:'none'}); return }
-      state.items.splice(index,1)
-      persist()
-      showNotice({title:'已删除',icon:'none'})
-      setTimeout(()=>uni.navigateBack(),250)
-    },
-  })
+async function removeItem(){
+ if(busy.value||!item.value)return
+ busy.value=true;const uid=accountId(),target=id.value
+ try{const result=await showDialog({title:'删除消费计划？',content:'删除后无法恢复，也不会保留在省下金额中。',confirmText:'删除',danger:true});if(!result.confirm||uid!==accountId())return;if(!removeWishlist(state,target,persistNow)){showNotice({title:'保存失败，请重试',icon:'none'});return}showNotice({title:'已删除',icon:'none'});back()}finally{busy.value=false}
 }
-function finish(status){
-  if(!item.value||item.value.status!=='active')return
-  const target=state.items.find(x=>x.id===item.value.id)
-  if(!target)return back()
-  target.status=status
-  target.updated=Date.now()
-  persist()
-  const message=status==='abandoned'?'挑战成功，已放弃购买':status==='failed'?'挑战失败，已放弃挑战':'挑战失败，已记录购买'
-  showNotice({title:message,icon:'success'})
-  setTimeout(()=>uni.navigateBack(),350)
-}
-onMounted(()=>{
-  const pages=getCurrentPages()
-  const current=pages[pages.length-1]
-  id.value=current?.options?.id||''
-  item.value=state.items.find(x=>x.id===id.value)||null
-  timer.value=setInterval(()=>{now.value=Date.now()},1000)
-})
-onUnmounted(()=>{if(timer.value)clearInterval(timer.value)})
 </script>
-<style lang="scss">
-.detail-page{min-height:100vh;background:#f8f9f5;color:#173d35;padding-top:var(--fire-status-top, env(safe-area-inset-top));box-sizing:border-box}.detail-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e1e7de}.back,.head-space{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.back{font-size:32px}.title{font-size:20px;font-weight:600}.detail-scroll{height:calc(100vh - 64px - var(--fire-status-top, env(safe-area-inset-top)));box-sizing:border-box}.hero-card{margin:24px;padding:28px 20px;border-radius:20px;background:#e5eee4;text-align:center}.hero-icon{margin:auto;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;color:#447e70}.name{display:block;margin-top:16px;font-size:25px;font-weight:700}.status{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:14px;background:#d5e6d6;color:#447e70;font-size:12px}.info-card,.progress-card{margin:0 24px 16px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e1e7de}.info-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef1eb;color:#737e76;font-size:13px}.info-row:last-child{border-bottom:0}.info-row .strong{color:#173d35;font-size:18px;font-weight:600}.progress-title{display:block;font-size:15px;font-weight:600}.countdown{display:block;margin-top:10px;color:#447e70;font-size:22px;font-variant-numeric:tabular-nums}.progress-track{height:7px;margin-top:18px;border-radius:5px;background:#edf0e9;overflow:hidden}.progress-fill{height:100%;background:#527059;border-radius:5px}.progress-tip{display:block;margin-top:12px;color:#737e76;font-size:12px}.actions{padding:0 24px calc(32px + env(safe-area-inset-bottom))}.actions button{width:100%;min-height:50px;margin-top:12px;border-radius:13px;font-size:15px}.save{background:#173d35;color:#fff}.buy{background:#fff;color:#527059;border:1px solid #b8cabb}.danger{background:#fff5f2;color:#a35d4e;border:1px solid #efc8be}.missing{text-align:center;padding:80px 24px}.missing button{margin-top:20px;background:#173d35;color:#fff}
-
-.status.ended{background:#d7eadb;color:#2e7255;font-weight:600}
-.status.failed{background:#f5e0da;color:#a35d4e}
-
-/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
- .fire-page-wishlist-detail{padding-top:var(--fire-page-top)}
- .fire-page-wishlist-detail .detail-scroll{height:calc(100vh - 64px - var(--fire-page-top));height:calc(100dvh - 64px - var(--fire-page-top))}
+<style scoped>
+.detail-page{min-height:100vh;box-sizing:border-box;padding:var(--fire-page-top) 20px calc(30px + env(safe-area-inset-bottom));background:#f4f7f2;color:#173d35}.head{display:flex;align-items:center;justify-content:space-between;font-size:20px;font-weight:600;margin-bottom:24px}.back,.delete{min-height:44px;background:transparent;padding:8px;color:#173d35}.back{font-size:30px}.delete{font-size:14px;color:#a35d4e;background:#faf1ed;border-radius:12px}.card{background:#fff;border:1px solid #e0e8dc;border-radius:20px;padding:24px;margin:16px 0}.hero{text-align:center;padding:36px 24px}.name,.amount,.status,.countdown,.tip{display:block;overflow-wrap:anywhere}.name{font-size:22px;font-weight:600}.amount{font-size:32px;margin:16px 0}.status{font-size:13px;color:#66806f}.line{display:flex;justify-content:space-between;gap:12px;color:#708275;font-size:14px;margin:12px 0}.countdown{font-size:20px;margin-top:28px}.track{height:7px;border-radius:8px;background:#e6eee1;margin:18px 0;overflow:hidden}.track view{height:100%;background:#53816a}.tip{font-size:13px;line-height:1.7;color:#708275}.actions{display:flex;flex-direction:column;gap:12px;margin-top:26px}.primary,.secondary{width:100%;min-height:48px;border-radius:14px;padding:14px;font-size:15px}.primary{background:#173d35;color:#fff}.secondary{background:#e6eee1;color:#315b47}.full{margin-top:24px}.missing{padding:70px 12px;text-align:center;color:#708275}.missing button{margin-top:20px}button:after{border:0}
 </style>

@@ -233,7 +233,7 @@ export function LedgerSummary(s, month, type) {
 }
 
 // ---------- 账目保存 ----------
-export function SaveExpense(s, entry, day) {
+export function SaveExpense(s, entry, day, legacyReward=true) {
   if (!day) day = LocalDay()
   const raw = String(entry.amount == null ? '' : entry.amount).trim()
   if (!/^\d+(\.\d{1,2})?$/.test(raw)) return false
@@ -256,6 +256,7 @@ export function SaveExpense(s, entry, day) {
     date: date,
     note: note,
     necessity: type === 'expense' ? (entry.necessity || null) : null,
+    ...(!legacyReward?{updatedAt:Date.now(),rewardVersion:1}:{}),
   }
   if (entry.id) {
     const idx = s.ledger.findIndex(function (x) { return x.id === entry.id })
@@ -265,7 +266,7 @@ export function SaveExpense(s, entry, day) {
     s.ledger.push(record)
   }
   HeroDay(s, day)
-  if (type === 'expense' && date === day) HeroComplete(s, 'ledger', day)
+  if (legacyReward && type === 'expense' && date === day) HeroComplete(s, 'ledger', day)
   return true
 }
 
@@ -293,7 +294,7 @@ export function SyncLatestAsset(s) {
   }
 }
 
-export function SaveAssetRecord(s, entry, day) {
+export function SaveAssetRecord(s, entry, day, legacyReward=true) {
   if (!day) day = LocalDay()
   const raw = String(entry.amount == null ? '' : entry.amount).trim()
   const amount = Number(raw)
@@ -308,8 +309,9 @@ export function SaveAssetRecord(s, entry, day) {
   const current = sameDateIdx >= 0 ? s.assetHistory[sameDateIdx] : null
   const normalized = Math.round(amount * 100) / 100
   if (current && current.amount === normalized && current.date === date) {
+    if(!legacyReward){current.confirmedAt=Date.now();current.rewardVersion=1}
     SyncLatestAsset(s)
-    const rewarded=date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
+    const rewarded=legacyReward && date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
     return { changed: false, record: current, rewarded: !!rewarded }
   }
   let createdAt = current ? current.createdAt : Date.now()
@@ -321,11 +323,12 @@ export function SaveAssetRecord(s, entry, day) {
     date: date,
     amount: normalized,
     createdAt: createdAt,
+    ...(!legacyReward?{confirmedAt:Date.now(),rewardVersion:1}:{}),
   }
   if (sameDateIdx >= 0) s.assetHistory[sameDateIdx] = record
   else s.assetHistory.push(record)
   SyncLatestAsset(s)
-  const rewarded=date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
+  const rewarded=legacyReward && date.slice(0,7)===day.slice(0,7) && HeroComplete(s,'assets',day)
   return { changed: true, record: record, rewarded: !!rewarded }
 }
 
@@ -448,7 +451,7 @@ export function ReelCalendarParts(deadline, now) {
 export function WishlistSaved(s) {
   let total = 0
   for (const item of (s.items || [])) {
-    if ((item.status === 'abandoned' || item.status === 'ended') && Number.isFinite(item.amount) && item.amount > 0) {
+    if ((item.status === 'success' || item.status === 'transferred' || item.status === 'abandoned' || item.status === 'ended') && Number.isFinite(item.amount) && item.amount > 0) {
       total += Math.round(item.amount * 100)
     }
   }

@@ -40,7 +40,7 @@ function save(){
    saving.value=false
    return showNotice({title:result.invalid?'保存失败，请检查日期和金额':'本机保存失败，请检查设备存储后重试',icon:'none'})
  }
- const title=result.rewarded?'资产已保存，任务完成 +10 EXP':date.value.slice(0,7)!==day.slice(0,7)?'历史资产已保存，本月任务需记录本月资产':'资产已保存'
+ const title=date.value.slice(0,7)!==day.slice(0,7)?'历史资产已保存，本月任务需记录本月资产' :'资产已保存，经验将在云端确认后更新'
  assetDraft.clear()
  amount.value=''
  uni.switchTab({url:'/pages/index/index',success:()=>showNotice({title,icon:'success'}),

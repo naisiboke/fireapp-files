@@ -1,143 +1,41 @@
 <template>
-  <view class="wishlist-page fire-page-wishlist-index" :style="pageLayoutStyle">
-    <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><view class="back" @tap="back">‹</view><view><text class="title">极简拔草</text><text class="sub">记下想要的，留点时间再决定。</text></view></view>
-    <view class="save-banner"><view><text class="save-label">拔草已省下</text><text class="save-amount">¥ {{ money(saved) }}</text></view><text class="tag">为自己留白</text></view>
-    <view class="tabs"><view v-for="t in tabs" :key="t.id" class="tab" :class="{active: filter===t.id}" @tap="filter=t.id"><text>{{ t.name }}</text></view></view>
-    <view v-if="filtered.length" class="list"><view v-for="item in filtered" :key="item.id" class="item" :class="'status-' + item.status" @tap="open(item)">
-      <view class="item-icon">{{ categoryIcon(item.category) }}</view><view class="item-copy"><text class="item-name">{{ item.name }}</text><text class="item-price">¥ {{ money(item.amount) }}</text><text class="item-sub">{{ statusText(item) }}</text></view><text class="arrow">›</text>
-    </view></view>
-    <view v-else class="empty"><text class="empty-icon">＋</text><text class="empty-title">{{ filter==='active'?'给心动留一点时间':'这里还没有记录' }}</text><text class="empty-sub">添加一个想买的东西，设置 3、7 或 30 天冷静期。</text></view>
-    <view v-if="!showAdd" class="add" @tap="openAdd"><text>＋ 添加消费计划</text></view>
-    <FireOverlay :visible="showAdd" :owner-id="feedbackOwnerId" label="添加消费计划" wide @close="closeAdd">
-      <view class="sheet">
-        <view class="sheet-head"><text class="sheet-title">添加消费计划</text><button class="close" type="button" @tap="closeAdd" @click="closeAdd" aria-label="关闭"><view class="fire-close-mark"></view></button></view>
-        <scroll-view class="sheet-scroll" scroll-y :scroll-into-view="focusedField">
-          <view class="sheet-content">
-            <text class="field-label">名称</text>
-            <input id="plan-name" v-model="form.name" class="input" type="text" placeholder="请输入消费计划名称" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" @input="onNameInput" @focus="focusedField='plan-name'" />
-            <text class="field-label">预计金额</text>
-            <view id="plan-amount" class="money-input"><text>¥</text><input v-model="form.amount" type="digit" :disabled="false" :readonly="false" placeholder="预计金额" :adjust-position="true" :cursor-spacing="24" @input="form.amount=$event.detail.value" @focus="focusedField='plan-amount'" /></view>
-            <text class="field-label">分类</text>
-            <view class="category-row"><view v-for="cat in categories" :key="cat.id" class="choice" :class="{active:form.category===cat.id}" @tap="form.category=cat.id">{{ cat.name }}</view></view>
-            <text class="field-label">冷静期</text>
-            <view class="choice-row"><view v-for="d in [3,7,30]" :key="d" class="choice" :class="{active:form.days===d}" @tap="form.days=d">{{ d }} 天</view></view>
-          </view>
-        </scroll-view>
-        <view class="sheet-footer"><text v-if="formError" class="form-error">{{ formError }}</text><button class="primary" type="button" @click="handleSubmit">完成</button></view>
-      </view>
-    </FireOverlay>
-    <BottomTabs v-if="!showAdd" current="tools" />
+ <view class="wishlist-page" :style="pageLayoutStyle">
+  <AppFeedback :owner-id="feedbackOwnerId" />
+  <view class="head"><button class="back" @tap="back">‹</button><text class="title">极简拔草</text><button class="new" @tap="openAdd">＋ 添加</button></view>
+  <view class="summary"><text>挑战成功，留下</text><text class="amount">¥ {{money(saved)}}</text></view>
+  <view class="tabs"><button v-for="t in tabs" :key="t.id" :class="{active:filter===t.id}" @tap="filter=t.id">{{t.name}}</button></view>
+  <view v-for="item in filtered" :key="item.id" class="item" @tap="open(item)">
+   <view class="row"><view><text class="name">{{item.name}}</text><text class="price">¥ {{money(item.amount)}}</text></view><text class="arrow">›</text></view>
+   <view class="row"><text class="status">{{statusText(item)}}</text><button class="delete" :disabled="deleting" @tap.stop="removeItem(item)" aria-label="删除此计划"><view class="trash"></view>删除</button></view>
   </view>
+  <view v-if="!filtered.length" class="empty"><text>{{filter==='active'?'给心动留一点时间':'这里还没有记录'}}</text><text>3、7 或 30 天后，再做决定。</text></view>
+  <BottomTabs current="tools" />
+ </view>
 </template>
 <script>
 import AppFeedback from '@/components/AppFeedback.vue'
-import FireOverlay from '@/components/FireOverlay.vue'
-import { feedbackPageMixin } from '@/utils/feedback-page.js'
-import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
-import { state, persist, WISHLIST_KEY } from '@/store/index.js'
-import { WishlistSaved } from '@/utils/engine.js'
-export default {
-  mixins: [feedbackPageMixin],
-  onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  components:{ AppFeedback, FireOverlay,  BottomTabs },
-  data(){return{state,filter:'active',showAdd:false,form:{name:'',amount:'',category:'other',days:7},formError:'',submitLock:false,focusedField:'',keyboardHeight:0,viewportHeight:0,viewportTop:0,categories:[{id:'shopping',name:'购物'},{id:'food',name:'饮食'},{id:'travel',name:'旅行'},{id:'life',name:'生活'},{id:'other',name:'其他'}],tabs:[{id:'active',name:'进行中'},{id:'ended',name:'已提前结束（挑战成功）'},{id:'abandoned',name:'已放弃'},{id:'failed',name:'挑战失败'},{id:'bought',name:'已购买'}]}},
-  onLoad(){
-    this.keyboardListener = event => { this.keyboardHeight = Math.max(0, Number(event.height) || 0) }
-    // #ifndef H5
-    if (uni.onKeyboardHeightChange) uni.onKeyboardHeightChange(this.keyboardListener)
-    // #endif
-    // #ifdef H5
-    if (typeof window !== 'undefined' && window.visualViewport) {
-      this.viewportListener = () => {
-        this.viewportHeight = window.visualViewport.height
-        this.viewportTop = window.visualViewport.offsetTop
-      }
-      window.visualViewport.addEventListener('resize', this.viewportListener)
-      window.visualViewport.addEventListener('scroll', this.viewportListener)
-      this.viewportListener()
-    }
-    // #endif
-  },
-  onUnload(){
-    // #ifndef H5
-    if (uni.offKeyboardHeightChange) uni.offKeyboardHeightChange(this.keyboardListener)
-    // #endif
-    // #ifdef H5
-    if (typeof window !== 'undefined' && window.visualViewport && this.viewportListener) {
-      window.visualViewport.removeEventListener('resize', this.viewportListener)
-      window.visualViewport.removeEventListener('scroll', this.viewportListener)
-    }
-    // #endif
-  },
-  onShow(){
-    const saved = uni.getStorageSync(WISHLIST_KEY)
-    if (Array.isArray(saved)) state.items = saved
-  },
-  computed:{
-    panelStyle(){
-      if (this.viewportHeight) return { top:this.viewportTop+'px', height:this.viewportHeight+'px', bottom:'auto' }
-      return { bottom:this.keyboardHeight+'px' }
-    },
-    items(){return Array.isArray(state.items)?state.items:[]},
-    filtered(){return this.items.filter(x=>x.status===this.filter)},
-    saved(){try{return WishlistSaved(state)}catch(e){return this.items.filter(x=>x.status==='abandoned').reduce((a,x)=>a+Number(x.amount||0),0)}},
-  },
-  methods:{
-    openAdd(){ uni.navigateTo({ url: '/pages/wishlist/add' }) },
-    closeAdd(){ this.showAdd=false; this.focusedField=''; this.formError=''; uni.hideKeyboard() },
-    handleSubmit(){
-      if (this.submitLock) return
-      const name = String(this.form.name || '').trim()
-      const amount = Number(this.form.amount)
-      if (!name) { this.formError = '请填写消费计划名称'; showNotice({title:'请填写消费计划名称',icon:'none'}); return }
-      if (!Number.isFinite(amount) || amount <= 0) { this.formError = '请填写正确的预计金额'; showNotice({title:'请填写正确的预计金额',icon:'none'}); return }
-      this.submitLock = true
-      this.formError = ''
-      this.addItem()
-      setTimeout(() => { this.submitLock = false }, 350)
-    },
-    money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})},
-    back(){uni.switchTab({url:'/pages/tools/index'})},
-    categoryIcon(c){return ({shopping:'购',food:'食',travel:'旅',life:'居',other:'＋'})[c]||'＋'},
-    statusText(x){if(x.status==='active'){const left=Math.max(0,Math.ceil((Number(x.created||Date.now())+Number(x.days||7)*86400000-Date.now())/86400000));return left?'冷静期剩余 '+left+' 天':'冷静期已结束'}if(x.status==='ended')return '已提前结束（挑战成功）';if(x.status==='failed')return '放弃挑战 · 挑战失败';return x.status==='abandoned'?'已放弃购买 · 已计入省下金额':'已购买 · 未计入省下金额'},
-    addItem(){const name=String(this.form.name||'').trim(),amount=Number(this.form.amount);state.items.push({id:'item-'+Date.now(),name,amount,category:this.form.category,days:this.form.days,created:Date.now(),status:'active',note:''});persist();this.form={name:'',amount:'',category:'other',days:7};this.closeAdd();showNotice({title:'消费计划已添加',icon:'success'})},
-    open(item){
-      uni.navigateTo({ url: '/pages/wishlist/detail?id=' + encodeURIComponent(item.id) })
-    },
-    setStatus(item, status){
-      const target = state.items.find(x => x.id === item.id)
-      if (target) { target.status = status; target.updated = Date.now(); if (status === 'active') target.created = Date.now(); persist() }
-    },
-    removeItem(item){
-      const index = state.items.findIndex(x => x.id === item.id)
-      if (index >= 0) { state.items.splice(index, 1); persist(); showNotice({title:'已删除',icon:'none'}) }
-    },
-  },
+import {feedbackPageMixin} from '@/utils/feedback-page.js'
+import {showDialog,showNotice} from '@/utils/feedback.js'
+import {state,persistNow} from '@/store/index.js'
+import {accountId} from '@/utils/account-cache.js'
+import {WishlistSaved} from '@/utils/engine.js'
+import {wishlistBucket,wishlistDue,wishlistReason,coolingEnd,removeWishlist} from '@/utils/wishlist.js'
+export default{
+ mixins:[feedbackPageMixin],components:{AppFeedback,BottomTabs},
+ data(){return{state,filter:'active',deleting:false,now:Date.now(),timer:null,tabs:[{id:'active',name:'进行中'},{id:'success',name:'挑战成功'},{id:'bought',name:'已购买'}]}},
+ onShow(){this.now=Date.now();clearInterval(this.timer);this.timer=setInterval(()=>{this.now=Date.now()},60000)},
+ onHide(){clearInterval(this.timer)},onUnload(){clearInterval(this.timer)},
+ computed:{filtered(){return (state.items||[]).filter(x=>wishlistBucket(x)===this.filter)},saved(){return WishlistSaved(state)}},
+ methods:{
+ money(v){return Number(v||0).toLocaleString('zh-CN',{maximumFractionDigits:2})},
+ back(){uni.switchTab({url:'/pages/tools/index'})},openAdd(){uni.navigateTo({url:'/pages/wishlist/add'})},
+ open(item){uni.navigateTo({url:'/pages/wishlist/detail?id='+encodeURIComponent(String(item.id))})},
+ statusText(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买 · 挑战失败';if(wishlistDue(item,this.now))return '待确认是否购买';return '冷静期还剩 '+Math.ceil((coolingEnd(item)-this.now)/86400000)+' 天'},
+ async removeItem(item){if(this.deleting)return;this.deleting=true;const uid=accountId(),id=String(item.id);try{const result=await showDialog({title:'删除消费计划？',content:'删除后无法恢复，也不会保留在省下金额中。',confirmText:'删除',danger:true});if(!result.confirm||uid!==accountId())return;showNotice({title:removeWishlist(state,id,persistNow)?'已删除':'保存失败，请重试',icon:'none'})}finally{this.deleting=false}},
+ },
 }
 </script>
-<style>
-.wishlist-page{min-height:100vh;padding:calc(60px + var(--fire-status-top, env(safe-area-inset-top))) 24px calc(88px + env(safe-area-inset-bottom));background:#f8f9f5;box-sizing:border-box;color:#173d35}.head{display:flex;gap:14px;align-items:flex-start}.back{font-size:32px;line-height:24px}.title{display:block;font-size:26px;font-weight:700}.sub{display:block;margin-top:7px;color:#737e76;font-size:13px}.save-banner{display:flex;justify-content:space-between;align-items:center;margin-top:28px;padding:20px;border-radius:20px;background:#e5eee4}.save-label{display:block;color:#737e76;font-size:13px}.save-amount{display:block;margin-top:6px;font-size:29px;font-weight:600}.tag{padding:8px 12px;border-radius:18px;background:#fff;color:#447e70;font-size:12px}.tabs{display:flex;gap:4px;margin:22px 0 16px;padding:4px;border-radius:20px;background:#edf0e9}.tab{flex:1;padding:12px;text-align:center;border-radius:16px;color:#737e76;font-size:13px}.tab.active{background:#fff;color:#173d35;font-weight:600;box-shadow:0 2px 8px #173d3508}.item{display:flex;align-items:center;gap:13px;padding:18px 0;border-bottom:1px solid #e1e7de}.item-icon{width:42px;height:42px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:#e5eee4;color:#447e70}.item-copy{flex:1}.item-name{display:block;font-size:15px}.item-price{display:block;margin-top:5px;font-size:16px}.item-sub{display:block;margin-top:4px;color:#737e76;font-size:12px}.arrow{font-size:24px;color:#91a392}.empty{text-align:center;padding:70px 15px}.empty-icon{font-size:40px;color:#447e70}.empty-title{display:block;margin-top:16px;font-size:17px;font-weight:600}.empty-sub{display:block;margin-top:9px;color:#737e76;font-size:13px;line-height:1.7}.add{position:fixed;right:24px;bottom:calc(92px + env(safe-area-inset-bottom));padding:14px 18px;border-radius:24px;background:#173d35;color:#fff;font-size:13px;z-index:100}.mask{position:fixed;inset:0;background:#173d3555;z-index:100000;display:flex;align-items:stretch;padding-top:calc(12px + var(--fire-status-top, env(safe-area-inset-top)));box-sizing:border-box;pointer-events:auto}.sheet{width:100%;height:100%;min-height:0;display:flex;flex-direction:column;border-radius:24px 24px 0 0;background:#f8f9f5;box-sizing:border-box;overflow:hidden;pointer-events:auto}.sheet-scroll{position:relative;z-index:1;flex:1;height:0;min-height:0;width:100%;pointer-events:auto}.sheet-content{padding:0 24px calc(88px + env(safe-area-inset-bottom));box-sizing:border-box}.form-error{display:block;margin-bottom:8px;color:#a35d4e;font-size:13px;line-height:1.4}.sheet-footer{position:relative;flex-shrink:0;z-index:100001;padding:12px 24px calc(16px + env(safe-area-inset-bottom));background:#f8f9f5;border-top:1px solid #e1e7de;pointer-events:auto}.field-label{display:block;margin-top:20px;color:#737e76;font-size:13px}.category-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.category-row .choice{flex:0 0 auto;min-width:44px;box-sizing:border-box}.sheet-head{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:16px 24px}.sheet-title{font-size:20px;font-weight:600}.close{margin:0;padding:0;min-width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;font-size:25px;color:#173d35}.close:after,.primary:after{border:0}.input,.money-input{position:relative;z-index:2;pointer-events:auto!important;width:100%;margin-top:18px;padding:14px;border:1px solid #e1e7de;border-radius:12px;background:#fff;box-sizing:border-box}.money-input{display:flex;gap:8px}.money-input input{flex:1}.choice-row{display:flex;gap:8px;margin-top:16px}.choice{flex:1;padding:12px;text-align:center;border-radius:10px;background:#edf0e9;font-size:13px}.choice.active{background:#e5eee4;color:#173d35;font-weight:600}.primary{position:relative;z-index:100002;pointer-events:auto!important;touch-action:manipulation;margin:0;min-height:48px;width:100%;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;border-radius:12px;background:#173d35;color:#fff;font-size:16px;line-height:1.5;box-sizing:border-box}
-
-/* 清爽卡片布局：状态更容易扫描，点击统一进入详情 */
-.wishlist-page{background:#f4f7f2;padding-left:18px;padding-right:18px}
-.head{align-items:center}
-.back{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e7f0e5;color:#245548}
-.save-banner{margin-top:22px;padding:22px;border:1px solid #d5e3d4;background:linear-gradient(135deg,#e1eee1,#eef4e9);box-shadow:0 8px 22px rgba(23,61,53,.06)}
-.tabs{gap:6px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{min-width:78px;padding:12px 8px;white-space:normal;line-height:1.35}
-.list{margin-top:12px;padding:4px 16px;border:1px solid #e0e9df;border-radius:20px;background:#fff;box-shadow:0 8px 24px rgba(23,61,53,.05)}
-.item{padding:17px 0;transition:background .15s ease}
-.item:active{background:#f5f8f3}
-.item-icon{width:48px;height:48px;border-radius:16px;font-size:17px;box-shadow:inset 0 0 0 1px #d5e3d4}
-.item-name{font-weight:600;color:#173d35}
-.item-sub{color:#527059}
-.status-ended .item-sub{color:#2e7255;font-weight:600}
-.status-failed .item-sub{color:#a35d4e}
-.add{right:18px;bottom:calc(96px + env(safe-area-inset-bottom));box-shadow:0 10px 24px rgba(23,61,53,.18)}
-
-/* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
- .fire-page-wishlist-index{padding-top:var(--fire-page-top)}
+<style scoped>
+.wishlist-page{min-height:100vh;box-sizing:border-box;padding:var(--fire-page-top) 20px calc(110px + env(safe-area-inset-bottom));background:#f4f7f2;color:#173d35}.head,.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{flex:1;font-size:23px;font-weight:700}.back,.new{background:transparent;color:#173d35;min-height:44px;padding:8px}.back{font-size:30px}.new{font-size:14px}.summary{padding:24px;margin:22px 0;background:#e3eee1;border-radius:20px;color:#627769;font-size:13px}.amount{display:block;color:#173d35;font-size:30px;margin-top:8px;font-weight:600}.tabs{display:flex;padding:4px;gap:4px;background:#e9eee5;border-radius:16px;margin-bottom:18px}.tabs button{flex:1;min-width:0;background:transparent;color:#6d7f72;padding:10px 4px;font-size:14px}.tabs .active{background:#fff;color:#173d35;border-radius:12px;font-weight:600}.item{background:#fff;padding:20px;margin:12px 0;border:1px solid #dfe8dc;border-radius:18px}.name,.price{display:block;overflow-wrap:anywhere}.name{font-size:17px;font-weight:600}.price{font-size:20px;margin-top:8px}.arrow{font-size:28px;color:#8ba08d}.status{font-size:12px;color:#66816f;margin-top:12px}.delete{margin-top:10px;gap:6px;min-height:40px;padding:8px 10px;color:#a35d4e;background:#faf1ed;border-radius:10px;font-size:12px}.trash{width:11px;height:12px;border:1.5px solid currentColor;border-radius:0 0 3px 3px;position:relative}.trash:before{content:'';position:absolute;top:-5px;left:-3px;width:14px;border-top:1.5px solid currentColor}.empty{padding:70px 12px;text-align:center;line-height:2;color:#708474}.empty text{display:block}.empty text+text{font-size:13px}button:after{border:0}
 </style>

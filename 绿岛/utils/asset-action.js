@@ -7,7 +7,7 @@ export function commitAssetRecord(state, entry, day, persistNow) {
     .map(key=>[key,JSON.parse(JSON.stringify(state[key]))]))
   const rollback=()=>{for(const key of keys){if(key in before)state[key]=before[key];else delete state[key]}}
   try {
-    const result=SaveAssetRecord(state,entry,day)
+    const result=SaveAssetRecord(state,entry,day,false)
     if(!result){rollback();return {saved:false,invalid:true}}
     if(!persistNow()){rollback();return {saved:false,storageFailed:true}}
     return {...result,saved:true}

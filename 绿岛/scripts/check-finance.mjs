@@ -5,8 +5,8 @@ import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
 
 const source = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
-const clean = s => s.replace(/^import .+$/gm, '').replace(/\bexport (const|function)/g, '$1')
-const engine = new Function(clean(source('utils/engine.js')) + '\nreturn {FireEngine,GoalEngine,SavingsProjection,ReelParts,ReelCalendarParts,HeroDay,LedgerSummary,addCalendarMonths};')()
+const clean = s => s.replace(/^import .+$/gm, '').replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g, '')
+const engine = new Function(clean(source('utils/engine.js')) + '\nreturn {FireEngine,GoalEngine,SavingsProjection,ReelParts,ReelCalendarParts,HeroDay,SaveAssetRecord,LocalDay,LedgerSummary,addCalendarMonths};')()
 const helpers = new Function('FireEngine', clean(source('utils/finance-plan.js')) + '\nreturn {validateFireForm,validateGoalForm,hasValidFinance,financeSignature,createFreedomPlan,freedomResult};')(engine.FireEngine)
 const results = []
 const check = (name, condition) => { assert.ok(condition, name); results.push(name) }
@@ -47,6 +47,7 @@ const storage = {
 }
 const storeEnv = {
   reactive:v=>v,toRaw:v=>v,storage,uni,...engine,...helpers,
+  accountId:()=> 'test-account',readAccountCache:(_k,f)=>f,writeAccountCache:()=>true,preserveLegacyCache(){},adoptVerifiedLegacyCache(){},isApiConfigured:()=>false,onActionRewards(){},validateNickname:()=>({ok:true}),
   setTimeout:(callback,delay)=>{timers.set(++nextId,{callback,delay});return nextId},
   clearTimeout:key=>timers.delete(key),
 }
@@ -56,6 +57,7 @@ check('new install has no demo data', store.state.finance.assets === 0 && store.
 function makePage() {
   const env = {
     ...engine,...helpers,...store,
+    useFeedbackPage:()=>1,useSessionDraft:()=>({clear(){}}),AppFeedback:{},AnimatedNumber:{},showNotice(){},dismissFeedback(){},isMembershipActive:()=>false,deleteGoalPlan(){},accountId:()=> 'test-account',setTimeout:callback=>{callback();return 0},
     reactive:v=>v,ref:v=>({value:v}),computed:callback=>({get value(){return callback()}}),
     uni,document:documentMock,window:windowMock,Date:ClockDate,setInterval:callback=>{timers.set(++nextId,{callback,interval:true});return nextId},
     clearInterval:key=>timers.delete(key),
@@ -68,20 +70,20 @@ function makePage() {
 let page = makePage()
 hooks.onLoad({})
 check('empty form and no result', page.fire.assets === '' && page.fire.rate === '4' && page.fire.withdrawal === '4' && page.fireResult.value === null)
-page.calculate()
+await page.calculate()
 check('validation messages block saving', page.errors.value.length === 3 && !db.fire_forge_state)
 const existing = {
   ledger:[{id:'l',date:'2026-10-07',cents:100}],items:[{id:'i',status:'active',amount:120}],
-  assetHistory:[{id:'a',amount:400}],reading:{shelf:['x'],history:[{id:1}]},completed:['t'],exp:150,
+  assetHistory:[{id:'a',date:'2026-10-01',amount:400,createdAt:1}],reading:{shelf:['x'],history:[{id:1}]},completed:['t'],exp:150,
   monthlyTargets:{'2026-10':{expense:100}},toolUsage:{hero:{clicks:2}},customField:{value:'keep'},
 }
 Object.assign(store.state,copy(existing))
 db.firelife_favorites_v1=['fav']; db.firelife_ugc_v1=[{id:'ugc'}]
 Object.assign(page.fire,{assets:'0',monthlyDeposit:'1000',retirementExpense:'1000',rate:'0',withdrawal:'4'})
-page.calculate()
+await page.calculate()
 check('submit saves real finance synchronously', store.state.financeEntered && page.fireResult.value.months === 300 && !!db.fire_forge_state)
 const initialDeadline = store.state.freedomPlan.deadline
-check('other state fields retained', Object.keys(existing).every(key=>JSON.stringify(store.state[key])===JSON.stringify(existing[key])))
+check('other state fields retained', Object.keys(existing).filter(key=>!['assetHistory'].includes(key)).every(key=>JSON.stringify(store.state[key])===JSON.stringify(existing[key])))
 check('community storage untouched', db.firelife_favorites_v1[0] === 'fav' && db.firelife_ugc_v1[0].id === 'ugc')
 check('asset based coverage diagnosis', page.coverage.value === 0)
 store.state.finance.assets = 987
@@ -89,12 +91,12 @@ store.refreshFinance()
 check('homepage refresh reads finance', store.state.finance.assets === 0 && store.state.freedomPlan.deadline === initialDeadline)
 page = makePage(); hooks.onLoad({})
 check('reopen restores input and fixed date', page.fire.monthlyDeposit === '1000' && page.fireResult.value.date.getTime() === initialDeadline)
-page.fire.assets = '1000'; page.calculate()
+page.fire.assets = '1000'; await page.calculate()
 check('editing recalculates', store.state.finance.assets === 1000 && page.fireResult.value.months === 299)
 page.mode.value = 'goal'
 Object.assign(page.goal,{name:'车子',assets:'20000',amount:'100000',monthlyDeposit:'2000',expectedMonths:'24',rate:'0'})
 const beforeFinance = JSON.stringify(store.state.finance)
-page.calculate()
+await page.calculate()
 check('goal calculation is draft only', !!store.state.goalDraft && store.state.goalPlan === null && page.goalResult.value.months === 40)
 check('goal leaves FIRE finance intact', JSON.stringify(store.state.finance) === beforeFinance)
 page.publishGoal()
@@ -104,7 +106,7 @@ check('goal reopens with stable date', page.goal.name === '车子' && page.goalR
 page.mode.value = 'fire'
 writeFail=true
 const before = JSON.stringify(store.state.finance)
-page.fire.assets='999'; page.calculate()
+page.fire.assets='999'; await page.calculate()
 check('storage failure rolls back and shows error', JSON.stringify(store.state.finance)===before && page.errors.value[0].includes('保存失败'))
 writeFail=false
 hooks.onShow()
@@ -154,7 +156,7 @@ check('home has editable finance entry', source('pages/index/index.vue').include
 check('calculator defaults annual return and withdrawal to 4', source('pages/calculator/index.vue').includes("rate:'4',withdrawal:'4'"))
 check('calculator has no passive income field', !source('pages/calculator/index.vue').includes('passive') && !source('utils/finance-plan.js').includes('passive'))
 check('pro diagnosis is gated before rendering', source('pages/calculator/index.vue').includes('showDiagnosis && isProMember') && source('pages/calculator/index.vue').includes('showDiagnosis && !isProMember'))
-check('mini home goal card keeps only compact fields', source('pages/index/index.vue').includes('goal-card-mini') && source('pages/index/index.vue').includes('remainingDays'))
+check('home displays goals in the main countdown',source('pages/index/index.vue').includes('displayResult.date')&&source('pages/index/index.vue').includes('state.goalPlan.name+\'目标倒计时\''))
 
 
 const numberCode = source('components/AnimatedNumber.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .+$/gm,'')

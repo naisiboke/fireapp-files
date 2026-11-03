@@ -79,7 +79,7 @@ const TOOL_CATALOG = [
   { route: 'reading-library', category: '成长', url: '', icon: 'books', color: '#426052', bg: '#edf2e9', name: '认知数据库', desc: '打开阅读内容', status: '开发中' },
   { route: 'time-ledger', category: '效率', url: '', icon: 'time', color: '#426052', bg: '#edf2e9', name: '时间复利计算器', desc: '算清你的生命时薪', status: '待开发' },
   { route: 'ai', category: '效率', url: '/pages/ai/index', icon: 'ai', color: '#426052', bg: '#edf2e9', name: '行为建议 AI', desc: '询问消费与习惯建议' },
-  { route: 'music', category: '内容', url: '', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围', status: '开发中' },
+  { route: 'music', category: '内容', url: '/pages/music/index', icon: 'music', color: '#426052', bg: '#edf2e9', name: '音乐', desc: '选择专注氛围', status: '' },
 ]
 
 function svgUri(svg) {

@@ -3,7 +3,8 @@ import { bootstrap, hydrateFromServer, persist, persistNow, suspendAccountSync, 
 
 import { configureSessionRecovery, safeReturnRoute } from './utils/session-recovery.js'
 import { currentPageRoute } from './utils/session-drafts.js'
-import { showNotice } from './utils/feedback.js'
+import { beginWishlistVisit, maybePromptWishlist } from './utils/wishlist-reminder.js'
+import { feedbackState, showNotice } from './utils/feedback.js'
 
 const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register', 'pages/guide/index'])
 
@@ -20,12 +21,15 @@ export default {
     if (uni.getStorageSync('fire_login_status') === true) {
       hydrateFromServer().then(result => {
         if(!result.loaded)return
+        maybePromptWishlist(feedbackState.owner)
         import('./utils/personality-store.js').then(({hydratePersonalityHistory})=>hydratePersonalityHistory()).catch(()=>{})
       }).catch(error=>console.error('[account-restore]',error))
     }
     // 首个页面已经由 pages.json 指定为启动页，不再在 App.onLaunch 中二次 reLaunch，避免 H5 首屏空白。
   },
   onShow() {
+    beginWishlistVisit()
+    maybePromptWishlist(feedbackState.owner)
     uni.hideTabBar({ animation: false })
     const pages = getCurrentPages()
     const route = pages.length ? String(pages[pages.length - 1].route || '').replace(/^\//, '') : ''

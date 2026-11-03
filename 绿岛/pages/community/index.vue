@@ -507,11 +507,12 @@ export default {
       const idx = list.findIndex(x => x.postId === post.id)
       if (idx >= 0) {
         list.splice(idx, 1)
-        showNotice({ title: '已取消收藏', icon: 'none' })
+
       } else {
         list.push({
           postId: post.id,
           snapshotAt: Date.now(),
+          rewardVersion: 1,
           snapshot: {
             id: post.id,
             category: post.category,
@@ -523,10 +524,11 @@ export default {
             displayName: post.displayName || '',
           },
         })
-        showNotice({ title: '已收藏', icon: 'none' })
+
       }
+      if(!CS.saveFavorites(list)){showNotice({title:'收藏保存失败，请重试',icon:'none'});return}
       this.favorites = list
-      CS.saveFavorites(list)
+      showNotice({title:idx>=0?'已取消收藏':'已收藏，符合条件的经验将在云端确认后更新',icon:'none'})
     },
 
     removeFavorite(id) {

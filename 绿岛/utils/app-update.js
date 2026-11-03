@@ -1,10 +1,10 @@
-import { feedbackState, showDialog, showNotice } from './feedback.js'
+import { feedbackState, hasOpenFeedback, showDialog, showNotice } from './feedback.js'
 import { currentPageRoute } from './session-drafts.js'
 
 export const OFFICIAL_DOWNLOAD_URL='https://fireday.cn/#download'
 export const UPDATE_URL='https://fireday.cn/app-update.json'
-export const BUILD_VERSION='1.0.3'
-export const BUILD_CODE=103
+export const BUILD_VERSION='1.0.4'
+export const BUILD_CODE=104
 const APP_ID='__UNI__6A9B0BE'
 const DAY=86400000
 export function validateUpdate(document,installed,platform) {
@@ -35,6 +35,7 @@ export function createUpdateChecker(env) {
       const item=validateUpdate(document,installed.code,installed.platform)
       if(!env.eligible()||env.owner()!==owner)return {status:'skipped'}
       if(!item){if(manual)env.notice('当前版本 '+installed.name+'，暂无已发布更新');return {status:'current'}}
+      if(!manual&&env.blocked?.())return {status:'skipped'}
       const key='fire_update_prompt_'+installed.platform+'_'+item.versionCode
       if(!manual&&env.now()-Number(env.read(key)||0)<DAY)return {status:'skipped'}
       env.write(key,env.now())
@@ -70,7 +71,7 @@ export function installedVersion() {
 const check=createUpdateChecker({
   isNative:nativeRuntime,now:()=>Date.now(),installed:installedVersion,
   eligible:()=>feedbackState.owner!==null&&!/^\/pages\/(guide|launch|onboarding|sync-conflict)\//.test(currentPageRoute()),
-  owner:()=>feedbackState.owner,
+  owner:()=>feedbackState.owner,blocked:()=>hasOpenFeedback(),
   read:key=>uni.getStorageSync(key),write:(key,value)=>uni.setStorageSync(key,value),
   fetch:()=>new Promise((resolve,reject)=>uni.request({
     url:UPDATE_URL+'?t='+Date.now(),method:'GET',timeout:8000,dataType:'json',header:{Accept:'application/json'},

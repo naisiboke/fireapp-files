@@ -1,5 +1,6 @@
 <template>
   <view class="fire-feedback-host">
+    <WishlistReminder :owner-id="ownerId" />
     <FireOverlay :visible="!!dialog" :owner-id="ownerId" :dismissible="false" elevated :label="dialog ? dialog.title : '提示'">
       <view v-if="dialog" class="fire-dialog">
         <view class="fire-dialog-head">
@@ -21,10 +22,11 @@
 </template>
 
 <script>
+import WishlistReminder from './WishlistReminder.vue'
 import FireOverlay from './FireOverlay.vue'
 import { feedbackState, closeDialog } from '@/utils/feedback.js'
 export default {
-  components: { FireOverlay },
+  components: { FireOverlay, WishlistReminder },
   props: { ownerId: Number },
   computed: {
     dialog() { return feedbackState.owner === this.ownerId ? feedbackState.dialog : null },

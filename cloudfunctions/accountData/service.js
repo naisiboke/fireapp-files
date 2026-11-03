@@ -1,3 +1,4 @@
+const actions=require('./action-rewards.js')
 const crypto = require('node:crypto')
 const idFor = (...parts) => crypto.createHash('sha256').update(parts.join(':')).digest('hex')
 const clone = value => JSON.parse(JSON.stringify(value))
@@ -15,7 +16,7 @@ function validate(value, maximum = 700000) {
 }
 function hasData(value){
   return !!(value && (value.financeEntered || ['assets','monthlyDeposit','retirementExpense','income','expense','goal'].some(key=>Number(value.finance?.[key])>0) || value.ledger?.length || value.items?.length || value.assetHistory?.length ||
-    value.aiChats?.length || value.goalPlan || value.goalDraft || Object.keys(value.monthlyTargets||{}).length ||
+    value.deletions?.length || value.aiChats?.length || value.goalPlan || value.goalDraft || Object.keys(value.monthlyTargets||{}).length ||
     Object.keys(value.personalityTests||{}).length || value.personality?.completed || value.profile?.nicknameUpdatedAt))
 }
 function stateValue(value) {
@@ -100,6 +101,8 @@ async function commit(db, collection, id, uid, version, payload, kind) {
     const row = { ...payload, userId: uid, revision: revision + 1, updatedAt: Date.now() }
     if(collection==='user_states'){
       for(const key of ['redeemWindow','aiQuota'])if(existing?.[key])row[key]=existing[key]
+      const rewardRow=await read(tx,'action_rewards',actions.key('actions',uid))
+      if(rewardRow&&row.state)row.state.exp=rewardRow.baseExp+rewardRow.earned
       row.membership=membershipFor(existing)
       if(row.state)row.state={...row.state,membership:row.membership}
     }
@@ -130,6 +133,14 @@ async function review(post) {
     return { approved:verdict.approved, reason:String(verdict.reason || (verdict.approved?'审核通过':'请修改内容')).slice(0,160) }
   } finally { clearTimeout(timer) }
 }
+async function settlePostReward(db,uid,id,at,attempt){
+ const post=await read(db,'community_posts',id),pending=post?.pendingActionReward
+ if(!pending||post.ownerId!==uid||post.deleted||post.status!=='approved'||(attempt&&post.reviewAttempt!==attempt))return null
+ const result=await actions.award(db,uid,pending.kind,id,at,{hash:pending.hash,firstPublishedAt:pending.firstPublishedAt})
+ await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:post.reviewAttempt,deleted:false,status:'approved'}).update({pendingActionReward:null})
+ return result.rewards
+}
+
 function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }) {
   return async event => {
     try {
@@ -139,6 +150,15 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
       if(event?.expectedUid && event.expectedUid!==uid)fail('ACCOUNT_MISMATCH','账号已切换，已拒绝旧账号的数据操作')
       const action = String(event && event.action || '')
       const stateId = idFor('state',uid)
+      if(action==='actions.get'){
+        const row=await read(db,'user_states',stateId)
+        if(row&&row.userId!==uid)fail('FORBIDDEN','账号归属异常')
+        await actions.forState(db,uid,row?.state||{},now())
+        const pendingPosts=(await db.collection('community_posts').where({ownerId:uid,deleted:false,status:'approved'}).orderBy('updatedAt','desc').limit(100).get()).data||[]
+        for(const post of pendingPosts)if(post.pendingActionReward)await settlePostReward(db,uid,post.id,now())
+        const favorites=await read(db,'user_collections',idFor('collection',uid,'favorites'))
+        return {ok:true,uid,rewards:await actions.forFavorites(db,uid,favorites?.items||[],now())}
+      }
       if(action==='membership.get'){
         const row=await read(db,'user_states',stateId)
         if(row&&row.userId!==uid)fail('FORBIDDEN','账号归属异常')
@@ -155,6 +175,8 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
           if (candidates.length === 1) row = await commit(db,'user_states',stateId,uid,0,{state:stateValue(candidates[0].state)},'verified-legacy-state')
         }
         if (row && row.userId !== uid) fail('FORBIDDEN','账号数据归属异常')
+        const rewardRow=await read(db,'action_rewards',actions.key('actions',uid))
+        if(row?.state&&rewardRow)row={...row,state:{...row.state,exp:rewardRow.baseExp+rewardRow.earned}}
         return {ok:true,uid,email:account.email || '',exists:!!row?.state,state:row?.state?{...row.state,membership:membershipFor(row,now())}:null,membership:membershipFor(row,now()),revision:Number(row?.revision || 0)}
       }
       if (action === 'state.save') {
@@ -162,8 +184,10 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
         const value = stateValue(event.state)
         // An established populated account must never be overwritten by an empty reinstall snapshot.
         if (hasData(current?.state) && !hasData(value)) fail('EMPTY_OVERWRITE','空白数据不会覆盖已有存档，请先恢复账号数据')
+        if(!Number.isSafeInteger(event.revision)||event.revision!==Number(current?.revision||0))fail('SYNC_CONFLICT','云端数据已有更新，本机副本已保留，请重新读取后同步')
+        await actions.wallet(db,uid,now(),value.exp)
         const row = await commit(db,'user_states',stateId,uid,event.revision,{state:{...value,membership:current?.state?.membership || {active:false,status:'inactive'}}},'account-state')
-        return {ok:true,uid,revision:row.revision}
+        return {ok:true,uid,revision:row.revision,rewards:await actions.forState(db,uid,value,now())}
       }
       if (action === 'collection.read' || action === 'collection.save') {
         const name = String(event.name || '')
@@ -175,7 +199,7 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
           return {ok:true,uid,exists:!!row,items:row ? row.items : null,revision:Number(row?.revision || 0)}
         }
         const row = await commit(db,'user_collections',id,uid,event.revision,{collection:name,items:validate(event.items)},'collection:'+name)
-        return {ok:true,uid,revision:row.revision}
+        return {ok:true,uid,revision:row.revision,...(name==='favorites'?{rewards:await actions.forFavorites(db,uid,event.items,now())}:{})}
       }
       if (action === 'posts.mine' || action === 'posts.public') {
         const publicFeed = action === 'posts.public'
@@ -185,7 +209,7 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
         const result = await db.collection('community_posts').where(where).orderBy('createdAt','desc').skip(cursor).limit(50).get()
         const rows = result.data || []
         const items = publicFeed ? rows.map(post=>{
-          const {ownerId,userId,reviewAttempt,legacyId,...visible}=post
+          const {ownerId,userId,reviewAttempt,legacyId,approvedContent,pendingActionReward,...visible}=post
           return visible
         }) : rows
         const stats=publicFeed?{
@@ -212,6 +236,9 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
           journey:value.journey==='settled'?'settled':'doing',
           timeline:(Array.isArray(value.timeline)?value.timeline:[]).slice(0,30).map(row=>({year:String(row.year||'').slice(0,4),desc:String(row.desc||row.title||'').slice(0,300)})),
           displayName:String(value.displayName || '社区用户').slice(0,20),
+          pendingActionReward:existing?.pendingActionReward||null,
+          firstPublishedAt:existing?.firstPublishedAt||(existing?.status==='approved'?(existing.reviewedAt||existing.createdAt):0),
+          approvedContent:existing?.approvedContent||(existing?.status==='approved'?{title:existing.title,content:existing.content,timeline:existing.timeline}:null),
           createdAt:existing?.createdAt || Date.now(),updatedAt:Date.now(),deleted:false,
           status:'pending',reviewStatus:'pending',reviewReason:'等待 AI 审核',reviewAttempt:attempt,
         }
@@ -228,8 +255,18 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
         await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({
           status,reviewStatus:status,reviewReason:String(verdict.reason||'').slice(0,160),reviewedAt:Date.now(),updatedAt:Date.now(),
         })
-        const latest=await read(db,'community_posts',id)
-        return {ok:true,uid,post:latest}
+        let latest=await read(db,'community_posts',id),rewards
+        if(latest?.status==='approved'&&latest.reviewAttempt===attempt){
+          const prior=latest.approvedContent,current={title:latest.title,content:latest.content,timeline:latest.timeline},fresh=!latest.firstPublishedAt,firstPublishedAt=latest.firstPublishedAt||now(),hash=idFor(JSON.stringify(current))
+          const before=String(prior?.content||'').replace(/\s/g,''),after=String(current.content||'').replace(/\s/g,'')
+          let difference=Math.abs(after.length-before.length)
+          for(let i=0;i<Math.min(before.length,after.length);i++)if(before[i]!==after[i])difference++
+          const changed=prior&&(difference>=30||JSON.stringify(prior.timeline)!==JSON.stringify(current.timeline))
+          const pendingActionReward=latest.pendingActionReward||(fresh?{kind:'publish',hash,firstPublishedAt}:changed?{kind:'edit',hash,firstPublishedAt}:null)
+          await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({firstPublishedAt,approvedContent:current,pendingActionReward})
+          rewards=await settlePostReward(db,uid,id,now(),attempt)||await actions.wallet(db,uid,now());latest=await read(db,'community_posts',id)
+        }
+        return {ok:true,uid,post:latest,...(rewards?{rewards}:{})}
       }
       if(action==='posts.delete'){
         const requested=String(event.id||'')

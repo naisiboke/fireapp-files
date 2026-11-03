@@ -4,7 +4,7 @@
     <view class="page-head">
       <button class="back" aria-label="返回" @click="back">‹</button>
       <text class="page-title">躺平倒计时</text>
-      <view class="head-space"></view>
+      <button v-if="mode==='goal' && state.goalPlan" class="delete-goal" :disabled="saving" @tap="removeGoal">删除目标</button><view v-else class="head-space"></view>
     </view>
     <text class="intro-title">{{ mode === 'fire' ? '计算你的自由日' : '为目标安排资金与时间' }}</text>
     <text class="intro-sub">按你填写的数据测算，修改后可重新计算。</text>
@@ -94,17 +94,18 @@
 import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
-import { showNotice, dismissFeedback } from '@/utils/feedback.js'
+import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 const feedbackOwnerId = useFeedbackPage({ handleBack: false })
 import { computed, reactive, ref, onUnmounted } from 'vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { onLoad, onShow, onHide, onUnload, onBackPress } from '@dcloudio/uni-app'
-import { state, refreshFinance, persistNow } from '@/store/index.js'
+import { state, refreshFinance, persistNow, deleteGoalPlan } from '@/store/index.js'
 import { FireEngine, GoalEngine, ReelCalendarParts, ReelParts, SaveAssetRecord, LocalDay } from '@/utils/engine.js'
 import { validateFireForm, validateGoalForm, hasValidFinance, freedomResult, createFreedomPlan } from '@/utils/finance-plan.js'
 import { isMembershipActive } from '@/utils/membership.js'
 import { askBehaviorAI } from '@/utils/api-service.js'
 
+import {accountId} from '@/utils/account-cache.js'
 import { useSessionDraft } from '@/utils/session-drafts.js'
 const fromAssetTask=ref(false)
 const mode = ref('fire'), errors = ref([]), saving = ref(false), showDiagnosis = ref(false), proNotice = ref(false), aiDiagnosis = ref(''), aiLoading = ref(false)
@@ -228,13 +229,13 @@ async function calculate() {
     try {
       state.finance={...state.finance,...parsed.finance}
       state.financeEntered=true
-      const assetResult=SaveAssetRecord(state,{amount:String(parsed.finance.assets),date:LocalDay()},LocalDay())
+      const assetResult=SaveAssetRecord(state,{amount:String(parsed.finance.assets),date:LocalDay()},LocalDay(),false)
       if(!assetResult)throw new Error('资产记录无效，请检查金额')
       state.freedomPlan=createFreedomPlan(state.finance)
       if(!persistNow())throw new Error('保存失败，请检查设备存储后重试')
       fireResult.value=freedomResult(state)
       calculatorDraft.clear()
-      showNotice({title:assetResult.rewarded?'计划已保存，资产任务 +10 EXP':'自由计划已保存',icon:'none'})
+      showNotice({title:'自由计划已保存，经验将在云端确认后更新',icon:'none'})
       if(fromAssetTask.value)goHome()
     } catch(error) {
       state.finance=oldFinance;state.profile=oldProfile;state.financeEntered=oldEntered
@@ -255,15 +256,26 @@ async function calculate() {
   now.value = Date.now()
   saving.value = false
 }
-function publishGoal() {
-  if (!calculatedGoal.value || !goalResult.value || saving.value) return
-  saving.value = true
-  const old = state.goalPlan
-  const plan = {...calculatedGoal.value,progress:goalResult.value.progress,targetDate:goalResult.value.date ? dateText(goalResult.value.date) : '100年内暂未可达'}
-  state.goalPlan = plan
-  if (persistNow()) showNotice({title:'目标已更新到首页',icon:'none'})
-  else { state.goalPlan = old; errors.value = ['保存失败，请重试'] }
-  saving.value = false
+function publishGoal(){
+ if(!calculatedGoal.value||!goalResult.value||saving.value)return
+ saving.value=true
+ const old=state.goalPlan,oldHome=state.homeCountdown
+ state.goalPlan={...calculatedGoal.value,id:old?.id||'goal-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),reviewedAt:Date.now(),rewardVersion:1,progress:goalResult.value.progress,targetDate:goalResult.value.date?dateText(goalResult.value.date):'100年内暂未可达'}
+ state.homeCountdown='goal'
+ if(persistNow()){calculatorDraft.clear();showNotice({title:'目标已保存到首页，经验将在云端确认后更新',icon:'none'});goHome()}
+ else{state.goalPlan=old;state.homeCountdown=oldHome;errors.value=['保存失败，请重试']}
+ saving.value=false
+}
+async function removeGoal(){
+ if(saving.value||!state.goalPlan)return
+ saving.value=true
+ const uid=accountId(),id=String(state.goalPlan.id||state.goalPlan.name)
+ try{
+  const result=await showDialog({title:'删除这个目标？',content:'删除后无法恢复。首页将切回自由日，资产记录和自由日计划会保留。',confirmText:'删除目标',danger:true})
+  if(!result.confirm||uid!==accountId()||id!==String(state.goalPlan?.id||state.goalPlan?.name))return
+  if(!deleteGoalPlan()){errors.value=['保存失败，目标仍已保留，请重试'];return}
+  calculatorDraft.clear();goalResult.value=null;calculatedGoal.value=null;showNotice({title:'目标已删除',icon:'none'});goHome()
+ }finally{saving.value=false}
 }
 onLoad(options => {
   refreshFinance()
@@ -273,7 +285,7 @@ onLoad(options => {
     for (const key of ['assets','monthlyDeposit','retirementExpense','rate','withdrawal']) fire[key] = String(state.finance[key])
     fireResult.value = freedomResult(state)
   }
-  const saved = state.goalDraft || state.goalPlan
+  const saved = options?.from==='home' ? state.goalPlan : state.goalDraft || state.goalPlan
   if (saved) {
     for (const key of Object.keys(goal)) goal[key] = saved[key] == null ? '' : String(saved[key])
     const parsed = validateGoalForm(goal)
@@ -369,4 +381,5 @@ button[disabled] { opacity:.5; }
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-calculator-index{padding-top:var(--fire-page-top)}
+.delete-goal{padding:8px 10px;color:#a35d4e;background:#faf0ea;font-size:12px;min-height:40px}
 </style>

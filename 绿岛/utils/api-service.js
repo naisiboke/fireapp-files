@@ -45,6 +45,10 @@ export async function apiRequest(path, options = {}) {
     fail: (error) => reject(new Error(error && error.errMsg ? error.errMsg : '无法连接云端服务')),
   }))
 }
+const rewardListeners=new Set()
+export function onActionRewards(listener){rewardListeners.add(listener);return()=>rewardListeners.delete(listener)}
+function publishRewards(result,uid){if(result?.rewards&&accountId()===uid)for(const listener of rewardListeners)listener(result.rewards,uid)}
+export async function fetchActionRewards(){const uid=accountId();if(!uid)return null;const result=await callAccountData({action:'actions.get',expectedUid:uid});assertOwner(uid);publishRewards(result,uid);return result.rewards}
 const revisions = new Map()
 const collectionWrites = new Map()
 function revisionKey(name,uid=accountId()){return uid+':'+name}
@@ -60,6 +64,7 @@ export async function saveUserState(state,revision) {
   if(!uid)throw new Error('请先登录')
   const result=await callAccountData({action:'state.save',state,revision,expectedUid:uid})
   assertOwner(uid)
+  publishRewards(result,uid)
   return result
 }
 export async function fetchPrivacySettings(){const result=await fetchUserState();return result.state?.privacySettings||{}}
@@ -113,7 +118,7 @@ export async function saveUserCollection(name,items) {
     assertOwner(uid)
     if(!uid || !revisions.has(key))throw new Error('尚未完成云端读取，本机修改已保留，恢复后再同步')
     const result=await callAccountData({action:'collection.save',name,items,revision:revisions.get(key),expectedUid:uid})
-    assertOwner(uid);revisions.set(key,result.revision);return result
+    assertOwner(uid);revisions.set(key,result.revision);publishRewards(result,uid);return result
   })
   collectionWrites.set(key,task)
   return task
@@ -121,7 +126,7 @@ export async function saveUserCollection(name,items) {
 export async function deleteUserCollection(name){return saveUserCollection(name,null)}
 export async function submitCommunityPost(post){
   const uid=accountId(),result=await callAccountData({action:'posts.submit',post,expectedUid:uid})
-  assertOwner(uid);return result.post
+  assertOwner(uid);publishRewards(result,uid);return result.post
 }
 export async function deleteCommunityPost(id){
   const uid=accountId(),result=await callAccountData({action:'posts.delete',id,expectedUid:uid})

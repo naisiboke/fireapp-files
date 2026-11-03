@@ -110,3 +110,5 @@ export function dismissFeedback(owner) {
   if (overlay.dismissible) overlay.close()
   return true
 }
+
+export function hasOpenFeedback(){return !!feedbackState.dialog||overlays.some(entry=>entry.owner===feedbackState.owner)}
