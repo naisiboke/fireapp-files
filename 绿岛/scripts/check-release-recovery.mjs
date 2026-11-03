@@ -188,7 +188,7 @@ await checkUpdate(true)
 check('settings manual check can reopen the prompt and follow download',dialogCount===2&&openCount===1)
 eligible=false
 await checkUpdate(true)
-check('logging out or losing the active page suppresses late update UI',dialogCount===2&&openCount===1)
+check('leaving an eligible page suppresses late update UI',dialogCount===2&&openCount===1)
 eligible=true;networkFails=true
 await checkUpdate()
 check('automatic update network failure stays silent',noticeCount===0)
@@ -197,6 +197,6 @@ check('manual update network failure gives useful feedback',noticeCount===1)
 native=false
 await checkUpdate(true)
 check('H5 does not invoke native download code',openCount===1&&noticeCount===2)
-check('release manifest uses the new identifiable build',source('manifest.json').includes('"versionCode" : "102"'))
+check('release manifest uses the new identifiable build',source('manifest.json').includes('"versionCode" : "103"'))
 check('repository release metadata remains unpublished until APK upload',JSON.parse(readFileSync(new URL('../../app-update.json',import.meta.url),'utf8')).android.published===false)
 console.log(checks.length+' release recovery, spacing and update checks passed')

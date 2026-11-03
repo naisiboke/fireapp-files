@@ -1,0 +1,14 @@
+// Frozen 1.0.2 validation rules: metadata must stay readable by installed APKs.
+const APP_ID='__UNI__6A9B0BE'
+function validateUpdate(document,installed,platform) {
+  const item=document?.[platform]
+  if(document?.appId!==APP_ID || !item || item.published!==true)return null
+  if(!Number.isSafeInteger(installed)||installed<=0 || !Number.isSafeInteger(item.versionCode)||item.versionCode<=installed)return null
+  if(typeof item.versionName!=='string'||!/^\d+\.\d+\.\d+(?:[.-][a-zA-Z0-9]+)?$/.test(item.versionName))throw new Error('更新版本信息无效')
+  const url=String(item.downloadUrl||'')
+  const valid=platform==='android' ? /^https:\/\/fireday\.cn\/(?:downloads\/)?[a-zA-Z0-9._-]+\.apk$/.test(url) :
+    /^https:\/\/apps\.apple\.com\/[a-zA-Z0-9/_.?=&%-]+$/.test(url)
+  if(!valid)throw new Error('更新下载地址无效')
+  const notes=Array.isArray(item.notes)?item.notes.filter(note=>typeof note==='string').slice(0,5).map(note=>note.slice(0,100)):[]
+  return {...item,downloadUrl:url,notes}
+}

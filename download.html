@@ -63,6 +63,27 @@ function configureDownloads() {
   });
 }
 configureDownloads();
+// Keep the real fallback links usable while loading optional release information.
+function configurePublishedDownloads(release) {
+  if(release?.appId!=='__UNI__6A9B0BE')return;
+  for(const platform of ['android','ios']){
+    const item=release[platform];
+    if(item?.published!==true||!Number.isSafeInteger(item.versionCode)||item.versionCode<=0)continue;
+    const url=String(item.downloadUrl||'');
+    const valid=platform==='android'?/^https:\/\/fireday\.cn\/(?:downloads\/)?[a-zA-Z0-9._-]+\.apk$/.test(url):/^https:\/\/apps\.apple\.com\/[a-zA-Z0-9/_.?=&%-]+$/.test(url);
+    if(!valid)continue;
+    const card=document.querySelector('.download-card[data-platform="'+platform+'"]');
+    if(!card)continue;
+    const version=typeof item.versionName==='string'&&/^\d+\.\d+\.\d+(?:[.-][a-zA-Z0-9]+)?$/.test(item.versionName)?' v'+item.versionName:'';
+    showDownload(card,url,platform==='android'?'下载 Android'+version:'前往 App Store'+version);
+  }
+}
+if(typeof fetch==='function'){
+  fetch('./app-update.json?t='+Date.now(),{cache:'no-store',credentials:'omit'})
+    .then(response=>response.ok?response.json():null)
+    .then(configurePublishedDownloads)
+    .catch(()=>{}); // A network failure must never disable the existing Android link.
+}
 const reveals=document.querySelectorAll('.reveal');
 if('IntersectionObserver' in window){
   const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});

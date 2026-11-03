@@ -2,14 +2,15 @@
   "appId": "__UNI__6A9B0BE",
   "android": {
     "published": false,
-    "versionCode": 102,
-    "versionName": "1.0.2",
-    "downloadUrl": "https://fireday.cn/fireday-1.0.2.apk",
+    "versionCode": 103,
+    "versionName": "1.0.3",
+    "downloadUrl": "https://fireday.cn/fireday-1.0.3.apk",
     "notes": [
-      "修复存档冲突导致无法进入 App",
-      "支持核对本机和云端版本，切换前保留两份备份",
-      "已验证邮箱可继续恢复，无需重复获取验证码"
-    ]
+      "更新提醒可直接前往官网下载最新版",
+      "官网自动读取最新发布版本的下载链接",
+      "保留存档冲突处理、资产任务和统一页面间距修复"
+    ],
+    "websiteUrl": "https://fireday.cn/#download"
   },
   "ios": null
 }
