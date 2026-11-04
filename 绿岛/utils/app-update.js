@@ -3,8 +3,8 @@ import { currentPageRoute } from './session-drafts.js'
 
 export const OFFICIAL_DOWNLOAD_URL='https://fireday.cn/#download'
 export const UPDATE_URL='https://fireday.cn/app-update.json'
-export const BUILD_VERSION='1.0.4'
-export const BUILD_CODE=104
+export const BUILD_VERSION='1.0.5'
+export const BUILD_CODE=105
 const APP_ID='__UNI__6A9B0BE'
 const DAY=86400000
 export function validateUpdate(document,installed,platform) {

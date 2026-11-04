@@ -1,7 +1,8 @@
 const crypto=require('node:crypto')
 const key=(...parts)=>crypto.createHash('sha256').update(parts.join(':')).digest('hex')
+const checked=result=>{if(result?.code){const error=Error(String(result.message||result.code));error.code=result.code;throw error}return result}
 const first=r=>Array.isArray(r.data)?r.data[0]||null:r.data||null
-const read=async(db,name,id)=>first(await db.collection(name).doc(id).get())
+const read=async(db,name,id)=>first(checked(await db.collection(name).doc(id).get()))
 const DAY=86400000,OFFICIAL=new Set(Array.from({length:7},(_,i)=>'official-'+(i+1)))
 const day=at=>new Date(at+8*3600000).toISOString().slice(0,10)
 const month=at=>day(at).slice(0,7)
@@ -13,7 +14,7 @@ async function wallet(db,uid,at,legacyExp=0){
  return db.runTransaction(async tx=>{
   const id=key('actions',uid);let row=await read(tx,'action_rewards',id)
   if(row&&row.userId!==uid)throw Error('REWARD_OWNER_MISMATCH')
-  if(!row){const state=await read(tx,'user_states',key('state',uid));row={userId:uid,baseExp:Math.max(safeExp(state?.state?.exp),safeExp(legacyExp)),earned:0,count:0,events:[],counters:{},createdAt:at};await tx.collection('action_rewards').doc(id).set(row)}
+  if(!row){const state=await read(tx,'user_states',key('state',uid));row={userId:uid,baseExp:Math.max(safeExp(state?.state?.exp),safeExp(legacyExp)),earned:0,count:0,events:[],counters:{},createdAt:at};checked(await tx.collection('action_rewards').doc(id).set(row))}
   return view(row,at)
  })
 }
@@ -41,9 +42,10 @@ async function award(db,uid,kind,ref,at,details={}){
   if(kind==='favorite'){const old=counters.favorite||{};counters.favorite={day:today,count:old.day===today?(old.count||0)+1:1}}
   if(kind==='publish')counters.publishAt=at
   if(kind==='edit')counters.editAt=at
-  const next={...row,earned:row.earned+rules[kind],count:row.count+1,counters,events:[...(row.events||[]),event].slice(-120)}
-  await tx.collection('action_reward_claims').doc(claimId).set({userId:uid,...event})
-  await tx.collection('action_rewards').doc(id).set(next)
+  const {_id,...savedRow}=row
+  const next={...savedRow,earned:row.earned+rules[kind],count:row.count+1,counters,events:[...(row.events||[]),event].slice(-120)}
+  checked(await tx.collection('action_reward_claims').doc(claimId).set({userId:uid,...event}))
+  checked(await tx.collection('action_rewards').doc(id).set(next))
   return{awarded:rules[kind],rewards:view(next,at)}
  })
 }

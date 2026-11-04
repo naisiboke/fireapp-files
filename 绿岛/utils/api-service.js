@@ -45,10 +45,32 @@ export async function apiRequest(path, options = {}) {
     fail: (error) => reject(new Error(error && error.errMsg ? error.errMsg : '无法连接云端服务')),
   }))
 }
-const rewardListeners=new Set()
+const rewardListeners=new Set(),actionSyncListeners=new Set()
 export function onActionRewards(listener){rewardListeners.add(listener);return()=>rewardListeners.delete(listener)}
-function publishRewards(result,uid){if(result?.rewards&&accountId()===uid)for(const listener of rewardListeners)listener(result.rewards,uid)}
-export async function fetchActionRewards(){const uid=accountId();if(!uid)return null;const result=await callAccountData({action:'actions.get',expectedUid:uid});assertOwner(uid);publishRewards(result,uid);return result.rewards}
+export function onActionSync(listener){actionSyncListeners.add(listener);return()=>actionSyncListeners.delete(listener)}
+function publishActionSync(uid,status,message='',code=''){
+ if(accountId()!==uid)return
+ for(const listener of actionSyncListeners){try{listener({status,message,code,updatedAt:Date.now()},uid)}catch(error){console.warn('[action-sync-listener]',error.code||error.message)}}
+}
+function validRewards(value){return value&&Number.isSafeInteger(value.exp)&&value.exp>=0&&Array.isArray(value.events)}
+function publishRewards(result,uid,expected=false){
+ if(accountId()!==uid)return
+ if(validRewards(result?.rewards)){
+  for(const listener of rewardListeners){try{listener(result.rewards,uid)}catch(error){console.warn('[action-reward-listener]',error.code||error.message)}}
+ }
+ if(result?.rewardsError)publishActionSync(uid,'error',result.rewardsError.message||'经验尚未同步，请重试',result.rewardsError.code)
+ else if(validRewards(result?.rewards))publishActionSync(uid,'synced')
+ else if(expected)publishActionSync(uid,'error','任务服务暂不可用，记录已保留','REWARDS_NOT_SUPPORTED')
+}
+export async function fetchActionRewards(){
+ const uid=accountId();if(!uid)return null
+ publishActionSync(uid,'syncing','正在同步任务…')
+ try{
+  const result=await callAccountData({action:'actions.get',expectedUid:uid});assertOwner(uid)
+  if(!validRewards(result.rewards)){const error=new Error('任务服务暂不可用，请稍后重试');error.code='REWARDS_NOT_SUPPORTED';throw error}
+  publishRewards(result,uid,true);return result.rewards
+ }catch(error){publishActionSync(uid,'error','经验待同步，记录已保留',error.code||'REWARD_SYNC_FAILED');throw error}
+}
 const revisions = new Map()
 const collectionWrites = new Map()
 function revisionKey(name,uid=accountId()){return uid+':'+name}
@@ -64,7 +86,7 @@ export async function saveUserState(state,revision) {
   if(!uid)throw new Error('请先登录')
   const result=await callAccountData({action:'state.save',state,revision,expectedUid:uid})
   assertOwner(uid)
-  publishRewards(result,uid)
+  publishRewards(result,uid,true)
   return result
 }
 export async function fetchPrivacySettings(){const result=await fetchUserState();return result.state?.privacySettings||{}}
@@ -118,7 +140,7 @@ export async function saveUserCollection(name,items) {
     assertOwner(uid)
     if(!uid || !revisions.has(key))throw new Error('尚未完成云端读取，本机修改已保留，恢复后再同步')
     const result=await callAccountData({action:'collection.save',name,items,revision:revisions.get(key),expectedUid:uid})
-    assertOwner(uid);revisions.set(key,result.revision);publishRewards(result,uid);return result
+    assertOwner(uid);revisions.set(key,result.revision);publishRewards(result,uid,name==='favorites');return result
   })
   collectionWrites.set(key,task)
   return task
@@ -126,7 +148,7 @@ export async function saveUserCollection(name,items) {
 export async function deleteUserCollection(name){return saveUserCollection(name,null)}
 export async function submitCommunityPost(post){
   const uid=accountId(),result=await callAccountData({action:'posts.submit',post,expectedUid:uid})
-  assertOwner(uid);publishRewards(result,uid);return result.post
+  assertOwner(uid);publishRewards(result,uid,result.post?.status==='approved');return result.post
 }
 export async function deleteCommunityPost(id){
   const uid=accountId(),result=await callAccountData({action:'posts.delete',id,expectedUid:uid})

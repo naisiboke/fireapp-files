@@ -93,6 +93,7 @@
           <text class="section-title">今日行动</text>
           <text class="section-count">{{ todayCount }} / {{todayTasks.length}}</text>
         </view>
+        <view v-if="state.actionSync && ['syncing','error'].includes(state.actionSync.status)" class="action-sync" :class="{failed:state.actionSync.status==='error'}" @tap="retryActions"><text>{{state.actionSync.message}}</text><text v-if="state.actionSync.status==='error'">重试 ›</text></view>
 
         <view
           v-for="t in todayTasks"
@@ -396,6 +397,7 @@ export default {
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买';if(wishlistDue(item,this.actionNow))return '待确认是否购买';return '冷静期剩余 '+Math.ceil((coolingEnd(item)-this.actionNow)/86400000)+' 天'},
+    retryActions(){if(state.actionSync?.status!=='syncing')refreshActions().catch(()=>{})},
     goTask(t){if(t.url)uni.navigateTo({url:t.url})},
 
   },
@@ -512,4 +514,5 @@ export default {
  .fire-page-index-index .home-masthead{padding-top:var(--fire-page-top)}
  .fire-page-index-index .home-unconfigured{padding-top:30px;padding-bottom:24px} .fire-page-index-index .home-unconfigured .btn-primary{margin-top:18px} .fire-page-index-index .account-sync-banner{padding:10px 12px;font-size:12px;line-height:1.6}
 .countdown-tabs{position:relative;z-index:4;display:inline-flex;gap:6px;padding:4px;border-radius:16px;background:rgba(255,255,255,.18);margin-top:14px}.countdown-tabs button{min-height:36px;font-size:13px;padding:8px 16px;background:transparent;color:#dce7db;border-radius:12px}.countdown-tabs .active{background:#f3f6ec;color:#173d35;font-weight:600}
+.action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:8px 0;color:#6b7e70;background:#edf3e8;border-radius:10px;font-size:12px;line-height:1.6}.action-sync.failed{background:#fbf2e9;color:#93643b}.action-sync text:last-child{flex-shrink:0}
 </style>

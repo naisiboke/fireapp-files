@@ -119,7 +119,7 @@ function createClient(){
   if(transport==='malformed'&&event.action==='bootstrap')return {...result,exists:true,state:{}}
   return result
  }
- const api=moduleOf(source('utils/api-service.js'),['fetchActionRewards','onActionRewards','fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
+ const api=moduleOf(source('utils/api-service.js'),['onActionSync','fetchActionRewards','onActionRewards','fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
  const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','getAccountConflictSummary','readAccountConflictBackup','resolveAccountConflict','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
   ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname(){return {ok:true}},
   console:silent,setTimeout:callback=>{const id=++timerId;clientTimers.set(id,callback);return id},clearTimeout:id=>clientTimers.delete(id),

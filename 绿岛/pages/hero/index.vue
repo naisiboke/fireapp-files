@@ -6,6 +6,7 @@
     <text class="detail">累计经验 {{ growth.total }} EXP · 单次奖励最高10经验</text>
     <view class="overview"><view><text class="big">{{ todayCount }}</text><text> / {{dailyTasks.length}} 今日完成</text></view><view><text class="big">{{actionDays.length}}</text><text> 天累计行动</text></view></view>
     <view class="section-head"><text class="section-title">今天，做一点小事</text><text class="date">{{ today }}</text></view>
+    <view v-if="state.actionSync && ['syncing','error'].includes(state.actionSync.status)" class="action-sync" @tap="retryActions"><text>{{state.actionSync.message}}</text><text v-if="state.actionSync.status==='error'">重试 ›</text></view>
     <view v-for="task in dailyTasks" :key="task.id" class="task" :class="{done:isDone(task.id)}" @tap="complete(task.id)"><view class="check">{{ isDone(task.id) ? '✓' : '○' }}</view><view class="task-copy"><text>{{ task.title }}</text><text class="task-sub">{{ isDone(task.id) ? '今天已完成' : task.desc }}</text></view><text class="reward">+{{task.xp}} EXP</text></view>
     <view class="section-head badges-head"><text class="section-title">成长留下的小印记</text></view>
     <view class="badges"><view v-for="badge in badges" :key="badge.name" class="badge" :class="{locked:!badge.ok}"><text class="badge-icon">{{ badge.ok ? '✦' : '◇' }}</text><text>{{ badge.name }}</text><text class="badge-state">{{ badge.ok ? '已解锁' : '待解锁' }}</text></view></view>
@@ -33,7 +34,7 @@ export default{
  badges(){const h=state.hero||{};return[{name:'迈出第一步',ok:state.exp>0},{name:'理性选择',ok:(state.items||[]).some(x=>['success','ended','abandoned','transferred'].includes(x.status))},{name:'七日同行',ok:this.actionDays.length>=7}]},
  },
  onShow(){this.now=Date.now();this.posts=CS.ugc();refreshActions().catch(()=>{})},
- methods:{back(){uni.switchTab({url:'/pages/tools/index'})},isDone(id){return !!this.dailyTasks.find(t=>t.id===id)?.done},complete(id){const t=ACTION_RULES.find(t=>t.id===id);if(t)uni.navigateTo({url:t.url})}},
+ methods:{retryActions(){if(state.actionSync?.status!=='syncing')refreshActions().catch(()=>{})},back(){uni.switchTab({url:'/pages/tools/index'})},isDone(id){return !!this.dailyTasks.find(t=>t.id===id)?.done},complete(id){const t=ACTION_RULES.find(t=>t.id===id);if(t)uni.navigateTo({url:t.url})}},
 }
 </script>
 <style>
@@ -41,4 +42,5 @@ export default{
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-hero-index{padding-top:var(--fire-page-top)}
+.action-sync{display:flex;justify-content:space-between;gap:10px;padding:12px;margin:12px 0;font-size:12px;line-height:1.6;border-radius:10px;background:#faf1e7;color:#93643b}
 </style>

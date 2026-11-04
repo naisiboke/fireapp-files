@@ -24,5 +24,5 @@ export function todayActions(state,{posts=[],member=false,at=Date.now()}={}){
  }).map(rule=>({...rule,title:rule.id==='goal'?'检视「'+state.goalPlan.name+'」目标':rule.title,done:events.some(e=>e.kind===rule.id&&e.day===today)}))
  let seed=0;for(const ch of today)seed=(seed*31+ch.charCodeAt(0))>>>0
  const rank=id=>id==='ledger'?-1:((seed+ACTION_RULES.findIndex(r=>r.id===id)*7)%5)
- return rows.sort((a,b)=>rank(a.id)-rank(b.id)||a.id.localeCompare(b.id)).slice(0,3)
+ return rows.sort((a,b)=>Number(b.done)-Number(a.done)||rank(a.id)-rank(b.id)||a.id.localeCompare(b.id)).slice(0,3)
 }

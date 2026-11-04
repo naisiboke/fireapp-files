@@ -15,8 +15,8 @@ function moduleWith(deps={}){
 const moduleDeps={feedbackState:{owner:1},showDialog:async()=>({confirm:true}),showNotice(){},currentPageRoute:()=>'/pages/index/index'}
 const {validateUpdate,createUpdateChecker,OFFICIAL_DOWNLOAD_URL}=moduleWith(moduleDeps)
 const meta={appId:'__UNI__6A9B0BE',android:{published:true,versionCode:103,versionName:'1.0.3',downloadUrl:'https://fireday.cn/fireday-1.0.3.apk',websiteUrl:OFFICIAL_DOWNLOAD_URL,notes:['前往官网下载最新版']}}
-check('manifest contains the new installable release number',source('manifest.json').includes('"versionName" : "1.0.4"')&&source('manifest.json').includes('"versionCode" : "104"'))
-check('release metadata matches the new version code',JSON.parse(releaseSource).android.versionCode===104)
+check('manifest contains the new installable release number',source('manifest.json').includes('"versionName" : "1.0.5"')&&source('manifest.json').includes('"versionCode" : "105"'))
+check('release metadata matches the new version code',JSON.parse(releaseSource).android.versionCode===105)
 check('new release stays unpublished until its APK is uploaded',JSON.parse(releaseSource).android.published===false)
 check('update destination is the official download section',OFFICIAL_DOWNLOAD_URL==='https://fireday.cn/#download')
 check('release metadata advertises the website destination',JSON.parse(releaseSource).android.websiteUrl===OFFICIAL_DOWNLOAD_URL)
@@ -31,7 +31,7 @@ for(const websiteUrl of ['https://fireday.cn','https://fireday.cn/',OFFICIAL_DOW
  check('official homepage normalizes to downloads: '+websiteUrl,validateUpdate({...meta,android:{...meta.android,websiteUrl}},102,'android').websiteUrl===OFFICIAL_DOWNLOAD_URL)
 }
 const oldValidate=new Function(...Object.keys(moduleDeps),clean(legacyModuleSource)+'\nreturn validateUpdate;')(...Object.values(moduleDeps))
-check('already released clients still recognize the new metadata',oldValidate({...JSON.parse(releaseSource),android:{...JSON.parse(releaseSource).android,published:true}},102,'android').versionCode===104)
+check('already released clients still recognize the new metadata',oldValidate({...JSON.parse(releaseSource),android:{...JSON.parse(releaseSource).android,published:true}},102,'android').versionCode===105)
 function fixture(){
  const values={now:172800000,owner:1,eligible:true,confirm:true,native:true,metadata:meta,fetches:0,platform:'android'}
  const opened=[],dialogs=[],notices=[],cache=new Map()

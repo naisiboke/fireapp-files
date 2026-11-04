@@ -3,7 +3,7 @@ import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
 import { HeroDay } from '../utils/engine.js'
 import { createFreedomPlan, financeSignature, hasValidFinance } from '../utils/finance-plan.js'
-import { isApiConfigured, fetchAccountBootstrap, saveUserState, fetchMembership, redeemMembershipCode, fetchActionRewards, onActionRewards } from '../utils/api-service.js'
+import { isApiConfigured, fetchAccountBootstrap, saveUserState, fetchMembership, redeemMembershipCode, fetchActionRewards, onActionRewards, onActionSync } from '../utils/api-service.js'
 import { validateNickname } from '../utils/nickname.js'
 
 export const STATE_VERSION = 4
@@ -39,6 +39,7 @@ const seed = () => ({
   completed: [],
   exp: 0,
   actionRewards:{version:1,events:[],counters:{},loaded:false},
+  actionSync:{status:'idle',message:''},
   homeCountdown:'fire',
   started: false,
   financeEntered: false,
@@ -160,6 +161,7 @@ function serializableState() {
   delete plain.ready
   delete plain.cloudSync
   delete plain.__fireLocalSync
+  delete plain.actionSync
   delete plain.actionRewards
   return plain
 }
@@ -189,7 +191,7 @@ function localSyncMeta(local) {
 function meta() { return {revision,dirty,changeVersion} }
 function saveMeta() { writeAccountCache('fire_sync_meta_v1',meta()) }
 function equivalentState(left,right){
-  const ignored=new Set(['membership','ready','cloudSync','__fireLocalSync','exp','actionRewards'])
+  const ignored=new Set(['membership','ready','cloudSync','__fireLocalSync','exp','actionRewards','actionSync'])
   const normalize=value=>{
     if(Array.isArray(value))return value.map(normalize)
     if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,normalize(value[key])]))
@@ -478,11 +480,24 @@ function acceptRewards(rewards,uid){
  writeLocal(serializableState());writeAccountCache('fire_action_rewards_v1',state.actionRewards)
 }
 onActionRewards(acceptRewards)
+onActionSync((sync,uid)=>{if(accountId()===uid)state.actionSync={...sync}})
+let actionRequest=null
 export async function refreshActions(){
  const uid=accountId(),epoch=sessionEpoch;if(!uid)return null
- const rewards=await fetchActionRewards()
- if(accountId()!==uid||epoch!==sessionEpoch)return null
- acceptRewards(rewards,uid);return rewards
+ if(actionRequest?.uid===uid&&actionRequest.epoch===epoch)return actionRequest.promise
+ const promise=(async()=>{
+  // Finish the financial upload before reading receipts; a fast page return must not read the old snapshot.
+  if(dirty&&restoreReady){
+   const saved=await syncStateToServer()
+   if(accountId()!==uid||epoch!==sessionEpoch)return null
+   if(!saved.synced){state.actionSync={status:'error',message:'记录待上传，经验稍后同步'};return null}
+  }
+  const rewards=await fetchActionRewards()
+  if(accountId()!==uid||epoch!==sessionEpoch)return null
+  acceptRewards(rewards,uid);return rewards
+ })()
+ actionRequest={uid,epoch,promise}
+ try{return await promise}finally{if(actionRequest?.promise===promise)actionRequest=null}
 }
 export function deleteGoalPlan(){
  const old={plan:state.goalPlan,draft:state.goalDraft,home:state.homeCountdown,deletions:state.deletions},id=String(state.goalPlan?.id||state.goalPlan?.name||'goal')

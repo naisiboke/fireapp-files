@@ -163,7 +163,7 @@ const store=mod('store/index.js',['state','deleteGoalPlan','bootstrap'],{
  reactive,toRaw:v=>v,accountId:()=>currentUid,activateAccount(){},readAccountCache:(k,f)=>cache[k]??f,writeAccountCache:(k,v)=>{cache[k]=copy(v);return true},preserveLegacyCache(){},adoptVerifiedLegacyCache(){},
  storage:{get:(_k,f)=>copy(storageData)||f,set:(_k,v)=>{if(!storageWorks)return false;storageData=copy(v);return true}},
  uni:{setStorageSync(){},removeStorageSync(){}},HeroDay(){},createFreedomPlan:()=>({}),financeSignature:JSON.stringify,hasValidFinance:()=>false,
- isApiConfigured:()=>false,onActionRewards:fn=>{rewardsCallback=fn},validateNickname:()=>({ok:true}),clearTimeout(){},setTimeout(){},console,
+ isApiConfigured:()=>false,onActionSync(){},onActionRewards:fn=>{rewardsCallback=fn},validateNickname:()=>({ok:true}),clearTimeout(){},setTimeout(){},console,
 })
 Object.assign(store.state,{ready:true,finance:{assets:900},freedomPlan:{deadline:12345},exp:50,goalPlan:{id:'g',name:'车子'},goalDraft:{name:'车子'},homeCountdown:'goal'})
 storageWorks=false;before=JSON.stringify(store.state)
@@ -228,5 +228,5 @@ check('delete UI leaves FIRE, assets and EXP untouched',calcState.finance.assets
 check('wishlist list only exposes three tabs',source('pages/wishlist/index.vue').includes("tabs:[{id:'active',name:'进行中'},{id:'success',name:'挑战成功'},{id:'bought',name:'已购买'}]"))
 check('list deletion cannot open detail through bubbling',source('pages/wishlist/index.vue').includes('@tap.stop="removeItem(item)"'))
 check('goal-only delete button leaves FIRE calculator without delete',source('pages/calculator/index.vue').includes('v-if="mode===\'goal\' && state.goalPlan"'))
-check('release is 104',source('manifest.json').includes('"versionCode" : "104"'))
+check('current release is 105',source('manifest.json').includes('"versionCode" : "105"'))
 console.log(checks.length+' v104 feature checks passed')

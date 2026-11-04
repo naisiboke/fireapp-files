@@ -47,7 +47,7 @@ const storage = {
 }
 const storeEnv = {
   reactive:v=>v,toRaw:v=>v,storage,uni,...engine,...helpers,
-  accountId:()=> 'test-account',readAccountCache:(_k,f)=>f,writeAccountCache:()=>true,preserveLegacyCache(){},adoptVerifiedLegacyCache(){},isApiConfigured:()=>false,onActionRewards(){},validateNickname:()=>({ok:true}),
+  accountId:()=> 'test-account',readAccountCache:(_k,f)=>f,writeAccountCache:()=>true,preserveLegacyCache(){},adoptVerifiedLegacyCache(){},isApiConfigured:()=>false,onActionSync(){},onActionRewards(){},validateNickname:()=>({ok:true}),
   setTimeout:(callback,delay)=>{timers.set(++nextId,{callback,delay});return nextId},
   clearTimeout:key=>timers.delete(key),
 }

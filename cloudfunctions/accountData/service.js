@@ -133,6 +133,13 @@ async function review(post) {
     return { approved:verdict.approved, reason:String(verdict.reason || (verdict.approved?'审核通过':'请修改内容')).slice(0,160) }
   } finally { clearTimeout(timer) }
 }
+function rewardError(error) {
+ console.error('[action-rewards]',String(error?.code||'REWARD_WRITE_FAILED'),String(error?.message||'').slice(0,180))
+ return {code:'REWARD_SYNC_PENDING',message:'记录已保存，经验待同步'}
+}
+async function rewardResponse(operation){
+ try{return {rewards:await operation()}}catch(error){return {rewardsError:rewardError(error)}}
+}
 async function settlePostReward(db,uid,id,at,attempt){
  const post=await read(db,'community_posts',id),pending=post?.pendingActionReward
  if(!pending||post.ownerId!==uid||post.deleted||post.status!=='approved'||(attempt&&post.reviewAttempt!==attempt))return null
@@ -187,7 +194,7 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
         if(!Number.isSafeInteger(event.revision)||event.revision!==Number(current?.revision||0))fail('SYNC_CONFLICT','云端数据已有更新，本机副本已保留，请重新读取后同步')
         await actions.wallet(db,uid,now(),value.exp)
         const row = await commit(db,'user_states',stateId,uid,event.revision,{state:{...value,membership:current?.state?.membership || {active:false,status:'inactive'}}},'account-state')
-        return {ok:true,uid,revision:row.revision,rewards:await actions.forState(db,uid,value,now())}
+        return {ok:true,uid,revision:row.revision,...await rewardResponse(()=>actions.forState(db,uid,value,now()))}
       }
       if (action === 'collection.read' || action === 'collection.save') {
         const name = String(event.name || '')
@@ -199,7 +206,7 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
           return {ok:true,uid,exists:!!row,items:row ? row.items : null,revision:Number(row?.revision || 0)}
         }
         const row = await commit(db,'user_collections',id,uid,event.revision,{collection:name,items:validate(event.items)},'collection:'+name)
-        return {ok:true,uid,revision:row.revision,...(name==='favorites'?{rewards:await actions.forFavorites(db,uid,event.items,now())}:{})}
+        return {ok:true,uid,revision:row.revision,...(name==='favorites'?await rewardResponse(()=>actions.forFavorites(db,uid,event.items,now())):{})}
       }
       if (action === 'posts.mine' || action === 'posts.public') {
         const publicFeed = action === 'posts.public'
@@ -255,7 +262,7 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
         await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({
           status,reviewStatus:status,reviewReason:String(verdict.reason||'').slice(0,160),reviewedAt:Date.now(),updatedAt:Date.now(),
         })
-        let latest=await read(db,'community_posts',id),rewards
+        let latest=await read(db,'community_posts',id),rewardResult={}
         if(latest?.status==='approved'&&latest.reviewAttempt===attempt){
           const prior=latest.approvedContent,current={title:latest.title,content:latest.content,timeline:latest.timeline},fresh=!latest.firstPublishedAt,firstPublishedAt=latest.firstPublishedAt||now(),hash=idFor(JSON.stringify(current))
           const before=String(prior?.content||'').replace(/\s/g,''),after=String(current.content||'').replace(/\s/g,'')
@@ -264,9 +271,9 @@ function createHandler({ db, identity, moderate = review, now = ()=>Date.now() }
           const changed=prior&&(difference>=30||JSON.stringify(prior.timeline)!==JSON.stringify(current.timeline))
           const pendingActionReward=latest.pendingActionReward||(fresh?{kind:'publish',hash,firstPublishedAt}:changed?{kind:'edit',hash,firstPublishedAt}:null)
           await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({firstPublishedAt,approvedContent:current,pendingActionReward})
-          rewards=await settlePostReward(db,uid,id,now(),attempt)||await actions.wallet(db,uid,now());latest=await read(db,'community_posts',id)
+          rewardResult=await rewardResponse(async()=>await settlePostReward(db,uid,id,now(),attempt)||await actions.wallet(db,uid,now()));latest=await read(db,'community_posts',id)
         }
-        return {ok:true,uid,post:latest,...(rewards?{rewards}:{})}
+        return {ok:true,uid,post:latest,...rewardResult}
       }
       if(action==='posts.delete'){
         const requested=String(event.id||'')
