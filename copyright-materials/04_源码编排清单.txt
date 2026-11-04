@@ -1,0 +1,96 @@
+源码版本：14b89b584e0dddce6bac65a3e1b17c4b634f07f2
+
+文件顺序：
+1. 绿岛/main.js | 53行 | 8cf51556e1184a7ca3acfcecb5070798a5c24ad3
+2. 绿岛/store/index.js | 925行 | 99ba3a896a7b5f078e2f2c2353ef58658e957e8f
+3. 绿岛/utils/engine.js | 589行 | c3c4ff15bb7073532ca7b1f1225041884a1d85f3
+4. 绿岛/utils/finance-plan.js | 103行 | c8834d6820faf1987e3402335ef9df3dcdc93c34
+5. 绿岛/utils/asset-action.js | 42行 | b4202dd997c10dde37db6c796640c82e4d457988
+6. 绿岛/utils/wishlist.js | 82行 | 4af3bcba5ac0873cd42493da44f2e73255d2e665
+7. 绿岛/utils/account-cache.js | 74行 | 140857e1381b8505e7506205bc9f8b154f3373ef
+8. 绿岛/utils/action-tasks.js | 80行 | 90ec6c09cc268b7f6b4bbd5112d131345a4fcf15
+9. 绿岛/utils/ai-chat-store.js | 55行 | cbd0c881d080184201ad1cae2ee8536d9e1db721
+10. 绿岛/utils/api-service.js | 353行 | 987c416e8d262aedb88932047c0d4864ee7e9983
+11. 绿岛/utils/app-update.js | 188行 | d96e6d7b608ba23f52447747a7c99454262108eb
+12. 绿岛/utils/cloudbase-auth.js | 230行 | fe7522f347562f07ee4eeda44a43eefdcdeb908a
+13. 绿岛/utils/cloudbase-native.js | 277行 | 9e162b117c82dd6fe78608173cd24de62f2789be
+14. 绿岛/utils/cloudbase-platform.js | 49行 | b5f8ef5bde5cb87789ba0d7b64fd0119f565b936
+15. 绿岛/utils/community-review.js | 26行 | b59508d39cf820b90c09de754914bab21dfdba53
+16. 绿岛/utils/community-store.js | 211行 | fed251df3723369b083bfd4931b90b49985f91de
+17. 绿岛/utils/feedback-page.js | 75行 | e62fb864a92ac6420c6c064dee97b545dd3291d9
+18. 绿岛/utils/feedback.js | 157行 | 632b3bd3434194d30c862d6ecb8adbfe5205fd5f
+19. 绿岛/utils/format.js | 14行 | ffd352a09d24263e6bb1db1678ce71666ea54c2f
+20. 绿岛/utils/membership.js | 35行 | 93e78190e50ee71c1edc3a24ed7a5069dc5665b0
+21. 绿岛/utils/nickname.js | 38行 | ad4b5a9fa51c66913e7ae70f9598355562e395e1
+22. 绿岛/utils/page-entry.js | 80行 | 602a811bccee5274d1cdafd3494f584eda46982f
+23. 绿岛/utils/page-layout.js | 27行 | c6bcac9b1ebff37807198d8646c6fa30203868e5
+24. 绿岛/utils/personality-store.js | 46行 | 78a0fb1da4da1e912637f382d3014f71c688122c
+25. 绿岛/utils/session-drafts.js | 128行 | 09eb94a911ca6ca26e11ada81d527854936a96ea
+26. 绿岛/utils/session-recovery.js | 77行 | 34224fe008816c693a9a4b3b628305d6ac8bf389
+27. 绿岛/utils/storage.js | 15行 | 8766df25915484c6249a15938fc6046f93c61ce3
+28. 绿岛/utils/wishlist-reminder.js | 92行 | b714ffb8950aec6032071fa9042e2ba685b411b3
+29. cloudfunctions/accountData/index.js | 29行 | 4db4b56b3c0d7628de6f3154623e2bf30cb20ac5
+30. cloudfunctions/accountData/service.js | 685行 | 5d03feb5ae02b615a9f0cfaab16e0b5d81678074
+31. cloudfunctions/accountData/action-rewards.js | 204行 | 9a58ee7ef0840ec471983f95680e2f3f0f592fef
+
+页码映射：
+1 | 前连续30页 | 汇编1—50行 | 绿岛/main.js
+2 | 前连续30页 | 汇编51—100行 | 绿岛/main.js / 绿岛/store/index.js
+3 | 前连续30页 | 汇编101—150行 | 绿岛/store/index.js
+4 | 前连续30页 | 汇编151—200行 | 绿岛/store/index.js
+5 | 前连续30页 | 汇编201—250行 | 绿岛/store/index.js
+6 | 前连续30页 | 汇编251—300行 | 绿岛/store/index.js
+7 | 前连续30页 | 汇编301—350行 | 绿岛/store/index.js
+8 | 前连续30页 | 汇编351—400行 | 绿岛/store/index.js
+9 | 前连续30页 | 汇编401—450行 | 绿岛/store/index.js
+10 | 前连续30页 | 汇编451—500行 | 绿岛/store/index.js
+11 | 前连续30页 | 汇编501—550行 | 绿岛/store/index.js
+12 | 前连续30页 | 汇编551—600行 | 绿岛/store/index.js
+13 | 前连续30页 | 汇编601—650行 | 绿岛/store/index.js
+14 | 前连续30页 | 汇编651—700行 | 绿岛/store/index.js
+15 | 前连续30页 | 汇编701—750行 | 绿岛/store/index.js
+16 | 前连续30页 | 汇编751—800行 | 绿岛/store/index.js
+17 | 前连续30页 | 汇编801—850行 | 绿岛/store/index.js
+18 | 前连续30页 | 汇编851—900行 | 绿岛/store/index.js
+19 | 前连续30页 | 汇编901—950行 | 绿岛/store/index.js
+20 | 前连续30页 | 汇编951—1000行 | 绿岛/store/index.js / 绿岛/utils/engine.js
+21 | 前连续30页 | 汇编1001—1050行 | 绿岛/utils/engine.js
+22 | 前连续30页 | 汇编1051—1100行 | 绿岛/utils/engine.js
+23 | 前连续30页 | 汇编1101—1150行 | 绿岛/utils/engine.js
+24 | 前连续30页 | 汇编1151—1200行 | 绿岛/utils/engine.js
+25 | 前连续30页 | 汇编1201—1250行 | 绿岛/utils/engine.js
+26 | 前连续30页 | 汇编1251—1300行 | 绿岛/utils/engine.js
+27 | 前连续30页 | 汇编1301—1350行 | 绿岛/utils/engine.js
+28 | 前连续30页 | 汇编1351—1400行 | 绿岛/utils/engine.js
+29 | 前连续30页 | 汇编1401—1450行 | 绿岛/utils/engine.js
+30 | 前连续30页 | 汇编1451—1500行 | 绿岛/utils/engine.js
+31 | 后连续30页 | 汇编3540—3589行 | 绿岛/utils/feedback.js / 绿岛/utils/format.js / 绿岛/utils/membership.js
+32 | 后连续30页 | 汇编3590—3639行 | 绿岛/utils/membership.js / 绿岛/utils/nickname.js
+33 | 后连续30页 | 汇编3640—3689行 | 绿岛/utils/nickname.js / 绿岛/utils/page-entry.js
+34 | 后连续30页 | 汇编3690—3739行 | 绿岛/utils/page-entry.js / 绿岛/utils/page-layout.js
+35 | 后连续30页 | 汇编3740—3789行 | 绿岛/utils/page-layout.js / 绿岛/utils/personality-store.js
+36 | 后连续30页 | 汇编3790—3839行 | 绿岛/utils/personality-store.js / 绿岛/utils/session-drafts.js
+37 | 后连续30页 | 汇编3840—3889行 | 绿岛/utils/session-drafts.js
+38 | 后连续30页 | 汇编3890—3939行 | 绿岛/utils/session-drafts.js / 绿岛/utils/session-recovery.js
+39 | 后连续30页 | 汇编3940—3989行 | 绿岛/utils/session-recovery.js
+40 | 后连续30页 | 汇编3990—4039行 | 绿岛/utils/session-recovery.js / 绿岛/utils/storage.js / 绿岛/utils/wishlist-reminder.js
+41 | 后连续30页 | 汇编4040—4089行 | 绿岛/utils/wishlist-reminder.js
+42 | 后连续30页 | 汇编4090—4139行 | 绿岛/utils/wishlist-reminder.js / cloudfunctions/accountData/index.js
+43 | 后连续30页 | 汇编4140—4189行 | cloudfunctions/accountData/index.js / cloudfunctions/accountData/service.js
+44 | 后连续30页 | 汇编4190—4239行 | cloudfunctions/accountData/service.js
+45 | 后连续30页 | 汇编4240—4289行 | cloudfunctions/accountData/service.js
+46 | 后连续30页 | 汇编4290—4339行 | cloudfunctions/accountData/service.js
+47 | 后连续30页 | 汇编4340—4389行 | cloudfunctions/accountData/service.js
+48 | 后连续30页 | 汇编4390—4439行 | cloudfunctions/accountData/service.js
+49 | 后连续30页 | 汇编4440—4489行 | cloudfunctions/accountData/service.js
+50 | 后连续30页 | 汇编4490—4539行 | cloudfunctions/accountData/service.js
+51 | 后连续30页 | 汇编4540—4589行 | cloudfunctions/accountData/service.js
+52 | 后连续30页 | 汇编4590—4639行 | cloudfunctions/accountData/service.js
+53 | 后连续30页 | 汇编4640—4689行 | cloudfunctions/accountData/service.js
+54 | 后连续30页 | 汇编4690—4739行 | cloudfunctions/accountData/service.js
+55 | 后连续30页 | 汇编4740—4789行 | cloudfunctions/accountData/service.js
+56 | 后连续30页 | 汇编4790—4839行 | cloudfunctions/accountData/service.js / cloudfunctions/accountData/action-rewards.js
+57 | 后连续30页 | 汇编4840—4889行 | cloudfunctions/accountData/action-rewards.js
+58 | 后连续30页 | 汇编4890—4939行 | cloudfunctions/accountData/action-rewards.js
+59 | 后连续30页 | 汇编4940—4989行 | cloudfunctions/accountData/action-rewards.js
+60 | 后连续30页 | 汇编4990—5039行 | cloudfunctions/accountData/action-rewards.js
