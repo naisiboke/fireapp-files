@@ -94,6 +94,42 @@ const server=http.createServer((req,res)=>{
  await page.reload({waitUntil:'networkidle'});
  check('untrusted metadata cannot replace APK links',await page.locator('[data-android-download]').getAttribute('href')==='./fireday.apk');
  await page.unroute('**/app-update.json?*');
+
+ const demoContext=await browser.newContext({viewport:{width:1440,height:1000}}),demo=await demoContext.newPage();
+ await demo.clock.install();
+ await demo.goto(origin,{waitUntil:'networkidle'});
+ await demo.waitForFunction(()=>document.querySelector('[data-phone-preview]').dataset.previewRotating==='true');
+ check('one phone presents four preview tabs',await demo.locator('.device').count()===1&&await demo.locator('[data-preview-tab]').count()===4);
+ for(const key of ['tools','community','profile','home']){
+  await demo.clock.fastForward(6100);
+  check('autoplay advances to '+key,await demo.locator('[data-preview-tab="'+key+'"]').getAttribute('aria-selected')==='true');
+ }
+ await demo.locator('[data-preview-tab="community"]').click();
+ check('manual community selection shows the timeline panel',await demo.locator('#preview-panel-community').isVisible());
+ check('community preview has dated journey nodes',await demo.locator('#preview-panel-community .journey-step').count()===3&&await demo.locator('.journey-year').allTextContents().then(v=>v.join(',')==='2023,2024,2026'));
+ check('only one preview panel is exposed',await demo.locator('.demo-panel:not([hidden])').count()===1);
+ await demo.mouse.move(0,0);await demo.clock.fastForward(19000);
+ check('manual selection stays selected',await demo.locator('[data-preview-tab="community"]').getAttribute('aria-selected')==='true');
+ await demo.locator('[data-preview-tab="community"]').focus();await demo.keyboard.press('ArrowRight');
+ check('arrow key switches to profile',await demo.locator('[data-preview-tab="profile"]').getAttribute('aria-selected')==='true');
+ await demo.keyboard.press('Home');
+ check('Home key selects home',await demo.locator('[data-preview-tab="home"]').getAttribute('aria-selected')==='true');
+ await demo.keyboard.press('End');
+ check('End key selects profile',await demo.locator('[data-preview-tab="profile"]').getAttribute('aria-selected')==='true');
+ await demo.locator('[data-preview-pause]').click();
+ await demo.mouse.move(0,0);await demo.clock.fastForward(6100);
+ check('explicit play resumes rotation',await demo.locator('[data-preview-tab="home"]').getAttribute('aria-selected')==='true');
+ await demo.evaluate(()=>{document.activeElement.blur();document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,document.documentElement.scrollHeight)});
+ await demo.waitForFunction(()=>document.querySelector('[data-phone-preview]').dataset.previewRotating==='false');
+ const before=await demo.locator('[data-phone-preview]').getAttribute('data-preview-active');
+ await demo.clock.fastForward(19000);
+ check('offscreen preview pauses rotation',await demo.locator('[data-phone-preview]').getAttribute('data-preview-active')===before);
+ await demo.evaluate(()=>window.scrollTo(0,0));
+ await demo.waitForFunction(()=>document.querySelector('[data-phone-preview]').dataset.previewRotating==='true');
+ await demo.clock.fastForward(6100);
+ check('rotation resumes when the phone returns',await demo.locator('[data-preview-tab="tools"]').getAttribute('aria-selected')==='true');
+ await demoContext.close();
+
  const nojs=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}}),plain=await nojs.newPage();
  await plain.goto(origin);await plain.waitForTimeout(1200);
  check('no-JS fallback remains a real APK link',await plain.locator('[data-platform="android"] a').getAttribute('href')==='./fireday.apk');
@@ -103,15 +139,39 @@ const server=http.createServer((req,res)=>{
  await quiet.goto(origin,{waitUntil:'networkidle'});
  check('reduced motion disables hero animation',await quiet.locator('.hero-copy').evaluate(el=>getComputedStyle(el).animationName)==='none');
  check('reduced motion keeps sections visible',await quiet.locator('.feature').first().evaluate(el=>getComputedStyle(el).opacity)==='1');
+ check('reduced motion does not autoplay the phone',await quiet.locator('[data-phone-preview]').getAttribute('data-preview-rotating')==='false');
+ await quiet.locator('[data-preview-tab="community"]').click();
+ check('reduced motion still supports manual preview switching',await quiet.locator('#preview-panel-community').isVisible());
  await reduced.close();
  await page.setViewportSize({width:1440,height:1000});await page.reload({waitUntil:'networkidle'});await revealAll(page);
  fs.mkdirSync('/tmp/fireday-web-preview',{recursive:true});
+ for(const key of ['home','tools','community','profile']){
+  await page.locator('[data-preview-tab="'+key+'"]').click();
+  const panel=page.locator('[data-preview-panel="'+key+'"]'),box=await panel.boundingBox(),footer=await page.locator('.screen-footer').boundingBox();
+  check('desktop '+key+' stays above phone navigation',box.y+box.height<=footer.y+1);
+  check('desktop '+key+' content fits its viewport',await panel.evaluate(el=>el.scrollHeight<=el.clientHeight+2));
+ }
+ await page.locator('[data-preview-tab="home"]').click();
+ await page.waitForTimeout(500);
+ await page.evaluate(()=>window.scrollTo(0,0));
  const desktop=await page.screenshot({fullPage:true,type:'jpeg',quality:77,path:'/tmp/fireday-web-preview/desktop.jpg'});
  await page.setViewportSize({width:390,height:844});await page.reload({waitUntil:'networkidle'});await revealAll(page);
+ for(const key of ['home','tools','community','profile']){
+  await page.locator('[data-preview-tab="'+key+'"]').click();
+  const panel=page.locator('[data-preview-panel="'+key+'"]'),box=await panel.boundingBox(),footer=await page.locator('.screen-footer').boundingBox();
+  check('mobile '+key+' stays above phone navigation',box.y+box.height<=footer.y+1);
+  check('mobile '+key+' content fits its viewport',await panel.evaluate(el=>el.scrollHeight<=el.clientHeight+2));
+ }
+ await page.locator('[data-preview-tab="community"]').click();
+ await page.waitForTimeout(500);
+ const community=await page.locator('.device').screenshot({type:'jpeg',quality:84,path:'/tmp/fireday-web-preview/community.jpg'});
+ await page.locator('[data-preview-tab="home"]').click();
+ await page.waitForTimeout(500);
+ await page.evaluate(()=>window.scrollTo(0,0));
  const mobile=await page.screenshot({fullPage:true,type:'jpeg',quality:77,path:'/tmp/fireday-web-preview/mobile.jpg'});
  check('no browser runtime errors',errors.length===0);
  console.log('WEBSITE_CHECKS='+JSON.stringify({passed:checks.length,textContrast:Number(contrast.toFixed(2)),errors}));
- for(const [key,bytes]of [['DESKTOP',desktop],['MOBILE',mobile]]){
+ for(const [key,bytes]of [['DESKTOP',desktop],['MOBILE',mobile],['COMMUNITY',community]]){
   console.log(key+'_PREVIEW_BEGIN');const b64=bytes.toString('base64');for(let i=0;i<b64.length;i+=1000)console.log(b64.slice(i,i+1000));console.log(key+'_PREVIEW_END');
  }
  await browser.close();await new Promise(resolve=>server.close(resolve));
