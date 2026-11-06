@@ -1,0 +1,29 @@
+name: Review Fire生活 website
+on:
+  push:
+    branches: [website-mist-gray]
+    paths:
+      - download.html
+      - index.html
+      - scripts/check-website-design.cjs
+      - .github/workflows/review-website.yml
+permissions:
+  contents: read
+jobs:
+  browser-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check app update and website download behavior
+        run: node 绿岛/scripts/check-website-update.mjs
+      - name: Install browser check tools
+        run: |
+          npm install --prefix /tmp/fireday-web-check --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.56.1
+          npm exec --prefix /tmp/fireday-web-check -- playwright install --with-deps chromium
+      - name: Review desktop, mobile and download behavior
+        env:
+          FIREDAY_PLAYWRIGHT_PATH: /tmp/fireday-web-check/node_modules/playwright
+        run: node scripts/check-website-design.cjs
