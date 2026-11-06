@@ -7,7 +7,7 @@
 <meta name="description" content="Fire生活，让选择回到自己手中。记录收支、管理资产与储蓄目标，看见你的自由日。安卓版开放下载，iOS版本筹备中。">
 <title>Fire生活 · 把生活，握在自己手里</title>
 <style>
-:root{color-scheme:light;--paper:#d8dad4;--paper-soft:#e0e2dc;--sage:#cbd0c7;--ink:#222a25;--muted:#4e5951;--accent:#3e5949;--line:rgba(35,48,39,.14);--ease:cubic-bezier(.22,.68,0,1);--width:1120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+:root{color-scheme:light;--paper:#d8dad4;--paper-soft:#e0e2dc;--sage:#cbd0c7;--ink:#222a25;--muted:#4e5951;--accent:#3e5949;--line:rgba(35,48,39,.14);--card:#aebba5;--card-line:#84987a;--card-ink:#22381f;--ease:cubic-bezier(.22,.68,0,1);--width:1120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:96px}
 body{margin:0;background:var(--paper);line-height:1.6}
@@ -33,7 +33,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .nav-cta{padding:9px 17px;background:var(--ink);color:var(--paper-soft);border-radius:9px;font-size:12px;font-weight:550;transition:background .2s,transform .2s}
 .nav-cta:hover{background:#3c4940;transform:translateY(-1px)}
 .hero{display:grid;grid-template-columns:1fr 1fr;align-items:center;column-gap:62px;min-height:780px;padding-block:62px 78px}
-.hero-copy{position:relative;z-index:1;padding-bottom:8px;animation:arrive .85s var(--ease) both}
+.hero-copy{position:relative;z-index:1;padding-bottom:8px}
 .eyebrow{font-size:15px;font-weight:500;letter-spacing:.14em;color:var(--muted);margin:0 0 28px}
 h1{font-size:clamp(45px,5.15vw,68px);font-weight:650;line-height:1.19;letter-spacing:-.055em;margin:0 0 29px}
 h1 span{display:block;white-space:nowrap}
@@ -48,7 +48,7 @@ h1 span{display:block;white-space:nowrap}
 .text-link:hover .icon{transform:translateX(4px)}
 .hero-note{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:25px 0 0}
 .hero-note .dot{width:2px;height:2px;border-radius:50%;background:currentColor}
-.device-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;margin:0;animation:device-arrive 1.05s var(--ease) both}
+.device-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;margin:0}
 .device-stage:before{content:"";position:absolute;left:5%;right:0;top:8%;bottom:10%;border-radius:50%;background:radial-gradient(ellipse,rgba(241,243,235,.18),rgba(200,208,196,.08) 50%,transparent 72%);pointer-events:none}
 .device{position:relative;width:296px;height:598px;border-radius:46px;padding:7px;background:linear-gradient(140deg,#686e67,#202622 18%,#101612 72%,#646d63);box-shadow:0 28px 48px -24px rgba(29,38,31,.38),0 3px 6px rgba(29,38,31,.24),inset 0 0 0 1px rgba(240,242,233,.58);transform:rotate(2deg);transition:transform .8s var(--ease)}
 .device:before{content:"";position:absolute;left:-2px;top:115px;width:2px;height:30px;border-radius:2px;background:#535d53;box-shadow:0 40px #535d53}
@@ -65,7 +65,7 @@ h1 span{display:block;white-space:nowrap}
 .countdown-number{font-size:23px;font-weight:650;letter-spacing:-.06em;line-height:1.3;margin-top:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .countdown-number b{font-size:29px;font-weight:650}
 .progress{height:6px;overflow:hidden;border-radius:20px;background:rgba(63,85,62,.12);margin-top:18px}
-.progress span{display:block;height:100%;width:67%;background:#738b6e;border-radius:inherit;transform-origin:left;animation:progress-arrive 1.1s .35s var(--ease) both}
+.progress span{display:block;height:100%;width:67%;background:#738b6e;border-radius:inherit;transform-origin:left;animation:none}
 .screen-section-title{font-size:12px;font-weight:650;margin:24px 0 10px}
 .screen-task{display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(56,75,55,.11);font-size:10px;padding:12px 0}
 .screen-task .icon{width:14px;height:14px;stroke-width:1.5}
@@ -86,24 +86,24 @@ h1 span{display:block;white-space:nowrap}
 .feature:not(:first-child):before{content:"";position:absolute;top:2px;left:-24px;height:53px;width:1px;background:var(--line)}
 .feature h3{font-size:23px;font-weight:600;letter-spacing:-.04em;margin:0}
 .feature-copy{font-size:14px;color:var(--muted);line-height:1.75;margin:11px 0 29px;min-height:25px}
-.feature-preview{height:184px;min-width:0;padding:20px;border:1px solid rgba(255,255,255,.15);background:rgba(232,236,225,.24);border-radius:17px;box-shadow:0 6px 12px -10px rgba(51,65,50,.12)}
-.preview-label{font-size:11px;color:#4b5b4b}
+.feature-preview{height:184px;min-width:0;padding:20px;color:var(--card-ink);border:1px solid var(--card-line);background:var(--card);border-radius:17px;box-shadow:0 16px 30px -20px rgba(30,49,31,.42),0 2px 6px rgba(30,49,31,.07),inset 0 1px 0 rgba(255,255,255,.22)}
+.preview-label{font-size:11px;color:#2b4128}
 .preview-date{font-size:22px;font-weight:600;letter-spacing:-.055em;margin:10px 0 15px;white-space:nowrap}
-.feature-preview .progress{height:5px;margin:0 0 17px}.feature-preview .progress span{width:52%;animation:none}
-.goal-detail{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:#566351}
+.feature-preview .progress{height:5px;margin:0 0 17px}.feature-preview .progress{background:rgba(42,64,39,.18)}.feature-preview .progress span{width:52%;background:#4f7044;animation:none}
+.goal-detail{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:#2b4128}
 .goal-detail .icon{width:12px;height:12px}
 .transaction{display:flex;align-items:center;gap:10px;font-size:11px;padding:12px 0;border-bottom:1px solid rgba(55,75,53,.09)}
 .transaction:last-child{border:0;padding-bottom:0}
 .transaction .icon{width:15px;height:15px;color:#52674d}
 .transaction span:last-child{margin-left:auto;font-variant-numeric:tabular-nums;font-size:11px}
-.transaction .income{color:#3d6142}
+.transaction .income{color:#204921}
 .wish-name{font-size:16px;font-weight:600;letter-spacing:-.03em;margin:1px 0 5px}
-.wish-period{font-size:11px;color:var(--muted)}
+.wish-period{font-size:11px;color:#2b4128}
 .timeline{display:flex;align-items:center;margin-top:29px;height:9px}
-.timeline i{display:block;width:9px;height:9px;border-radius:50%;border:1.5px solid #81927b}
-.timeline i:first-child{background:#647b5c;border-color:#647b5c}
-.timeline span{height:1px;flex:1;background:#a3b29b}.timeline span:first-of-type{background:#718866}
-.timeline-labels{display:flex;justify-content:space-between;margin-top:10px;font-size:9px;color:#5c6954}
+.timeline i{display:block;width:9px;height:9px;border-radius:50%;border:1.5px solid #5d7452}
+.timeline i:first-child{background:#46643d;border-color:#46643d}
+.timeline span{height:1px;flex:1;background:#7a8f70;transform-origin:left}.timeline span:first-of-type{background:#4f7044}
+.timeline-labels{display:flex;justify-content:space-between;margin-top:10px;font-size:9px;color:#2b4128}
 .download-section{padding:94px 0 85px;background:var(--paper-soft)}
 .downloads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:55px}
 .download-card{display:flex;align-items:center;gap:19px;min-width:0;padding:27px 26px;border:1px solid var(--line);border-radius:15px;background:rgba(221,225,215,.32)}
@@ -125,20 +125,30 @@ h1 span{display:block;white-space:nowrap}
 .footer-about{font-size:12px;color:var(--muted);line-height:1.8;max-width:520px;margin:0;text-wrap:balance}
 .footer-bottom{display:flex;align-items:center;gap:15px;flex-wrap:wrap;justify-content:center;font-size:10px;color:var(--muted)}
 .footer-bottom a:hover{text-decoration:underline;text-underline-offset:4px}
-.reveal{opacity:1;transform:none}
-.motion-ready .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
-.motion-ready .reveal.on{opacity:1;transform:none}
-.motion-ready .feature:nth-child(2){transition-delay:75ms}.motion-ready .feature:nth-child(3){transition-delay:150ms}
-@keyframes arrive{from{opacity:0;transform:translateY(17px)}to{opacity:1;transform:none}}
-@keyframes device-arrive{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:none}}
-@keyframes progress-arrive{from{transform:scaleX(.3)}to{transform:scaleX(1)}}
-@media(hover:hover) and (pointer:fine){.device-stage:hover .device{transform:rotate(0deg) translateY(-3px)}}
+.reveal{opacity:1}
+/* Animate children so the observed element keeps stable geometry at viewport edges. */
+.motion-ready .reveal{opacity:0;transition:opacity .85s cubic-bezier(.16,1,.3,1);transition-delay:var(--reveal-delay,0ms)}
+.motion-ready .reveal>*{transform:translate3d(0,24px,0);transition:transform 1.1s cubic-bezier(.16,1,.3,1);transition-delay:var(--reveal-delay,0ms)}
+.motion-ready .reveal.on{opacity:1}
+.motion-ready .reveal.on>*{transform:none}
+.motion-ready .feature:nth-child(2){--reveal-delay:80ms}.motion-ready .feature:nth-child(3){--reveal-delay:160ms}
+.motion-ready .device-stage{--reveal-delay:90ms}
+.motion-ready .device-stage>.device{transform:translateY(28px) rotate(2deg)}
+.motion-ready .device-stage.on>.device{transform:rotate(2deg)}
+.motion-ready .device-stage .progress span,.motion-ready .feature-preview .progress span{transform:scaleX(.12);transition:transform 1.25s .22s cubic-bezier(.16,1,.3,1)}
+.motion-ready .device-stage.on .progress span,.motion-ready .feature.on .progress span{transform:scaleX(1)}
+.motion-ready .feature .transaction{opacity:0;transform:translateY(7px);transition:opacity .65s ease,transform .9s cubic-bezier(.16,1,.3,1)}
+.motion-ready .feature .transaction:nth-child(2){transition-delay:120ms}.motion-ready .feature .transaction:nth-child(3){transition-delay:200ms}.motion-ready .feature .transaction:nth-child(4){transition-delay:280ms}
+.motion-ready .feature.on .transaction{opacity:1;transform:none}
+.motion-ready .feature .timeline span{transform:scaleX(.08);transition:transform 1.15s .22s cubic-bezier(.16,1,.3,1)}
+.motion-ready .feature.on .timeline span{transform:scaleX(1)}
+@media(hover:hover) and (pointer:fine){.device-stage:hover .device,.motion-ready .device-stage.on:hover>.device{transform:rotate(0deg) translateY(-3px)}}
 @media(min-width:1600px){.hero{min-height:820px}}
 @media(max-width:1000px){.container{width:calc(100% - 64px)}.hero{column-gap:38px;min-height:720px;padding-block:65px}.device{width:270px;height:546px;border-radius:43px}.device-screen{border-radius:36px;padding-inline:16px}.countdown-panel{margin-top:18px;padding:14px 13px}.screen-heading{margin-top:33px}.screen-section-title{margin-top:19px}.screen-task{padding:10px 0}.feature-grid{gap:30px}.feature:not(:first-child):before{left:-15px}.feature-preview{padding:16px}.feature h3{font-size:21px}.preview-date{font-size:20px}.download-card{gap:13px;padding:22px 19px}.platform-copy{padding-left:13px}.download-btn{padding:9px 12px}}
 @media(max-width:860px){.hero{grid-template-columns:1fr;gap:51px;min-height:0;padding-block:67px 53px}.hero-copy{max-width:550px}.eyebrow{margin-bottom:22px}h1{font-size:clamp(40px,7.5vw,62px);margin-bottom:23px}.hero-description{font-size:17px}.hero-actions{margin-top:28px}.hero-note{margin-top:22px}.device{width:284px;height:574px}.device-screen{border-radius:36px}.screen-heading{margin-top:37px}.countdown-panel{margin-top:20px;padding:16px}.screen-section-title{margin-top:22px}.screen-task{padding:11px 0}.device-caption{margin-top:18px}.features-section{padding-block:73px 76px}.feature-grid{gap:24px;margin-top:49px}.feature:not(:first-child):before{left:-12px}.feature h3{font-size:20px}.feature-copy{font-size:13px;min-height:45px}.feature-preview{height:168px;padding:14px}.preview-date{font-size:17px}.preview-label{font-size:10px}.transaction{gap:7px;font-size:10px}.transaction span:last-child{font-size:10px}.wish-name{font-size:14px}.download-section{padding-block:75px 65px}.downloads{gap:18px}.download-card{flex-wrap:wrap;gap:16px;padding:24px}.platform-copy{flex:1}.download-card .download-btn{margin:1px 0 0;width:100%}}
 @media(max-width:620px){.container{width:calc(100% - 40px)}.nav{height:64px;gap:20px}.brand{font-size:18px;gap:8px}.brand-mark{width:29px;height:29px;border-radius:8px}.nav-right{gap:0}.nav-links{gap:22px;font-size:12px}.nav-links .about-link,.nav-cta{display:none}.hero{padding-top:51px;gap:43px}h1{font-size:clamp(36px,9.2vw,52px);line-height:1.25;letter-spacing:-.05em}.eyebrow{font-size:13px;margin-bottom:18px}.hero-description{font-size:15px;max-width:300px}.hero-actions{gap:21px;margin-top:25px}.button{font-size:14px;min-height:46px;padding:13px 18px;border-radius:10px}.text-link{font-size:13px}.hero-note{font-size:11px;gap:7px;margin-top:21px}.device{width:272px;height:550px}.device-screen{padding-inline:16px}.screen-heading{margin-top:34px}.screen-heading strong{font-size:17px}.countdown-panel{padding:14px 13px;margin-top:18px}.screen-task{padding:10px 0}.screen-section-title{margin-top:19px}.device-caption{font-size:9px}.features-section{padding-block:64px 66px}.section-heading h2{font-size:32px;letter-spacing:-.045em}.section-heading p{font-size:14px;margin-top:14px}.feature-grid{grid-template-columns:1fr;gap:37px;max-width:370px;margin-inline:auto;margin-top:42px}.feature:not(:first-child):before{display:none}.feature h3{font-size:22px}.feature-copy{font-size:14px;min-height:0;margin-bottom:19px}.feature-preview{height:177px;padding:19px 21px}.preview-label{font-size:11px}.preview-date{font-size:23px}.transaction{font-size:12px;padding:12px 0}.transaction span:last-child{font-size:12px}.wish-name{font-size:17px}.wish-period{font-size:12px}.timeline{margin-top:28px}.timeline-labels{font-size:10px}.download-section{padding-block:66px 54px}.download-section h2{max-width:300px;margin-inline:auto;font-size:31px}.downloads{grid-template-columns:1fr;gap:14px;margin-top:35px}.download-card{flex-wrap:nowrap;padding:24px 20px;gap:15px}.platform-copy{padding-left:15px}.platform-copy h3{font-size:17px}.download-card .download-btn{width:auto;margin-left:auto;font-size:11px;padding:10px 12px}.platform-icon{width:27px}.platform-icon .icon{width:27px}.platform-copy p{font-size:10px}.footer-content{padding-top:28px;gap:13px}.footer-about{font-size:11px;max-width:310px}.footer{padding-bottom:25px}}
 @media(max-width:374px){.container{width:calc(100% - 32px)}.nav-links{gap:17px}.hero-actions{gap:16px}.download-card{padding-inline:16px;gap:11px}.platform-copy{padding-left:11px}.platform-copy h3{font-size:16px}.platform-copy p{font-size:9px}.download-card .download-btn{padding-inline:10px}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.motion-ready .reveal{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.motion-ready .reveal,.motion-ready .feature .transaction{opacity:1;transform:none}.motion-ready .reveal>*,.motion-ready .progress span,.motion-ready .timeline span{transform:none}.device-stage .device{transform:rotate(2deg)!important}}
 @media(prefers-reduced-transparency:reduce){.site-header{background:var(--paper);backdrop-filter:none}}
 </style>
 </head>
@@ -172,14 +182,14 @@ h1 span{display:block;white-space:nowrap}
 </header>
 <main id="main">
 <section class="hero container" aria-labelledby="hero-title">
-<div class="hero-copy">
+<div class="hero-copy reveal">
 <p class="eyebrow">Fire生活</p>
 <h1 id="hero-title"><span>把生活，</span><span>握在自己手里。</span></h1>
 <p class="hero-description">记录收支，管理目标，看见你的自由日。</p>
 <div class="hero-actions"><a class="button" href="./fireday.apk" download="fireday.apk" data-android-download><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载安卓版</a><a class="text-link" href="#features">进一步了解<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
 <p class="hero-note"><span>Android 已开放下载</span><i class="dot" aria-hidden="true"></i><span data-platform-status="ios">iOS 即将上线</span></p>
 </div>
-<figure class="device-stage">
+<figure class="device-stage reveal">
 <div class="device" aria-hidden="true"><div class="device-screen">
 <div class="status-bar"><span>9:41</span><span class="status-icons"><svg class="icon"><use href="#i-signal"/></svg><svg class="icon"><use href="#i-battery"/></svg></span></div>
 <div class="screen-heading"><strong>我的自由计划</strong><svg class="icon"><use href="#i-bell"/></svg></div><div class="screen-domain">fireday.cn</div>
@@ -266,8 +276,9 @@ const reveals=document.querySelectorAll('.reveal');
 const reduceMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 if('IntersectionObserver' in window&&!reduceMotion&&document.documentElement){
   const observer=new window.IntersectionObserver(entries=>entries.forEach(entry=>{
-    if(entry.isIntersecting){entry.target.classList.add('on');observer.unobserve(entry.target);}
-  }),{threshold:.08});
+    if(entry.isIntersecting&&entry.intersectionRatio>=.12)entry.target.classList.add('on');
+    else if(!entry.isIntersecting)entry.target.classList.remove('on');
+  }),{threshold:[0,.12],rootMargin:"-72px 0px -12px 0px"});
   document.documentElement.classList.add('motion-ready');
   reveals.forEach(element=>observer.observe(element));
 }else{reveals.forEach(element=>element.classList.add('on'));}
