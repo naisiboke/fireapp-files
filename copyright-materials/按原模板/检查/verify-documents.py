@@ -28,3 +28,8 @@ for filename in ["代码模板_已填写.docx","功能-填写模板_已填写.do
     info[filename]={"renderedPages":pages,"codeParagraphs":code_lines,"pageBreaks":breaks,"actualScreenshots":len(images)}
 print("DOCUMENT_CHECK="+json.dumps(info,ensure_ascii=False))
 print("MANUAL_STATUS=awaiting_8_actual_app_screenshots")
+
+fixture=subprocess.check_output(["pdfinfo","/tmp/copyright-pdf/layout-fixture.pdf"],text=True)
+fixture_pages=int(re.search(r"^Pages:\s+(\d+)",fixture,re.M).group(1))
+assert fixture_pages==15,("image-layout-fixture",fixture_pages)
+print("IMAGE_LAYOUT_FIXTURE_PAGES="+str(fixture_pages))

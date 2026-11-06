@@ -6,9 +6,9 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  verify-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -18,6 +18,13 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund --package-lock=false js-beautify@1.15.4 @babel/parser@7.28.5
           node verify-source.cjs
+  verify-documents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Install document renderer
         run: |
           sudo apt-get update -qq
@@ -25,5 +32,6 @@ jobs:
       - name: Render and check documents
         run: |
           mkdir -p /tmp/copyright-pdf
-          libreoffice -env:UserInstallation=file:///tmp/copyright-office-profile --headless --convert-to pdf --outdir /tmp/copyright-pdf copyright-materials/按原模板/*.docx
+          node copyright-materials/按原模板/检查/render-fixture.cjs
+          libreoffice -env:UserInstallation=file:///tmp/copyright-office-profile --headless --convert-to pdf --outdir /tmp/copyright-pdf copyright-materials/按原模板/*.docx /tmp/layout-fixture.docx
           python copyright-materials/按原模板/检查/verify-documents.py

@@ -8,7 +8,7 @@ function formatCodeLine(line){
  while(width(r)>80){q=null;e=false;let cut=0;for(let i=0;i<r.length;i++){const c=r[i];if(q){if(e)e=false;else if(c==='\\')e=true;else if(c===q)q=null;continue}if(c==="'"||c==='"'||c===BT){q=c;continue}if(c==='/'&&r[i+1]==='/')break;
  const h=r.slice(0,i+1).trimEnd(),tail=r.slice(i+1).trimStart();
  if((c===' '||c===','||c===';')&&width(h)<=80&&h.trim().length>1&&!/\b(?:return|throw|yield|await|async|new)$/.test(h)&&!tail.startsWith('=>'))cut=i+1}
- if(!cut)throw Error('Unwrappable '+r);a.push(r.slice(0,cut).trimEnd());r=pad+r.slice(cut).trimStart();
+ if(!cut)return [line];a.push(r.slice(0,cut).trimEnd());r=pad+r.slice(cut).trimStart();
  }return [...a,r]
 }
 module.exports={formatCodeLine};
