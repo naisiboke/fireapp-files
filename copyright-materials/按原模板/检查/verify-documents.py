@@ -31,5 +31,7 @@ print("MANUAL_STATUS=awaiting_8_actual_app_screenshots")
 
 fixture=subprocess.check_output(["pdfinfo","/tmp/copyright-pdf/layout-fixture.pdf"],text=True)
 fixture_pages=int(re.search(r"^Pages:\s+(\d+)",fixture,re.M).group(1))
+fixture_text=subprocess.check_output(["pdftotext","-layout","/tmp/copyright-pdf/layout-fixture.pdf","-"],text=True)
+print("FIXTURE_PAGE_HEADS="+json.dumps([t.strip()[:100] for t in fixture_text.split("\f") if t.strip()],ensure_ascii=False))
 assert fixture_pages==15,("image-layout-fixture",fixture_pages)
 print("IMAGE_LAYOUT_FIXTURE_PAGES="+str(fixture_pages))
