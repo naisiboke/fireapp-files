@@ -1,0 +1,29 @@
+name: Validate original-template copyright files
+on:
+  push:
+    branches: [copyright-materials-v1.0.5]
+    paths: [.github/workflows/validate-copyright-template.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify source formatting
+        working-directory: copyright-materials/按原模板/检查
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false js-beautify@1.15.4 @babel/parser@7.28.5
+          node verify-source.cjs
+      - name: Install document renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-writer fonts-noto-cjk fonts-liberation poppler-utils > /tmp/copyright-render-install.log 2>&1
+      - name: Render and check documents
+        run: |
+          mkdir -p /tmp/copyright-pdf
+          libreoffice -env:UserInstallation=file:///tmp/copyright-office-profile --headless --convert-to pdf --outdir /tmp/copyright-pdf copyright-materials/按原模板/*.docx
+          python copyright-materials/按原模板/检查/verify-documents.py
