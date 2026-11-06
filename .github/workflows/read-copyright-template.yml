@@ -1,0 +1,34 @@
+name: Read copyright Word template
+on:
+  push:
+    branches: [copyright-materials-v1.0.5]
+    paths: [.github/workflows/read-copyright-template.yml]
+permissions:
+  contents: read
+jobs:
+  inspect-template:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 0b068020b188fd6a32127660c8cce38fb04e7c7f
+          persist-credentials: false
+      - name: Extract Word XML parts
+        shell: python
+        run: |
+          import base64, io, json, zipfile
+          path="说明书模板.docx"
+          with zipfile.ZipFile(path) as z:
+              parts={n:z.read(n) for n in z.namelist() if n.endswith((".xml",".rels")) and not n.startswith("customXml/")}
+              out=io.BytesIO()
+              with zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED) as target:
+                  for name,data in parts.items():
+                      target.writestr(name,data)
+              encoded=base64.b64encode(out.getvalue()).decode()
+              print("TEMPLATE_PARTS_BEGIN")
+              for start in range(0,len(encoded),1000):
+                  print(encoded[start:start+1000])
+              print("TEMPLATE_PARTS_END")
+              print("TEMPLATE_ENTRY_LIST="+json.dumps([{"name":n,"bytes":z.getinfo(n).file_size} for n in z.namelist()],ensure_ascii=False))
+          
