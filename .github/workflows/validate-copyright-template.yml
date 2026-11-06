@@ -35,3 +35,5 @@ jobs:
           node copyright-materials/按原模板/检查/render-fixture.cjs
           libreoffice -env:UserInstallation=file:///tmp/copyright-office-profile --headless --convert-to pdf --outdir /tmp/copyright-pdf copyright-materials/按原模板/*.docx /tmp/layout-fixture.docx
           python copyright-materials/按原模板/检查/verify-documents.py
+
+# Revision: AST-based string wrapping and standard formatter.
