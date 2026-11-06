@@ -46,6 +46,12 @@ const server=http.createServer((req,res)=>{
   return(Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05)
  });
  check('muted text meets normal-text contrast',contrast>=4.5);
+ const featureContrast=await page.evaluate(()=>{
+  const rgb=s=>s.match(/\d+/g).slice(0,3).map(Number),lum=a=>a.map(x=>{x/=255;return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4)}).reduce((s,x,i)=>s+x*[.2126,.7152,.0722][i],0);
+  const fg=lum(rgb(getComputedStyle(document.querySelector('.feature-copy')).color)),bg=lum(rgb(getComputedStyle(document.querySelector('.features-section')).backgroundColor));
+  return(Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05)
+ });
+ check('feature descriptions meet normal-text contrast',featureContrast>=4.5);
  const published={appId:pending.appId,android:{published:true,versionCode:106,versionName:'1.0.6',downloadUrl:'https://fireday.cn/fireday-1.0.6.apk'},ios:{published:true,versionCode:106,versionName:'1.0.6',downloadUrl:'https://apps.apple.com/cn/app/id123456789'}};
  await page.route('**/app-update.json?*',route=>route.fulfill({json:published}));
  await page.reload({waitUntil:'networkidle'});
