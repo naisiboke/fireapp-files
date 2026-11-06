@@ -23,6 +23,8 @@ jobs:
         run: |
           npm install --prefix /tmp/fireday-web-check --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.56.1
           npm exec --prefix /tmp/fireday-web-check -- playwright install --with-deps chromium
+      - name: Install Chinese preview fonts
+        run: sudo apt-get install -y --no-install-recommends fonts-noto-cjk > /tmp/fireday-font-install.log 2>&1
       - name: Review desktop, mobile and download behavior
         env:
           FIREDAY_PLAYWRIGHT_PATH: /tmp/fireday-web-check/node_modules/playwright
