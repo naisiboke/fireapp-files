@@ -1,0 +1,54 @@
+
+import assert from 'node:assert/strict'
+import{readFileSync}from'node:fs'
+import{commitMonthlyPlan,commitLedgerRecord,removeLedgerRecord,expenseDistribution,shareOf,validLedgerDate,defaultLedgerDraft}from'../utils/quiet-ledger.js'
+const checks=[],check=(name,value)=>{assert.ok(value,name);checks.push(name)},clone=value=>JSON.parse(JSON.stringify(value))
+const day='2026-11-08',month=day.slice(0,7),fresh=()=>({ledger:[],monthlyTargets:{},hero:null,exp:17,finance:{assets:15000,retirementExpense:6000,monthlyDeposit:3000},items:[],deletions:[]})
+let s=fresh(),before=clone(s)
+check('monthly plans save',commitMonthlyPlan(s,month,'3000','8000',()=>true))
+check('expense and income plans retain independent cents',s.monthlyTargets[month].expense===300000&&s.monthlyTargets[month].income===800000)
+check('plans never create actual records or EXP',s.ledger.length===0&&s.exp===17&&s.finance.assets===15000)
+before=clone(s);check('failed plan save reports failure',!commitMonthlyPlan(s,month,'5000','9000',()=>false))
+check('failed plan save restores old values',JSON.stringify(s)===JSON.stringify(before))
+for(const values of [['','8000'],['3000',''],['0','1'],['1','0'],['-1','8'],['1.001','8'],['1e5','8']]){before=clone(s);check('invalid plans do not change state '+values,!commitMonthlyPlan(s,month,...values,()=>true)&&JSON.stringify(s)===JSON.stringify(before))}
+const form={type:'expense',category:'food',amount:'30',date:day,note:'午饭',necessity:'necessary'}
+const food=commitLedgerRecord(s,month,form,()=>true,day)
+check('actual expense saves with note and category',food&&food.cents===3000&&food.note==='午饭'&&food.necessity==='necessary')
+check('expense carries server reward proof without granting local EXP',food.rewardVersion===1&&Number.isFinite(food.updatedAt)&&s.exp===17)
+check('record does not debit investment assets or monthly plans',s.finance.assets===15000&&s.monthlyTargets[month].expense===300000)
+const income=commitLedgerRecord(s,month,{...form,type:'income',category:'salary',amount:'5000'},()=>true,day)
+check('income remains separate from spending',income.type==='income'&&income.cents===500000&&income.necessity===null)
+before=clone(s);const failed=commitLedgerRecord(s,month,{...form,amount:'123'},()=>false,day)
+check('failed record save rolls back record and hero changes',!failed&&JSON.stringify(s)===JSON.stringify(before))
+const edit=commitLedgerRecord(s,month,{...form,id:food.id,amount:'50',note:'午饭与晚饭'},()=>true,day)
+check('editing updates exactly one record',edit.cents===5000&&edit.note==='午饭与晚饭'&&s.ledger.length===2&&s.exp===17)
+for(const entry of [{...form,amount:'0'},{...form,amount:'1.234'},{...form,category:'unknown'},{...form,date:'2026-11-09'},{...form,date:'2026-11-31'},{...form,date:'2026-10-08'},{...form,id:'missing'}]){before=clone(s);check('invalid record is atomic '+JSON.stringify(entry),!commitLedgerRecord(s,month,entry,()=>true,day)&&JSON.stringify(s)===JSON.stringify(before))}
+before=clone(s);check('failed deletion leaves record and tombstones intact',!removeLedgerRecord(s,food.id,()=>false)&&JSON.stringify(s)===JSON.stringify(before))
+check('confirmed deletion removes one record',removeLedgerRecord(s,food.id,()=>true)&&s.ledger.length===1&&s.ledger[0].id===income.id)
+check('deletion is recorded for archive safety',s.deletions.some(x=>x.kind==='ledger'&&x.id===food.id))
+check('deleting one record keeps plans, assets and EXP',s.finance.assets===15000&&s.exp===17&&s.monthlyTargets[month].income===800000)
+check('invalid real calendar date is rejected',!validLedgerDate('2026-02-30','2026-02',day))
+check('historic selected month gets a matching default date',defaultLedgerDraft('2026-10',day).date==='2026-10-01')
+check('current selected month defaults to today',defaultLedgerDraft(month,day).date===day)
+const records=[{type:'expense',category:'food',cents:60000},{type:'expense',category:'shopping',cents:36000},{type:'expense',category:'travel',cents:24000}]
+const cats=expenseDistribution(s,records)
+check('category shares use actual expense totals',cats.map(c=>c.percent).join(',')==='50,30,20')
+check('bar cents equal actual spending',cats.reduce((sum,c)=>sum+c.cents,0)===120000)
+check('unknown old categories remain in the visible total',expenseDistribution(s,[...records,{category:'old-custom-category',type:'expense',cents:100}]).reduce((n,c)=>n+c.cents,0)===120100)
+const many=expenseDistribution(s,['food','shopping','travel','phone','life','medical'].map((category,index)=>({category,cents:(index+1)*100})))
+check('many categories reduce to four segments without dropping money',many.length===4&&many.reduce((sum,c)=>sum+c.cents,0)===2100&&Math.abs(many.reduce((sum,c)=>sum+c.percent,0)-100)<.0001)
+check('empty shares are finite and quiet',expenseDistribution(s,[]).length===0&&shareOf(0,0)==='—')
+check('cent percentages format without false rounding to money',shareOf(1,3)==='33.3%'&&shareOf(600,1200)==='50%')
+const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8')
+const navSource=source('utils/quiet-entry-page.js').replace(/^import .*$/gm,'').replace(/export (const|function)/g,'$1')
+const routes=[],uni={navigateBack:o=>{routes.push('back');if(uni.fail)o.fail()},switchTab:o=>routes.push(o.url)}
+let pages=[{},{}]
+const {returnFromEntryPage}=new Function('uni','getCurrentPages',navSource+';return{returnFromEntryPage}')(uni,()=>pages)
+returnFromEntryPage();check('normal return pops the actual previous page',routes.at(-1)==='back')
+pages=[];returnFromEntryPage();check('direct entry has a safe tools fallback',routes.at(-1)==='/pages/tools/index')
+pages=[{},{}];uni.fail=true;returnFromEntryPage('/pages/index/index');check('failed pop has a safe home fallback',routes.at(-1)==='/pages/index/index')
+check('home task reaches the new inline form',source('utils/action-tasks.js').includes("url:'/pages/ledger/index?add=1'"))
+check('quick fan entry reaches the same inline form',source('components/BottomTabs.vue').includes("target = '/pages/ledger/index?add=1'"))
+check('inline drafts participate in account-scoped recovery',source('utils/session-drafts.js').includes("'budgetExpanded','draft','editingId','showAdd'"))
+check('art is local vector with no remote download',source('components/QuietEmptyState.vue').includes('data:image/svg+xml;charset=utf-8,'))
+console.log(checks.length+' quiet ledger money, atomic save, distribution and navigation checks passed')

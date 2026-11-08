@@ -17,8 +17,6 @@
 </template>
 
 <script>
-import { state } from '@/store/index.js'
-import { LocalDay } from '@/utils/engine.js'
 
 const TAB_ICONS = {
   home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
@@ -53,11 +51,7 @@ export default {
       if(this.guideActive)return
       this.expanded = false
       let target = url
-      if (url === '/pages/ledger/index') {
-        const month = LocalDay().slice(0, 7)
-        const budget = (state.monthlyTargets && state.monthlyTargets[month]) || {}
-        if (Number.isSafeInteger(budget.expense) && budget.expense > 0 && Number.isSafeInteger(budget.income) && budget.income > 0) target = '/pages/ledger/edit'
-      }
+      if (url === '/pages/ledger/index') target = '/pages/ledger/index?add=1'
       uni.navigateTo({ url: target })
     },
     switchTab(path) {
