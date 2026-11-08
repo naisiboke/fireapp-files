@@ -1,3 +1,4 @@
+import {validateNickname} from '../utils/nickname.js'
 import {CONSENT_MESSAGE,consentRecord} from '../utils/login-consent.js'
 // Run with Node.js 18+: node scripts/check-account-data.mjs
 // Real client/server modules with in-memory storage and authenticated CloudBase context mocks.
@@ -122,7 +123,7 @@ function createClient(){
  }
  const api=moduleOf(source('utils/api-service.js'),['onActionSync','fetchActionRewards','onActionRewards','fetchMembership','redeemMembershipCode','fetchAccountBootstrap','saveUserState','fetchUserCollection','saveUserCollection','submitCommunityPost','deleteCommunityPost','fetchCommunityPosts','isApiConfigured'],{...cache,callAccountData,uni})
  const store=moduleOf(source('store/index.js'),['state','refreshMembershipFromServer','redeemMembershipForAccount','bootstrap','hydrateFromServer','getAccountConflictSummary','readAccountConflictBackup','resolveAccountConflict','persistNow','persist','syncStateToServer','suspendAccountSync','endAccountSession'],{
-  ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname(){return {ok:true}},
+  ...api,...cache,storage,uni,reactive:value=>value,toRaw:value=>value,HeroDay(){},createFreedomPlan(){return {}},financeSignature:JSON.stringify,hasValidFinance(){return false},validateNickname,
   console:silent,setTimeout:callback=>{const id=++timerId;clientTimers.set(id,callback);return id},clearTimeout:id=>clientTimers.delete(id),
  })
  const community=moduleOf(source('utils/community-store.js'),['CS'],{...cache,...api,uni,console:silent,reactive:value=>value}).CS
