@@ -1,6 +1,7 @@
 <template>
   <view class="tools-view fire-page-tools-index" :style="pageLayoutStyle" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
+    <view class="fire-tab-content" :class="{ 'tab-content-reset':pageEntryReset, 'tab-content-slide':!pageEntryReset }" :style="tabEntryStyle">
 
     <view class="tools-head">
       <text class="tools-h1">工具</text>
@@ -44,7 +45,8 @@
 
     <view v-if="!commonTools.length && !uncommonTools.length" class="tools-empty">没有找到匹配的工具</view>
     <text class="safe-note">更多工具正在开发</text>
-    <BottomTabs current="tools" />
+    </view>
+    <BottomTabs ref="bottomNav" current="tools" />
   </view>
 </template>
 
@@ -148,9 +150,10 @@ export default {
 </script>
 
 <style>
+@import '../../utils/tab-content.css';
 @keyframes toolPageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes toolSlideIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-.tools-view { min-height: 100vh; padding: calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(88px + env(safe-area-inset-bottom)); background: #f3f4f2; box-sizing: border-box; animation: toolPageIn .32s cubic-bezier(.22,1,.36,1) backwards; }
+.tools-view { min-height: 100vh; padding: calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(88px + env(safe-area-inset-bottom)); background: #f3f4f2; box-sizing: border-box;  }
 .tool-card { animation: toolSlideIn .48s cubic-bezier(.22,1,.36,1) backwards; }
 .tool-card:nth-child(2) { animation-delay: .06s; }.tool-card:nth-child(3) { animation-delay: .12s; }.tool-card:nth-child(4) { animation-delay: .18s; }.tool-card:nth-child(5) { animation-delay: .24s; }.tool-card:nth-child(6) { animation-delay: .3s; }
 .tool-controls{margin:18px 0 24px}.tool-search{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;background:#fff;border:1px solid #dfe7dd;border-radius:13px;box-sizing:border-box}.search-icon{font-size:22px;color:#527059;line-height:1}.tool-search input{flex:1;height:42px;color:#243830;font-size:14px;background:transparent}.search-placeholder{color:#9aa99d}.category-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;width:100%;box-sizing:border-box}.category-chip{display:flex;align-items:center;justify-content:center;min-width:58px;height:36px;padding:0 14px;border-radius:999px;background:#e5eee4;color:#71807a;font-size:12px;white-space:nowrap;box-sizing:border-box;touch-action:manipulation}.category-chip:active{transform:scale(.97)}.category-chip.active{background:#315f4a;color:#fff;font-weight:600}.tools-empty{padding:54px 16px;text-align:center;color:#71807a;font-size:14px}
@@ -185,7 +188,7 @@ export default {
 .safe-note { display: block; text-align: center; font-size: 11px; color: #8b9489; margin-top: 40px; }
 @media screen and (max-width:390px){.tools-view{padding:calc(18px + var(--fire-status-top, env(safe-area-inset-top))) 16px calc(78px + env(safe-area-inset-bottom))}.tools-head{margin-bottom:16px}.tools-h1{font-size:24px}.tool-controls{margin:14px 0 18px}.tool-search{height:40px}.category-chip{height:32px;min-width:52px;padding:0 10px}.tool-grid{gap:8px}.tool-card{min-height:96px;padding:10px 9px;gap:8px;border-radius:13px}.tool-icon{width:26px;height:26px;border-radius:8px}.tool-icon-img{width:17px;height:17px}.tool-name{font-size:12px}.tool-desc{font-size:10px}.tool-arrow{right:9px;top:13px;font-size:16px}.group-title.second{margin-top:20px}}
 /* Reset only entry animations; page nodes and scroll position stay intact. */
-.tools-view.page-entry-reset{animation:none;opacity:0}
+.tools-view.page-entry-reset{animation:none}
 .tools-view.page-entry-reset .tool-card{animation:none}
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */

@@ -1,6 +1,7 @@
 <template>
   <view class="profile-page fire-page-profile-index" :style="pageLayoutStyle" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
+    <view class="fire-tab-content" :class="{ 'tab-content-reset':pageEntryReset, 'tab-content-slide':!pageEntryReset }" :style="tabEntryStyle">
 
     <!-- 顶部标题 -->
     <view class="page-head">
@@ -89,7 +90,8 @@
     </view>
 
     <text class="version">FIRE Forge · v1.0.0</text>
-    <BottomTabs current="profile" />
+    </view>
+    <BottomTabs ref="bottomNav" current="profile" />
   </view>
 </template>
 
@@ -192,9 +194,10 @@ export default {
 </script>
 
 <style>
+@import '../../utils/tab-content.css';
 @keyframes profilePageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes profileMenuIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
-.profile-page { animation: profilePageIn .32s cubic-bezier(.22,1,.36,1) backwards;
+.profile-page { 
   min-height: 100vh;
   padding: calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(88px + env(safe-area-inset-bottom));
   background: #f3f4f2;
@@ -399,7 +402,7 @@ export default {
 }
 @media screen and (max-width:390px){.profile-page{padding:calc(18px + var(--fire-status-top, env(safe-area-inset-top))) 16px calc(82px + env(safe-area-inset-bottom))}.page-head{margin-bottom:14px}.page-h1{font-size:24px}.page-sub{font-size:12px}.user-card{gap:10px;padding:12px;border-radius:13px}.avatar{width:42px;height:42px}.avatar-text{font-size:18px}.user-name{font-size:16px}.user-goal{font-size:11px}.pro-card{gap:10px;padding:12px;border-radius:13px}.pro-title{font-size:14px}.pro-desc{font-size:10px}.pro-btn{padding:7px 9px}.pro-btn-text{font-size:11px}.group{margin-top:18px}.group-title{font-size:12px}.group-menu{border-radius:13px}.menu-item{gap:10px;padding:10px 12px}.menu-icon{width:30px;height:30px;border-radius:9px}.menu-icon-img{width:17px;height:17px}.menu-name{font-size:13px}.menu-sub{font-size:10px}.chevron{font-size:20px}}
 /* Reset only entry animations; page nodes and scroll position stay intact. */
-.profile-page.page-entry-reset{animation:none;opacity:0}
+.profile-page.page-entry-reset{animation:none}
 .profile-page.page-entry-reset .menu-item{animation:none}
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
