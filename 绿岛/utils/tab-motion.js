@@ -21,7 +21,11 @@ function move(key,width=tabMotion.width){
   settledTimer=setTimeout(()=>{tabMotion.motion=null},FLOW_DURATION+20)
 }
 const router=createTabRouter({
-  navigate:(path,success,fail)=>uni.switchTab({url:path,success,fail}),
+  navigate:(path,success,fail)=>{
+    const previous=keyFor(actualPath()),next=keyFor(path)
+    entry={path,direction:Math.sign(TAB_KEYS.indexOf(next)-TAB_KEYS.indexOf(previous)),expires:Date.now()+5000}
+    uni.switchTab({url:path,success,fail})
+  },
   onArrival:path=>{
     // Actual page onShow consumes the direction; success only reconciles selection.
     if(router.snapshot().desired===path)tabMotion.selected=keyFor(path)
@@ -35,10 +39,9 @@ const router=createTabRouter({
 export function navigateTab(path,current,width){
   const actual=actualPath()||TAB_PATHS[TAB_KEYS.indexOf(current)]
   router.sync(actual)
-  const next=keyFor(path), previous=keyFor(actual)||current
+  const next=keyFor(path)
   const snapshot=router.snapshot()
   if(path===actual&&!snapshot.pending)return
-  entry={path,direction:Math.sign(TAB_KEYS.indexOf(next)-TAB_KEYS.indexOf(previous)),expires:Date.now()+5000}
   move(next,width)
   router.request(path)
 }
