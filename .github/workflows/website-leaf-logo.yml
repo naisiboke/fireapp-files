@@ -20,6 +20,25 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+      - name: Verify website update archive
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, zipfile
+          with zipfile.ZipFile('updates/fireday-leaf-logo-20261108.zip') as bundle:
+              assert bundle.testzip() is None
+              assert len(bundle.namelist()) == 5
+              for name in bundle.namelist():
+                  assert not name.startswith('/') and '..' not in pathlib.PurePosixPath(name).parts
+                  content = bundle.read(name)
+                  if name.endswith('.png'):
+                      assert content.startswith(bytes([137,80,78,71,13,10,26,10]))
+                  else:
+                      assert content.decode('utf-8').strip(), name
+                  if os.environ.get('GITHUB_REF_NAME') == 'website-leaf-logo':
+                      target = pathlib.Path('docs/website-leaf-logo-update.md' if name == '使用说明.txt' else name)
+                      assert content == target.read_bytes(), name
+          print('Website leaf-logo ZIP: PNG binary, CRC and all 5 files verified')
+          PY
       - name: Check app update and website download behavior
         run: node 绿岛/scripts/check-website-update.mjs
       - name: Install browser check tools
