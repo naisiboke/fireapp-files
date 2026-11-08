@@ -226,9 +226,9 @@ try{
  check('selected goal has white text and clear selection',await home.p.locator('.countdown-switch-option.selected').textContent().then(t=>t.includes('我的目标'))&&await home.p.locator('.countdown-switch-option.selected').evaluate(e=>getComputedStyle(e).color)==='rgb(255, 255, 255)')
  check('goal selection updates actual countdown content without touching assets',await home.p.locator('.countdown-target').textContent()!==fireDate&&await home.p.evaluate(()=>test.state.finance.assets)===assets)
  const metricsAfter=await home.p.locator('.home-metrics').boundingBox()
- check('countdown switching retains viewport and content height',Math.abs(await home.p.evaluate(()=>scrollY)-scrollBefore)<1&&Math.abs(metricsBefore.y-metricsAfter.y)<1)
+ check('countdown switching retains viewport and content height '+JSON.stringify({scrollBefore,scrollAfter:await home.p.evaluate(()=>scrollY),before:metricsBefore,after:metricsAfter}),Math.abs(await home.p.evaluate(()=>scrollY)-scrollBefore)<1&&Math.abs(metricsBefore.y-metricsAfter.y)<1)
  const homeTitle=await home.p.locator('.masthead-h1').boundingBox()
- check('home title retains status-bar clearance after switching',homeTitle.y>=59)
+ check('home title retains status-bar clearance after switching '+JSON.stringify({rect:homeTitle,layout:await home.p.evaluate(()=>({info:uni.getWindowInfo(),style:document.querySelector('.home-view').getAttribute('style'),scroll:scrollY}))}),homeTitle.y>=59)
  await screenshot(home.p,'HOME_GOAL_SELECTED')
  for(const status of ['pending','restoring','error','auth-required','conflict']){await home.p.evaluate(status=>{test.state.cloudSync={status,message:'需要处理的同步提示'}},status);await home.p.locator('.account-sync-banner').waitFor()}
  check('pending, failures, expiration and conflicts remain visible',await home.p.locator('.account-sync-banner').count()===1)

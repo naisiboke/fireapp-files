@@ -47,7 +47,7 @@
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
-        <text v-if="!activeGoal" class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text><text v-else class="inflation-note inflation-note-placeholder" aria-hidden="true"> </text>
+        <view class="home-plan-context" :aria-hidden="activeGoal"><text v-if="!activeGoal" class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text></view>
 
         <view class="progress"><view class="progress-fill" :style="{ width: displayResult.progress + '%' }"></view></view>
 
@@ -519,7 +519,7 @@ export default {
  .fire-page-index-index .home-unconfigured{padding-top:30px;padding-bottom:24px} .fire-page-index-index .home-unconfigured .btn-primary{margin-top:18px} .fire-page-index-index .account-sync-banner{padding:10px 12px;font-size:12px;line-height:1.6}
 
 .action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:8px 0;color:#6b7e70;background:#edf3e8;border-radius:10px;font-size:12px;line-height:1.6}.action-sync.failed{background:#fbf2e9;color:#93643b}.action-sync text:last-child{flex-shrink:0}
-.home-view{overflow-anchor:none}.inflation-note-placeholder{visibility:hidden;user-select:none}
+.home-view{overflow-anchor:none}.home-plan-context{height:15px;margin-top:-14px;margin-bottom:16px}.home-plan-context .inflation-note{margin:0;line-height:15px}
 .freedom-summary{animation:homeCountdownSwap .2s ease-out}
 @keyframes homeCountdownSwap{from{opacity:.45;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.freedom-summary{animation:none}}
