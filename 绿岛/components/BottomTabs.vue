@@ -8,11 +8,11 @@
       <view class="quick-item quick-music" aria-label="音乐" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view></view>
     </view>
     <view v-for="t in tabs.slice(0, 2)" :key="t.path" :id="t.key==='tools'?'fire-guide-tools':undefined" class="tab-item" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)">
-      <view :key="t.key + ':' + flowKey" class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="pulseStyle"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
+      <view class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="t.key===selectedKey?pulseStyle:{}"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
     </view>
     <view class="center-action" :class="{ expanded }" @tap="toggleMenu"><text>{{ expanded ? '×' : '+' }}</text></view>
     <view v-for="t in tabs.slice(2)" :key="t.path" class="tab-item" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)">
-      <view :key="t.key + ':' + flowKey" class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="pulseStyle"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
+      <view class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="t.key===selectedKey?pulseStyle:{}"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
     </view>
   </view>
 </template>
@@ -54,7 +54,7 @@ export default {
     selectedKey(){return this.isMainRoute?(tabMotion.selected||this.current):this.current},
     flowMoving(){return this.isMainRoute&&!!tabMotion.motion},
     flowKey(){return String(tabMotion.motion?.id||'rest')+':'+this.motionClock},
-    pulseStyle(){this.motionClock;return {'animation-delay':this.flowMoving?'-'+Math.min(FLOW_DURATION,Math.max(0,Date.now()-tabMotion.motion.started))+'ms':'0ms'}},
+    pulseStyle(){this.motionClock;return {'animation-name':this.flowMoving?(tabMotion.motion.id%2?'fireTabIcon':'fireTabIconAlternate'):'none','animation-delay':this.flowMoving?'-'+Math.min(FLOW_DURATION,Math.max(0,Date.now()-tabMotion.motion.started))+'ms':'0ms'}},
     flowStyle(){
       this.motionClock
       const motion=this.isMainRoute?tabMotion.motion:null
@@ -123,5 +123,6 @@ export default {
 .tab-icon-pulse{animation:fireTabIcon 400ms cubic-bezier(.22,.8,.25,1) both}
 @keyframes fireTabFlow{0%{left:var(--f0-left);top:var(--f0-top);width:var(--f0-width);height:var(--f0-height)}12%{left:var(--f1-left);top:var(--f1-top);width:var(--f1-width);height:var(--f1-height)}24%{left:var(--f2-left);top:var(--f2-top);width:var(--f2-width);height:var(--f2-height)}38%{left:var(--f3-left);top:var(--f3-top);width:var(--f3-width);height:var(--f3-height)}52%{left:var(--f4-left);top:var(--f4-top);width:var(--f4-width);height:var(--f4-height)}68%{left:var(--f5-left);top:var(--f5-top);width:var(--f5-width);height:var(--f5-height)}82%{left:var(--f6-left);top:var(--f6-top);width:var(--f6-width);height:var(--f6-height)}92%{left:var(--f7-left);top:var(--f7-top);width:var(--f7-width);height:var(--f7-height)}100%{left:var(--f8-left);top:var(--f8-top);width:var(--f8-width);height:var(--f8-height)}}
 @keyframes fireTabIcon{0%{transform:scale(1)}22%{transform:scale(.9)}66%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes fireTabIconAlternate{0%{transform:scale(1)}22%{transform:scale(.9)}66%{transform:scale(1.07)}100%{transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.tab-flow.moving,.tab-icon-pulse{animation:none!important}.tab-icon-selected,.tab-item{transition:none!important}}
 </style>

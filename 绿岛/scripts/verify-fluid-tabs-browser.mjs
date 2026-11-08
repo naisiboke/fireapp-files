@@ -38,7 +38,14 @@ try{
  })
  check(await nav().locator('.tab-label').count()===0,'navigation is icons only');check(await nav().locator('.tab-item').count()===4,'four icon targets retain accessible labels')
  const initial=await state()
- await tap('我的');await page.waitForTimeout(100)
+ const stableIcons=await page.evaluate(async()=>{
+  const old=[...document.querySelectorAll('.bottom-tabs .tab-icon')]
+  document.querySelector('.bottom-tabs [aria-label="我的"]').dispatchEvent(new Event('tap',{bubbles:true}))
+  await Promise.resolve()
+  return old.every((node,i)=>node===document.querySelectorAll('.bottom-tabs .tab-icon')[i])
+ })
+ check(stableIcons,'retargeting keeps loaded icon nodes instead of recreating SVG images')
+ await page.waitForTimeout(100)
  const middle=await state()
  check(middle.width>initial.width+5&&middle.height<initial.height,'capsule stretches/flattens after native footer replacement')
  check(middle.opacity==='1','footer never fades with content')
