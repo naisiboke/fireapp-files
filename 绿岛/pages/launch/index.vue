@@ -38,12 +38,9 @@ export default {
         const hasSeenIsland = uni.getStorageSync('fire_island_onboarding_done') === true
         const hasLoggedIn = uni.getStorageSync('fire_login_status') === true
         uni.removeStorageSync('fire_guest_mode')
-        const hasGuide = uni.getStorageSync('fire_app_guide_done') === true
         const url = !hasSeenIsland
           ? '/pages/onboarding/onboarding'
-          : (!hasLoggedIn
-            ? '/pages/login/login'
-            : (!hasGuide ? '/pages/guide/index' : '/pages/index/index'))
+          : (!hasLoggedIn ? '/pages/login/login' : '/pages/index/index')
         this.status = '正在加载…'
         uni.reLaunch({
           url,

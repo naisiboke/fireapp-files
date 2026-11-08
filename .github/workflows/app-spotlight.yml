@@ -1,0 +1,54 @@
+name: App spotlight guide checks
+on:
+  push:
+    branches: [app-spotlight-guide]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Unit and existing app regressions
+        working-directory: 绿岛
+        run: |
+          for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Validate source update archive
+        run: |
+          python3 - <<'PY'
+          import pathlib, zipfile
+          archive = pathlib.Path('updates/fire-spotlight-onboarding-20261108.zip')
+          if archive.exists():
+              with zipfile.ZipFile(archive) as bundle:
+                  assert bundle.testzip() is None
+                  assert len(bundle.namelist()) == 18
+                  for name in bundle.namelist():
+                      assert not name.startswith('/') and '..' not in pathlib.PurePosixPath(name).parts
+                      target = pathlib.Path('绿岛/docs/spotlight-onboarding.md' if name == '使用说明.txt' else name)
+                      assert bundle.read(name) == target.read_bytes(), name
+              print('Update archive CRC, paths and all 18 files verified')
+          PY
+      - name: Install pinned app dependencies
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Build uni-app H5
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install browser test dependencies
+        run: |
+          npm install --prefix /tmp/fire-spotlight-tools --ignore-scripts --no-audit --no-fund vue@3.4.21 vite@5.2.8 @vitejs/plugin-vue@5.0.4 playwright@1.56.1 pngjs@7.0.0
+          /tmp/fire-spotlight-tools/node_modules/.bin/playwright install --with-deps chromium
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Verify actual guide components in Chromium
+        run: node 绿岛/scripts/verify-spotlight-browser.mjs

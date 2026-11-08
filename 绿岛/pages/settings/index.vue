@@ -35,6 +35,7 @@
       <view class="row" @tap="toggleSound"><view class="row-icon">◌</view><view class="row-copy"><text class="row-title">操作提示音</text><text class="row-sub">记账和拔草完成时提醒</text></view><view class="switch" :class="{ on: state.soundEnabled }"><view class="thumb"></view></view></view>
       <view class="row" @tap="openPrivacy"><view class="row-icon">◇</view><view class="row-copy"><text class="row-title">隐私与权限</text><text class="row-sub">云端同步、个性化内容和守护动画</text></view><text class="chevron">›</text></view>
       <view class="row" @tap="checkUpdate"><view class="row-icon">↥</view><view class="row-copy"><text class="row-title">检查更新</text><text class="row-sub">当前版本 {{ versionLabel }}</text></view><text class="chevron">›</text></view>
+      <view class="row" @tap="replayGuide"><view class="row-icon">?</view><view class="row-copy"><text class="row-title">重新查看新手引导</text><text class="row-sub">认识记账、自由计划和工具入口</text></view><text class="chevron">›</text></view>
       <view class="row" @tap="openAbout"><view class="row-icon">i</view><view class="row-copy"><text class="row-title">关于 Fire生活</text><text class="row-sub">版本与服务说明</text></view><text class="chevron">›</text></view>
     </view>
 
@@ -56,6 +57,8 @@
 </template>
 
 <script>
+import { accountId } from '@/utils/account-cache.js'
+import { requestGuideReplay, clearGuideSession } from '@/utils/spotlight-guide.js'
 import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import { checkAppUpdate, installedVersion } from '@/utils/app-update.js'
 import AppFeedback from '@/components/AppFeedback.vue'
@@ -109,6 +112,10 @@ export default {
         fail: () => showDialog({ title: '问题反馈与奖励', content: 'naisiboke520\\n\\n反馈实用问题并被采纳，可获赠 1 个月 Fire生活会员。', showCancel: false }),
       })
     },
+    replayGuide() {
+      if(!requestGuideReplay(accountId()))return showNotice({title:'请先登录后查看引导',icon:'none'})
+      uni.switchTab({url:'/pages/index/index',fail:()=>showNotice({title:'暂时无法打开首页，请稍后重试',icon:'none'})})
+    },
     checkUpdate() { checkAppUpdate() },
     openAbout() { showDialog({ title: '关于 Fire生活', content: '记录自由计划、消费行动和长期生活选择。', showCancel: false }) },
     toggleSound() { state.soundEnabled = !state.soundEnabled; persist() },
@@ -152,7 +159,7 @@ export default {
     confirmReset() {
       showDialog({ title: '清除本机数据？', content: '会清除本机缓存并重新进入引导流程。', success: res => {
         if (!res.confirm) return
-        uni.clearStorageSync(); reset(); state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' })
+        clearGuideSession(); uni.clearStorageSync(); reset(); state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' })
       }})
     },
     replayOnboarding() { state.started = false; uni.reLaunch({ url: '/pages/onboarding/onboarding' }) },

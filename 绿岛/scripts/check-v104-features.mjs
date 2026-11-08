@@ -194,7 +194,7 @@ detailState.items=[{id:123,name:'旧项目'}];check('late restore resolves numer
 detailState.items=[];check('reactive detail disappears after actual deletion',detail.item.value===null)
 
 // Execute the actual home countdown and goal delete handlers.
-const homeDeps={state:store.state,AppFeedback:{},BottomTabs:{},AnimatedNumber:{},feedbackPageMixin:{},pageEntryMixin:{},...engine,
+const homeDeps={state:store.state,AppFeedback:{},BottomTabs:{},AnimatedNumber:{},SpotlightGuide:{},spotlightHomeMixin:{},feedbackPageMixin:{},pageEntryMixin:{},...engine,
  todayActions:task.todayActions,CS:{ugc:()=>[]},isMembershipActive:()=>false,LocalDay:()=>actions.day(instant),hasValidFinance:()=>true,freedomResult:()=>({progress:20,months:10,date:new Date(instant+100*DAY)}),
  persistNow:()=>true,setInterval:()=>1,clearInterval(){},setTimeout:fn=>fn(),refreshActions:async()=>null,refreshFinance(){},...wish,
  uni:{navigateTo:o=>homeRoutes.push(o.url)}}
