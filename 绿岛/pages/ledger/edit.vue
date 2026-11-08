@@ -1,5 +1,5 @@
 <template>
-  <view class="edit-page fire-page-ledger-edit" :style="pageLayoutStyle">
+  <view class="edit-page fire-page-ledger-edit" :class="{'editor-panel-open':draft.category}" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
 
     <!-- 顶部 -->
@@ -568,4 +568,6 @@ export default {
  .fire-page-ledger-edit{padding-top:var(--fire-page-top)}
 .record-delete{width:44px;min-width:44px!important;min-height:44px;padding:0!important;border:0!important;background:transparent!important;color:#a47261!important;font-size:12px!important}
 .missing-record{padding:16px}
+.edit-page.editor-panel-open{padding-bottom:calc(480px + env(safe-area-inset-bottom))}
+.panel{max-height:calc(100vh - var(--fire-status-top,env(safe-area-inset-top)) - 80px);overflow-y:auto;overscroll-behavior:contain}
 </style>

@@ -19,7 +19,7 @@
    <view class="qe-distribution-legend"><view v-for="c in distribution" :key="c.key"><view class="qe-legend-label"><view class="qe-legend-dot" :style="{background:c.color}"></view><text>{{c.label}} {{shareOf(c.cents,expenseTotal)}}</text></view><text class="qe-legend-amount">¥{{money(c.cents/100)}}</text></view></view>
   </view>
   <view class="qe-ledger-main">
-   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded && !showAdd" @ready="refreshEntryArrow" />
+   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded" @ready="refreshEntryArrow" />
    <view v-if="records.length" id="ledger-records" class="qe-list-section">
     <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
     <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id">{{f.name}}</button></view></view>
@@ -32,7 +32,7 @@
     <text class="qe-list-note">{{recordFilter==='income'?'占比按本月实际收入计算':'占比按本月实际支出计算，收入单独统计'}} · 点按记录可修改或删除</text>
    </view>
   </view>
-  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded && !showAdd}" aria-label="记一笔" @tap="goAdd">＋</button>
+  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded}" aria-label="记一笔" @tap="goAdd">＋</button>
   <view v-if="entryFly" class="qe-flight" :style="entryFly.style" aria-hidden="true"><text class="qe-flight-label">{{entryFly.title}}</text><text class="qe-flight-amount">{{entryFly.amount}}</text></view>
   <QuietEntrySheet :visible="entryVisible && budgetExpanded" :owner-id="feedbackOwnerId" title="本月预算" :busy="saving" @close="closeEntrySheet" @ready="entryFocus=true">
    <text class="qe-label">本月支出预算（元）</text><input class="qe-input" type="digit" aria-label="本月支出预算" :adjust-position="false" :focus="entryFocus" v-model="budgetInput" maxlength="12" placeholder="例如 3000" />
