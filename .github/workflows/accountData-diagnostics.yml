@@ -17,3 +17,9 @@ jobs:
         working-directory: 绿岛
         run: |
           for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Install App dependencies for transport-module compile check
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Build H5 with diagnostic error messages
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5

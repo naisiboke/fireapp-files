@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {createRequire} from 'node:module'
 import {readFileSync} from 'node:fs'
+import {accountTransportError} from '../utils/cloudbase-platform.js'
 const require=createRequire(import.meta.url)
 const {createHandler,SERVICE_BUILD}=require('../../cloudfunctions/accountData/service.js')
 const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value))
@@ -86,4 +87,11 @@ try{
  const logged=JSON.stringify(logs)
  check(!logged.includes('private-token')&&!logged.includes('private-email@example.com')&&!logged.includes('private-user')&&!logged.includes('private-content'),'failure logs contain sanitized metadata only')
 }finally{console.error=originalError}
+const unknown=accountTransportError({code:'UNKNOWN_ACTION',message:'private-token'})
+check(unknown.message.includes('部署版本')&&!unknown.message.includes('private-token')&&!unknown.message.includes('连接失败'),'unsupported server action is not mislabeled as a network failure')
+const database=accountTransportError({code:'DATABASE_REQUEST_FAILED',message:'private-token',diagnostic:{collection:'data_backups',operation:'post-backup',reason:'COLLECTION_MISSING'}})
+check(database.message.includes('data_backups')&&database.message.includes('缺少集合')&&!database.message.includes('private-token'),'safe database hint reaches App error text')
+const unsafe=accountTransportError({code:'DATABASE_REQUEST_FAILED',diagnostic:{collection:'private_token_12345',operation:'password',reason:'private-user'}})
+check(!unsafe.message.includes('private_token_12345')&&!unsafe.message.includes('password'),'unrecognized diagnostics do not expose arbitrary server text')
+check(accountTransportError({code:'NICKNAME_REJECTED'}).message.includes('未通过审核'),'nickname refusal is explained as review outcome')
 console.log('Deployment marker and database-step diagnostics: '+checks+' checks passed')
