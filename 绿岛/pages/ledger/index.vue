@@ -23,7 +23,7 @@
    <view v-if="records.length" id="ledger-records" class="qe-list-section">
     <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
     <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id">{{f.name}}</button></view></view>
-    <view class="qe-table-head"><text>消费内容</text><text>金额</text><text>{{recordFilter==='income'?'收入占比':'占比'}}</text></view>
+    <view class="qe-table-head"><text>{{recordFilter==='income'?'收入内容':recordFilter==='all'?'收支内容':'消费内容'}}</text><text>金额</text><text>{{recordFilter==='income'?'收入占比':'占比'}}</text></view>
     <view v-for="x in filteredRecords" :id="rowId(x.id)" :key="x.id" class="qe-record-row" :class="{'qe-record-arriving':entryArrivingId===String(x.id)}" role="button" tabindex="0" :aria-label="'修改或删除'+(x.note||catLabel(x))" @tap="editRecord(x)" @keydown.enter="editRecord(x)">
      <view class="qe-record-copy"><text class="qe-record-title">{{x.note||catLabel(x)}}</text><text class="qe-record-meta">{{catLabel(x)}} · {{x.date.slice(5)}}</text></view>
      <text class="qe-record-amount" :class="{income:x.type==='income'}">{{x.type==='income'?'+':'−'}}¥{{money(x.cents/100)}}</text><text class="qe-record-share">{{recordShare(x)}}</text>
@@ -44,7 +44,7 @@
     <view class="qe-type-tabs"><button :class="{active:draft.type==='expense'}" @tap="setRecordType('expense')">支出</button><button :class="{active:draft.type==='income'}" @tap="setRecordType('income')">收入</button></view>
     <text class="qe-label">金额</text><view class="qe-amount-line"><text class="qe-amount-currency">¥</text><input class="qe-input qe-input-amount" type="digit" aria-label="记账金额" :adjust-position="false" :focus="entryFocus" v-model="draft.amount" maxlength="12" placeholder="0.00" /></view>
     <view class="qe-form-options"><view><text class="qe-label">分类</text><picker :range="categories" range-key="label" :value="categoryIndex" @change="chooseCategory"><view class="qe-picker-row">{{currentCategoryLabel}} <text>⌄</text></view></picker></view><view><text class="qe-label">日期</text><picker mode="date" :value="draft.date" :start="month+'-01'" :end="lastDay" @change="draft.date=$event.detail.value"><view class="qe-picker-row">{{draft.date.slice(5)}} <text>⌄</text></view></picker></view></view>
-    <text class="qe-label">消费内容 / 备注（选填）</text><input class="qe-input" aria-label="记账备注" :adjust-position="false" v-model="draft.note" maxlength="120" placeholder="例如：午饭、日用品" />
+    <text class="qe-label">{{draft.type==='income'?'收入来源 / 备注（选填）':'消费内容 / 备注（选填）'}}</text><input class="qe-input" aria-label="记账备注" :adjust-position="false" v-model="draft.note" maxlength="120" :placeholder="draft.type==='income'?'例如：工资、兼职':'例如：午饭、日用品'" />
     <view v-if="draft.type==='expense'"><text class="qe-label">必要度（选填）</text><view class="qe-cooling-options"><button v-for="n in necessities" :key="n.id" :class="{active:draft.necessity===n.id}" @tap="draft.necessity=draft.necessity===n.id?null:n.id">{{n.name}}</button></view></view>
    </template>
    <text v-if="errorText" class="qe-error" role="alert">{{errorText}}</text>
