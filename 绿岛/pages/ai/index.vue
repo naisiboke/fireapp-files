@@ -108,7 +108,7 @@ export default {
     syncPrerequisites() { const f=state.finance||{}; const countdown=freedomResult(state); this.financeReady = !!state.financeEntered && hasValidFinance(state) && !!countdown.date; this.personalityReady = !!((state.personalityTests && (state.personalityTests.bigfive || state.personalityTests.mbti)) || (state.personality && state.personality.completed)); this.ready = this.financeReady && this.personalityReady },
     back() { uni.navigateBack() },
     close() { uni.switchTab({ url: '/pages/index/index' }) },
-    todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') },
+    todayKey() { return new Date(Date.now()+8*3600000).toISOString().slice(0,10) },
     refreshQuota() {
       if (this.isMember) return
       const key = this.todayKey()
@@ -179,7 +179,7 @@ export default {
         if(requestOwner!==accountId())return
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
-        if(!this.isMember){if(Number.isSafeInteger(result.used)){this.freeUsed=result.used;state.toolUsage=state.toolUsage||{};state.toolUsage.aiDaily={date:this.todayKey(),count:result.used};persist()}else this.consumeQuota()}
+        if(!this.isMember){if(Number.isSafeInteger(result.used)){this.freeUsed=result.used;state.toolUsage=state.toolUsage||{};state.toolUsage.aiDaily={date:result.quotaDate||this.todayKey(),count:result.used};this.refreshQuota();persist()}else this.consumeQuota()}
         const elapsed = Date.now() - startedAt
         if (elapsed < 1200) await new Promise(resolve => setTimeout(resolve, 1200 - elapsed))
         if(requestOwner!==accountId())return

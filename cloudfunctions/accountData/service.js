@@ -295,7 +295,7 @@ function createHandler({ db, identity, moderate = review, moderateNickname = rev
           const verdict=await moderateAIReply({question,answer:reply})
           if(verdict?.approved!==true)fail('AI_REVIEW_REJECTED','本次回答未通过审核，请换一种说法后重试')
           const used=await settleAI(db,uid,reservation,true);settled=true
-          return {ok:true,uid,reply,reviewed:true,maxCharacters:AI_REPLY_MAX,used}
+          return {ok:true,uid,reply,reviewed:true,maxCharacters:AI_REPLY_MAX,used,quotaDate:reservation.date}
         }finally{
           if(!settled)try{await settleAI(db,uid,reservation,false)}catch(error){console.error('[ai-quota-release]',error.code||'AI_RELEASE_FAILED')}
         }
