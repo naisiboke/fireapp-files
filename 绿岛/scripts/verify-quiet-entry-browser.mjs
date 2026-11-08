@@ -5,6 +5,7 @@ import path from 'node:path'
 import os from 'node:os'
 import {pathToFileURL,fileURLToPath}from'node:url'
 const tools=process.env.ENTRY_TOOLS||'/tmp/fire-entry-tools',root=fileURLToPath(new URL('..',import.meta.url)),temp=fs.mkdtempSync(path.join(os.tmpdir(),'fire-entry-'))
+fs.symlinkSync(path.join(tools,'node_modules'),path.join(temp,'node_modules'),'dir')
 const {createServer}=await import(pathToFileURL(path.join(tools,'node_modules/vite/dist/node/index.js')))
 const {default:vue}=await import(pathToFileURL(path.join(tools,'node_modules/@vitejs/plugin-vue/dist/index.mjs')))
 const {chromium}=await import(pathToFileURL(path.join(tools,'node_modules/playwright/index.mjs')))
