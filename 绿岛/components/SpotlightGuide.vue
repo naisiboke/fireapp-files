@@ -5,7 +5,7 @@
     <view class="fire-spotlight-anchor" :style="bubbleStyle">
       <view :key="step" class="fire-spotlight-tooltip" :class="layout.bubble.placement" :style="{maxHeight:layout.bubble.maxHeight+'px'}">
         <view class="fire-spotlight-arrow" :style="{left:(layout.bubble.arrow-6)+'px'}"></view>
-        <view class="fire-spotlight-copy" aria-live="polite" aria-atomic="true">
+        <view class="fire-spotlight-copy" @touchmove.stop @wheel.stop aria-live="polite" aria-atomic="true">
           <text id="fire-spotlight-title" class="fire-spotlight-title">{{ title }}</text>
           <text id="fire-spotlight-description" class="fire-spotlight-description">{{ description }}</text>
         </view>
@@ -104,7 +104,7 @@ export default {
 }
 </script>
 <style>
-.fire-spotlight{position:fixed!important;inset:0!important;bottom:auto!important;z-index:300000!important;overflow:hidden;touch-action:none;overscroll-behavior:contain;animation:fireSpotlightEnter .18s ease-out;isolation:isolate}
+.fire-spotlight{position:fixed!important;inset:0!important;bottom:auto!important;z-index:300000!important;overflow:hidden;touch-action:pan-y;overscroll-behavior:contain;animation:fireSpotlightEnter .18s ease-out;isolation:isolate}
 .fire-spotlight-closing{animation:none;opacity:0;transition:opacity .22s ease}
 .fire-spotlight-hole{position:absolute;box-sizing:border-box;pointer-events:none;box-shadow:0 0 0 200vmax rgba(0,0,0,.7);transition:left .4s cubic-bezier(.22,1,.36,1),top .4s cubic-bezier(.22,1,.36,1),width .4s cubic-bezier(.22,1,.36,1),height .4s cubic-bezier(.22,1,.36,1),border-radius .4s cubic-bezier(.22,1,.36,1)}
 .fire-spotlight-outline{position:absolute;inset:0;border-radius:inherit;border:1.5px solid #fff;box-sizing:border-box;animation:fireSpotlightBreathe 2s ease-in-out infinite;box-shadow:0 0 12px rgba(255,255,255,.12)}
@@ -114,7 +114,7 @@ export default {
 .fire-spotlight-tooltip.above{transform-origin:50% 100%}.fire-spotlight-tooltip.below{transform-origin:50% 0}
 .fire-spotlight-arrow{position:absolute;width:12px;height:12px;background:#fff;transform:rotate(45deg);pointer-events:none}
 .fire-spotlight-tooltip.above .fire-spotlight-arrow{bottom:-5px}.fire-spotlight-tooltip.below .fire-spotlight-arrow{top:-5px}
-.fire-spotlight-copy{min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.fire-spotlight-copy{touch-action:pan-y;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .fire-spotlight-title{display:block;font-size:17px;font-weight:650;line-height:1.5;color:#253b31}
 .fire-spotlight-description{display:block;margin-top:7px;font-size:14px;line-height:1.65;color:#657168}
 .fire-spotlight-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0;margin-top:16px}
