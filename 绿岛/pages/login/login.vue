@@ -4,13 +4,13 @@
     <text class="brand">Fire生活</text><view class="avatar"><text>岛</text></view>
     <view class="intro"><text class="title">欢迎回到Fire生活</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
     <view v-if="sessionExpired" class="expired-note">登录已过期，本机记录已保留。登录原邮箱即可恢复同步。</view>
-    <button v-if="canResume" class="resume-button" :disabled="loading" @tap="resumeLogin">已验证邮箱，继续进入</button>
+    <button v-if="canResume && !(loading && loginAction==='login')" class="resume-button" :disabled="loading" :aria-busy="loading && loginAction==='resume'" @tap="resumeLogin"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='resume'" :size="18" label="正在恢复登录"/><text>{{loading && loginAction==='resume'?'恢复中':'已验证邮箱，继续进入'}}</text></view></button>
     <view class="email-heading">邮箱验证码登录</view>
     <view class="form" aria-live="polite">
       <view class="field"><input v-model="email" :disabled="loading || sending" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/></view>
       <view class="code-row"><view class="field code-field"><input v-model="code" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" :disabled="sending || countdown > 0" @tap="sendCode">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
       <view class="form-meta"><text class="forgot" @tap="toast('验证码登录不需要密码')">登录帮助</text></view>
-      <button class="login-button fire-button-primary fire-button-lg" :disabled="loading" @tap="login">{{loading?'登录中…':'登录'}}</button>
+      <button class="login-button fire-button-primary fire-button-lg" :disabled="loading" :aria-busy="loading && loginAction==='login'" @tap="login"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='login'" :size="18" light label="正在登录"/><text>{{loading && loginAction==='login'?'登录中':'登录'}}</text></view></button>
     </view>
     <view class="register-entry"><text>首次使用？输入邮箱获取验证码即可注册</text></view>
     <view class="required-note">登录后才能进入Fire生活，数据会安全同步到你的账号</view><button v-if="isDev" class="test-login" @tap="fillAdmin">测试管理员邮箱</button><text class="sr-status" aria-live="polite">{{notice}}</text>
@@ -18,6 +18,7 @@
 </template>
 <script setup>
 import { pageLayoutStyle } from '@/utils/page-layout.js'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { useFeedbackPage } from '@/utils/feedback-page.js'
 import { showNotice } from '@/utils/feedback.js'
@@ -25,6 +26,7 @@ const feedbackOwnerId = useFeedbackPage()
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { state, persist, hydrateFromServer, endAccountSession } from '@/store/index.js'
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
+const loginAction=ref('')
 const email=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref(''), redirect=ref('')
 import { safeReturnRoute, finishSessionRecovery } from '@/utils/session-recovery.js'
 const sessionExpired=ref(false),canResume=ref(false)
@@ -64,10 +66,10 @@ async function enterAccount(value){
 }
 async function resumeLogin(){
  if(loading.value)return
- loading.value=true
+ loginAction.value='resume';loading.value=true
  try{await enterAccount(String(uni.getStorageSync('fire_account_email')||email.value||''))}
  catch(error){toast(error.message||'恢复失败，本机记录已保留，请重试')}
- finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false}
+ finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false;loginAction.value=''}
 }
 async function login(){
  if(loading.value)return
@@ -75,7 +77,7 @@ async function login(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))return toast('请输入正确的邮箱地址')
  if(!code.value.trim())return toast('请输入验证码')
  if(!verificationInfo||sentEmail!==value)return toast('请先获取当前邮箱的验证码')
- loading.value=true
+ loginAction.value='login';loading.value=true
  try{
    const loginState=await signInWithCode('email',value,code.value.trim(),verificationInfo)
    endAccountSession();uni.setStorageSync('fire_login_status',false)
@@ -86,11 +88,11 @@ async function login(){
    const detail=error&&(error.message||error.errMsg||error.error_description||error.error)
    toast(detail||'登录失败，请重新获取验证码后重试')
    console.error('[email-login]',error)
- }finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false}
+ }finally{canResume.value=uni.getStorageSync('fire_login_status')===true;loading.value=false;loginAction.value=''}
 }
 </script>
 <style lang="scss">
-.login-page{min-height:100vh;background:#f5f7f2;padding:calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(24px + env(safe-area-inset-bottom));box-sizing:border-box}.login-shell{width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;align-items:center}.brand{color:#173d35;font-size:22px;font-weight:700;letter-spacing:.16em;animation:fadeUp .3s ease both}.avatar{width:76px;height:76px;margin-top:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#dfece1;border:1px solid #c6dccb;color:#39705b;font-size:26px;font-weight:600;animation:fadeUp .3s .06s ease both}.intro{display:flex;flex-direction:column;align-items:center;margin-top:22px;animation:fadeUp .3s .12s ease both}.title{color:#173d35;font-size:24px;font-weight:700;line-height:1.4}.subtitle{margin-top:8px;color:#6b7c70;font-size:13px;line-height:1.6;text-align:center}.email-heading{width:100%;margin-top:28px;color:#173d35;font-size:15px;font-weight:600}.form{width:100%;margin-top:16px;animation:fadeUp .3s .22s ease both}.field{min-height:52px;display:flex;align-items:center;background:#fff;border:1px solid #dde7dd;border-radius:13px;margin-bottom:11px;padding:0 14px;box-sizing:border-box}.field:focus-within{border-color:#4f8068;box-shadow:0 0 0 2px rgba(79,128,104,.12)}.field-icon{width:22px;color:#4f8068;font-size:22px;text-align:center;margin-right:9px}.input{flex:1;height:50px;color:#173d35;font-size:15px;background:transparent}.placeholder{color:#a2afa5}.code-row{display:flex;align-items:stretch;gap:10px}.code-field{flex:1;margin-bottom:11px}.send-code{width:112px;min-height:52px;margin:0 0 11px;padding:0 8px;border:1px solid #b8cbb9;border-radius:13px;background:#fff;color:#173d35;font-size:12px;display:flex;align-items:center;justify-content:center}.send-code[disabled]{opacity:.55}.form-meta{height:32px;display:flex;justify-content:flex-end;align-items:center}.forgot{min-height:32px;display:flex;align-items:center;color:#6b7c70;font-size:13px}.login-button{width:100%;min-height:50px;border-radius:13px;background:#173d35;color:#fff;font-size:16px;border:0;display:flex;align-items:center;justify-content:center}.login-button:active{transform:scale(.98)}.login-button[disabled]{opacity:.7}.register-entry{min-height:44px;margin-top:24px;display:flex;align-items:center;color:#6b7c70;font-size:13px}.required-note{display:block;margin-top:18px;color:#71807a;font-size:12px;line-height:1.6;text-align:center}.test-login{min-height:34px;margin-top:10px;border:1px dashed #b8cbb9;border-radius:17px;background:transparent;color:#527059;font-size:12px}.sr-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.login-page{min-height:100vh;background:#f5f7f2;padding:calc(24px + var(--fire-status-top, env(safe-area-inset-top))) 20px calc(24px + env(safe-area-inset-bottom));box-sizing:border-box}.login-shell{width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;align-items:center}.brand{color:#173d35;font-size:22px;font-weight:700;letter-spacing:.16em;animation:fadeUp .3s ease both}.avatar{width:76px;height:76px;margin-top:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#dfece1;border:1px solid #c6dccb;color:#39705b;font-size:26px;font-weight:600;animation:fadeUp .3s .06s ease both}.intro{display:flex;flex-direction:column;align-items:center;margin-top:22px;animation:fadeUp .3s .12s ease both}.title{color:#173d35;font-size:24px;font-weight:700;line-height:1.4}.subtitle{margin-top:8px;color:#6b7c70;font-size:13px;line-height:1.6;text-align:center}.email-heading{width:100%;margin-top:28px;color:#173d35;font-size:15px;font-weight:600}.form{width:100%;margin-top:16px;animation:fadeUp .3s .22s ease both}.field{min-height:52px;display:flex;align-items:center;background:#fff;border:1px solid #dde7dd;border-radius:13px;margin-bottom:11px;padding:0 14px;box-sizing:border-box}.field:focus-within{border-color:#4f8068;box-shadow:0 0 0 2px rgba(79,128,104,.12)}.field-icon{width:22px;color:#4f8068;font-size:22px;text-align:center;margin-right:9px}.input{flex:1;height:50px;color:#173d35;font-size:15px;background:transparent}.placeholder{color:#a2afa5}.code-row{display:flex;align-items:stretch;gap:10px}.code-field{flex:1;margin-bottom:11px}.send-code{width:112px;min-height:52px;margin:0 0 11px;padding:0 8px;border:1px solid #b8cbb9;border-radius:13px;background:#fff;color:#173d35;font-size:12px;display:flex;align-items:center;justify-content:center}.send-code[disabled]{opacity:.55}.form-meta{height:32px;display:flex;justify-content:flex-end;align-items:center}.forgot{min-height:32px;display:flex;align-items:center;color:#6b7c70;font-size:13px}.login-button{width:100%;min-height:50px;border-radius:13px;background:#173d35;color:#fff;font-size:16px;border:0;display:flex;align-items:center;justify-content:center}.login-button:active{transform:scale(.98)}.login-button[disabled]{opacity:.9}.login-button:disabled:active{transform:none}.login-button-content{display:flex;align-items:center;justify-content:center;gap:9px;min-height:24px;line-height:1.4}.register-entry{min-height:44px;margin-top:24px;display:flex;align-items:center;color:#6b7c70;font-size:13px}.required-note{display:block;margin-top:18px;color:#71807a;font-size:12px;line-height:1.6;text-align:center}.test-login{min-height:34px;margin-top:10px;border:1px dashed #b8cbb9;border-radius:17px;background:transparent;color:#527059;font-size:12px}.sr-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-login-login{padding-top:var(--fire-page-top)}

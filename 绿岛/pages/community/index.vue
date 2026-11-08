@@ -23,11 +23,11 @@
       </view>
     </view>
 
-    <text v-if="publicLoading" class="community-sync-note">正在读取社区内容…</text>
+    <view class="community-loading-state" :class="{'community-loading-initial':publicLoading && !loadingMore && !visiblePosts.length}" :aria-busy="publicLoading"><view v-if="publicLoading && !loadingMore" class="community-loader" :class="{'community-loader-refresh':visiblePosts.length}"><LoadingSpinner :size="20" label="社区内容加载中" /></view></view>
     <!-- 列表 -->
     <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
     <view class="list">
-      <view v-if="visiblePosts.length === 0 && !publicLoading" class="empty">
+      <view v-if="visiblePosts.length === 0 && !publicLoading && !syncNotice" class="empty">
         <text class="empty-h2">还没有人在路上分享</text>
         <text class="empty-p">成为第一个写下自己故事的人吧</text>
         <view class="empty-btn" @tap="openPost">
@@ -145,7 +145,7 @@
       </view>
 
       <view v-if="visiblePosts.length < allPosts.length || publicCursor !== null" class="load-more" @tap="loadMore">
-        <text class="load-more-text">加载更多</text>
+        <LoadingSpinner v-if="loadingMore" :size="18" label="更多社区内容加载中" /><text v-else class="load-more-text">加载更多</text>
       </view>
       <text v-else-if="visiblePosts.length > 0 && allPosts.length > 0" class="no-more">没有更多了</text>
     </view>
@@ -364,6 +364,7 @@
 
 <script>
 import { pageEntryMixin } from '@/utils/page-entry.js'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AppFeedback from '@/components/AppFeedback.vue'
 import FireOverlay from '@/components/FireOverlay.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
@@ -384,7 +385,7 @@ const EMPTY_DRAFT = () => ({
 export default {
   mixins: [feedbackPageMixin, pageEntryMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  components: { AppFeedback, FireOverlay,  BottomTabs },
+  components: { LoadingSpinner, AppFeedback, FireOverlay,  BottomTabs },
   data() {
     return {
       POST_TAGS: COMMUNITY_POST_TAGS,
@@ -397,6 +398,7 @@ export default {
       feedVersion: 0,
       publicCounts: {doing:0,settled:0},
       publicLoading: false,
+      loadingMore: false,
       communitySyncMessage: '',
       modal: null,
       applyPost: null,
@@ -456,11 +458,11 @@ export default {
     async refreshCommunity() {
       const version=++this.feedVersion
       const journey=this.tab==='settled'?'settled':'doing'
-      this.publicLoading=true
-      const personal=await CS.hydrate()
-      if(version!==this.feedVersion)return
-      this.favorites=CS.favorites();this.netWorth=CS.netWorth()
+      this.publicLoading=true;this.loadingMore=false
       try {
+        const personal=await CS.hydrate()
+        if(version!==this.feedVersion)return
+        this.favorites=CS.favorites();this.netWorth=CS.netWorth()
         const result=await CS.publicPage(journey,0)
         if(version!==this.feedVersion)return
         this.allUGC=result.items||[]
@@ -469,7 +471,7 @@ export default {
         this.communitySyncMessage=personal.ok?'':'部分本机内容尚未同步，已保留，请重试'
       }catch(error){
         if(version===this.feedVersion)this.communitySyncMessage='社区内容暂未恢复，请联网后重试'
-      }finally{if(version===this.feedVersion)this.publicLoading=false}
+      }finally{if(version===this.feedVersion){this.publicLoading=false;this.loadingMore=false}}
     },
     buildUGCList(){return this.allUGC},
     isOfficial(post) {
@@ -490,12 +492,14 @@ export default {
     },
 
     async loadMore() {
+      if(this.publicLoading)return
       this.communityLoaded += 10
-      if(this.publicCursor===null||this.publicLoading)return
-      this.publicLoading=true
-      try{const version=this.feedVersion;const result=await CS.publicPage(this.tab==='settled'?'settled':'doing',this.publicCursor);if(version!==this.feedVersion)return;this.allUGC=[...this.allUGC,...result.items];this.publicCursor=result.nextCursor}
-      catch(error){this.communitySyncMessage='更多内容暂未加载，请重试'}
-      finally{this.publicLoading=false}
+      if(this.publicCursor===null)return
+      const version=this.feedVersion
+      this.publicLoading=true;this.loadingMore=true
+      try{const result=await CS.publicPage(this.tab==='settled'?'settled':'doing',this.publicCursor);if(version!==this.feedVersion)return;this.allUGC=[...this.allUGC,...result.items];this.publicCursor=result.nextCursor}
+      catch(error){if(version===this.feedVersion)this.communitySyncMessage='更多内容暂未加载，请重试'}
+      finally{if(version===this.feedVersion){this.publicLoading=false;this.loadingMore=false}}
     },
 
     isFav(id) {
@@ -1067,4 +1071,5 @@ export default {
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-community-index{padding-top:var(--fire-page-top)}
  .fire-page-community-index .community-head{padding-top:0}
+.community-loading-state{position:relative;height:0}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:absolute;right:0;top:-27px;z-index:2;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 </style>

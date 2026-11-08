@@ -9,7 +9,7 @@
         <text class="top-title">{{ editing ? '修改记录' : '记一笔' }}</text>
         <text class="top-sub">{{ draft.type === 'income' ? '记录一笔收入' : '记录一笔支出' }}</text>
       </view>
-      <view class="spacer"></view>
+      <button v-if="editing" class="record-delete" :disabled="saving" @tap="confirmDelete">删除</button><view v-else class="spacer"></view>
     </view>
 
     <!-- 类型选择 -->
@@ -30,7 +30,7 @@
       </view>
     </view>
 
-    <text class="hint-text">点一个分类，直接输入金额</text>
+    <text v-if="recordMissing" class="error-text missing-record">这条记录不存在或已删除，请返回列表。</text><text v-else class="hint-text">点一个分类，直接输入金额</text>
 
     <!-- 分类网格 -->
     <view class="cat-grid">
@@ -57,7 +57,7 @@
           <text class="panel-cat-name">{{ currentCategory ? currentCategory.label : '其他' }}</text>
         </view>
         <view class="panel-amount">
-          <input class="amount-input" type="digit" v-model="draft.amount" placeholder="0.00" />
+          <input class="amount-input" type="digit" :inputmode="keyboardCollapsed ? 'decimal' : 'none'" :show-soft-input-on-focus="keyboardCollapsed" v-model="draft.amount" placeholder="0.00" />
           <text class="amount-unit">元</text>
         </view>
         <view class="keyboard-toggle" @click="keyboardCollapsed = !keyboardCollapsed">
@@ -108,7 +108,10 @@ import { returnFromEntryPage } from '@/utils/quiet-entry-page.js'
 import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
-import { showNotice, dismissFeedback } from '@/utils/feedback.js'
+import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
+import { accountId } from '@/utils/account-cache.js'
+import { takeLedgerDraft } from '@/utils/ledger-draft-handoff.js'
+import { commitLedgerRecord, removeLedgerRecord } from '@/utils/quiet-ledger.js'
 import { state, persistNow } from '@/store/index.js'
 import {
   LocalDay, LedgerCategories, SaveExpense, HeroDay, HeroComplete,
@@ -130,6 +133,7 @@ export default {
   data() {
     return {
       editing: false,
+      saving:false,recordMissing:false,editorVisible:false,recordOwner:'',saveBackTimer:null,selectedMonth:'',
       editingId: null,
       draft: EMPTY_DRAFT(),
       today: LocalDay(),
@@ -181,22 +185,27 @@ export default {
   },
 
   onLoad(options) {
-    if (options && options.id) {
-      const record = (state.ledger || []).find(function (x) { return x.id === options.id })
-      if (record) {
-        this.editing = true
-        this.editingId = record.id
-        this.draft = {
-          type: record.type || 'expense',
-          category: record.category,
-          amount: (record.cents / 100).toFixed(2),
-          date: record.date,
-          note: record.note || '',
-          necessity: record.necessity || null,
-        }
-      }
+    this.recordOwner=accountId()
+    const month=String(options?.month||'')
+    this.selectedMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(month)&&month>='1900-01'&&month<=LocalDay().slice(0,7)?month:LocalDay().slice(0,7)
+    if(this.selectedMonth!==LocalDay().slice(0,7))this.draft.date=this.selectedMonth+'-01'
+    if(options?.id){
+      const record=(state.ledger||[]).find(x=>String(x.id)===String(options.id))
+      this.editing=true
+      if(!record){this.recordMissing=true;return}
+      this.editingId=record.id
+      this.draft={type:record.type||'expense',category:record.category,amount:String(record.cents/100),date:record.date,note:record.note||'',necessity:record.necessity||null}
     }
   },
+  onReady(){
+    if(this.editing)return
+    const draft=takeLedgerDraft(this.recordOwner,this.selectedMonth)
+    if(draft&&this.recordOwner===accountId())this.draft={...EMPTY_DRAFT(),...draft}
+  },
+  onShow(){this.editorVisible=true;this.today=LocalDay()},
+  onHide(){this.editorVisible=false;clearTimeout(this.saveBackTimer)},
+  onUnload(){this.editorVisible=false;clearTimeout(this.saveBackTimer)},
+  beforeUnmount(){this.editorVisible=false;clearTimeout(this.saveBackTimer)},
 
   methods: {
     back() {
@@ -271,54 +280,29 @@ export default {
     },
 
     submit() {
-      this.errorText = ''
-
-      if (!this.draft.category) {
-        this.errorText = '请先选择一个分类'
-        return
-      }
-      if (!this.draft.amount || Number(this.draft.amount) <= 0) {
-        this.errorText = '请输入有效金额'
-        return
-      }
-
-      const payload = {
-        id: this.editing ? this.editingId : undefined,
-        type: this.draft.type,
-        category: this.draft.category,
-        amount: this.draft.amount,
-        date: this.draft.date,
-        note: this.draft.note,
-        necessity: this.draft.necessity,
-      }
-
-      const before=JSON.parse(JSON.stringify({ledger:state.ledger,hero:state.hero,exp:state.exp}))
-      if (!SaveExpense(state, payload, LocalDay(), false)) {
-        this.errorText = '保存失败，请检查金额和日期'
-        return
-      }
-
-      if(!persistNow()){state.ledger=before.ledger;state.hero=before.hero;state.exp=before.exp;this.errorText='保存失败，请检查设备存储后重试';return}
+      if(this.saving||this.recordMissing)return
+      this.errorText=''
+      if(!this.editorVisible||!this.recordOwner||this.recordOwner!==accountId()||uni.getStorageSync('fire_login_status')!==true){this.errorText='登录状态已变化，当前输入已保留，请重新登录';return}
+      if(['restoring','conflict','auth-required'].includes(state.cloudSync?.status)){this.errorText='请先完成登录或同步，当前输入已保留';return}
+      if(!this.draft.category){this.errorText='请先选择一个分类';return}
+      if(!this.draft.amount||Number(this.draft.amount)<=0){this.errorText='请输入有效金额';return}
+      this.saving=true
+      const payload={...this.draft,...(this.editing?{id:this.editingId}:{})}
+      if(!commitLedgerRecord(state,this.draft.date.slice(0,7),payload,persistNow,LocalDay())){this.saving=false;this.errorText='保存失败，请检查金额、日期和设备存储后重试';return}
       clearOptionsDraft(this)
-      showNotice({ title: this.editing ? '已保存' : '已记账', icon: 'success' })
-
-      if (this.editing) {
-        setTimeout(function () { uni.navigateBack() }, 400)
-        return
-      }
-
-      const keepType = this.draft.type
-      const keepDate = this.draft.date
-      this.draft = {
-        type: keepType,
-        category: null,
-        amount: '',
-        date: keepDate,
-        note: '',
-        necessity: null,
-      }
-      this.keyboardCollapsed = false
-      this.errorText = ''
+      showNotice({title:this.editing?'已保存':'已记账',icon:'success'})
+      if(this.editing){this.saveBackTimer=setTimeout(()=>{if(this.editorVisible){this.saving=false;this.back()}},400);return}
+      const keepType=this.draft.type,keepDate=this.draft.date
+      this.draft={...EMPTY_DRAFT(),type:keepType,date:keepDate}
+      this.keyboardCollapsed=false;this.saving=false
+    },
+    async confirmDelete(){
+      if(this.saving||!this.editing||this.recordMissing)return
+      const uid=accountId(),id=this.editingId
+      const result=await showDialog({title:'删除这笔记录？',content:'删除后无法恢复，确认删除这笔收支记录吗？',confirmText:'删除',danger:true})
+      if(!result.confirm||!this.editorVisible||uid!==accountId()||uid!==this.recordOwner)return
+      if(!removeLedgerRecord(state,id,persistNow)){this.errorText='删除未保存，请检查设备存储后重试';return}
+      clearOptionsDraft(this);showNotice({title:'已删除',icon:'none'});this.back()
     },
   },
 
@@ -582,4 +566,6 @@ export default {
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-ledger-edit{padding-top:var(--fire-page-top)}
+.record-delete{width:44px;min-width:44px!important;min-height:44px;padding:0!important;border:0!important;background:transparent!important;color:#a47261!important;font-size:12px!important}
+.missing-record{padding:16px}
 </style>
