@@ -13,7 +13,7 @@ const {default:vue}=await import(pathToFileURL(path.join(tools,'node_modules/@vi
 const {chromium}=await import(pathToFileURL(path.join(tools,'node_modules/playwright/index.mjs')))
 const {default:pngjs}=await import(pathToFileURL(path.join(tools,'node_modules/pngjs/lib/png.js')))
 const {PNG}=pngjs
-fs.writeFileSync(path.join(temp,'index.html'),'<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="app"></div><script type="module" src="/main.js"></script>')
+fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="app"></div><script type="module" src="/main.js"></script>')
 fs.writeFileSync(path.join(temp,'store.js'),"import{reactive}from'vue';export const state=reactive({ready:false,monthlyTargets:{},cloudSync:{status:'synced'}});export const persistNow=()=>true")
 fs.writeFileSync(path.join(temp,'wishlist.js'),"import{reactive}from'vue';export const wishlistReminder=reactive({owner:null,id:''});export const maybePromptWishlist=()=>{}")
 fs.writeFileSync(path.join(temp,'main.js'),`
@@ -169,7 +169,7 @@ try{
  check(await page.locator('.fire-spotlight-next').textContent()==='知道了','last button label')
  await page.locator('.fire-spotlight-next').click();await absent(page)
  check(await page.evaluate(()=>window.tour.completed()&&document.body.style.overflow===''),'completion persists and releases scroll lock')
- await page.reload();await page.waitForTimeout(1100)
+ await page.reload();await page.waitForFunction(()=>!!window.tour);await page.evaluate(()=>window.tour.ready());await page.waitForTimeout(1100)
  check(await page.locator('.fire-spotlight').count()===0,'completion does not replay after reload')
  await page.evaluate(()=>window.tour.replay());await settle(page)
  await page.locator('.fire-spotlight-skip').click();await absent(page)
