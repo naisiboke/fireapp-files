@@ -1074,5 +1074,5 @@ export default {
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-community-index{padding-top:var(--fire-page-top)}
  .fire-page-community-index .community-head{padding-top:0}
-.community-loading-state{position:relative;height:0}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:static;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.community-loading-refresh{height:40px;display:flex;align-items:center;justify-content:center}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.community-loading-state{position:relative;height:32px;display:flex;align-items:center;justify-content:center}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:static;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.community-loading-refresh{height:32px;display:flex;align-items:center;justify-content:center}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 </style>
