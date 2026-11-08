@@ -6,6 +6,7 @@ import os from 'node:os'
 import {pathToFileURL,fileURLToPath}from'node:url'
 const tools=process.env.ENTRY_TOOLS||'/tmp/fire-entry-tools',root=fileURLToPath(new URL('..',import.meta.url)),temp=fs.mkdtempSync(path.join(os.tmpdir(),'fire-entry-'))
 fs.symlinkSync(path.join(tools,'node_modules'),path.join(temp,'node_modules'),'dir')
+const deadline=setTimeout(()=>{console.error('Browser verification exceeded 180 seconds');process.exit(1)},180000)
 const {createServer}=await import(pathToFileURL(path.join(tools,'node_modules/vite/dist/node/index.js')))
 const {default:vue}=await import(pathToFileURL(path.join(tools,'node_modules/@vitejs/plugin-vue/dist/index.mjs')))
 const {chromium}=await import(pathToFileURL(path.join(tools,'node_modules/playwright/index.mjs')))
@@ -101,7 +102,7 @@ new MutationObserver(focus).observe(document.getElementById('app'),{subtree:true
 `)
 const appStyle=fs.readFileSync(path.join(root,'App.vue'),'utf8').match(/<style[^>]*>([\s\S]*?)<\/style>/)[1].replace("@import './styles/feedback.scss';",'')
 fs.writeFileSync(path.join(temp,'global.css'),appStyle+`
-html,body{margin:0;background:#f7f7f2;color:#253b31;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;font-size:14px}view{display:block;box-sizing:border-box}text{display:inline}input{font-family:inherit}button{font-family:inherit;cursor:pointer;--button-height-md:44px;--button-pressed:.97;--button-radius:12px}
+html,body{margin:0;background:#f7f7f2;color:#253b31;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;font-size:14px}view{display:block;box-sizing:border-box}text{display:inline}input{font-family:inherit;border:0;outline:0}button{font-family:inherit;cursor:pointer;--button-height-md:44px;--button-pressed:.97;--button-radius:12px}
 .panel{padding-bottom:calc(14px + var(--test-safe-bottom))!important}.test-picker{position:relative}.test-picker-control{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .bottom-tabs{height:calc(60px + var(--entry-safe-bottom))!important;padding-bottom:calc(6px + var(--entry-safe-bottom))!important}.quick-menu{bottom:calc(36px + var(--entry-safe-bottom))!important}@media(max-width:390px){.bottom-tabs{height:calc(56px + var(--entry-safe-bottom))!important;padding-bottom:calc(4px + var(--entry-safe-bottom))!important}.quick-menu{bottom:calc(32px + var(--entry-safe-bottom))!important}}
 `)
@@ -231,10 +232,10 @@ try{
  check('community loading copy is removed',!(await feed.p.locator('body').textContent()).includes('正在读取社区内容'))
  await feed.p.waitForFunction(()=>!!window.resolveCommunity)
  const post={id:'test-post',journey:'doing',title:'记录我的自由计划',summary:'慢慢走向理想生活',category:'生活',timeline:[],displayName:'测试用户'}
- await feed.p.evaluate(post=>window.resolveCommunity({items:[post],stats:{doing:1,settled:0},nextCursor:1}),post);await feed.p.locator('.card-title').waitFor()
+ await feed.p.evaluate(post=>window.resolveCommunity({items:[post],stats:{doing:1,settled:0},nextCursor:1}),post);await feed.p.locator('.card-title').waitFor();await feed.p.waitForTimeout(550)
  check('loader disappears after community data arrives',await feed.p.locator('.community-loader .fire-loading-spinner').count()===0)
  const card=await feed.p.locator('.card').first().boundingBox()
- await feed.p.evaluate(()=>test.vm.refreshCommunity());await feed.p.locator('.community-loader-refresh .fire-loading-spinner').waitFor()
+ await feed.p.evaluate(()=>{test.vm.refreshCommunity()});await feed.p.locator('.community-loader-refresh .fire-loading-spinner').waitFor()
  const refreshing=await feed.p.locator('.card').first().boundingBox()
  check('refresh keeps current timeline cards in place',Math.abs(card.y-refreshing.y)<1)
  await screenshot(feed.p,'COMMUNITY_REFRESH')
@@ -280,4 +281,4 @@ try{
  await reduced.ctx.close()
  check('no browser runtime errors',errors.length===0)
  console.log(checks+' restored keypad, login spinner, countdown, community and wishlist browser checks passed')
-}finally{for(const [name,data]of previews){console.log(name+'_PREVIEW_BEGIN');for(let i=0;i<data.length;i+=1000)console.log(data.slice(i,i+1000));console.log(name+'_PREVIEW_END')}await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}
+}finally{clearTimeout(deadline);for(const [name,data]of previews){console.log(name+'_PREVIEW_BEGIN');for(let i=0;i<data.length;i+=1000)console.log(data.slice(i,i+1000));console.log(name+'_PREVIEW_END')}await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}

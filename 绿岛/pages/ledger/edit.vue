@@ -109,7 +109,7 @@ import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
-import { accountId } from '@/utils/account-cache.js'
+import { accountId, accountKey } from '@/utils/account-cache.js'
 import { takeLedgerDraft } from '@/utils/ledger-draft-handoff.js'
 import { commitLedgerRecord, removeLedgerRecord } from '@/utils/quiet-ledger.js'
 import { state, persistNow } from '@/store/index.js'
@@ -290,6 +290,7 @@ export default {
       const payload={...this.draft,...(this.editing?{id:this.editingId}:{})}
       if(!commitLedgerRecord(state,this.draft.date.slice(0,7),payload,persistNow,LocalDay())){this.saving=false;this.errorText='保存失败，请检查金额、日期和设备存储后重试';return}
       clearOptionsDraft(this)
+      try{uni.setStorageSync(accountKey('fire_first_entry_ledger'),true)}catch(ignore){}
       showNotice({title:this.editing?'已保存':'已记账',icon:'success'})
       if(this.editing){this.saveBackTimer=setTimeout(()=>{if(this.editorVisible){this.saving=false;this.back()}},400);return}
       const keepType=this.draft.type,keepDate=this.draft.date
