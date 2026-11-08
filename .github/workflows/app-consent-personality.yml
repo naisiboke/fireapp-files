@@ -35,6 +35,8 @@ jobs:
           npm install --prefix /tmp/fire-entry-tools --ignore-scripts --no-audit --no-fund vue@3.4.21 vite@5.2.8 @vitejs/plugin-vue@5.0.4 playwright@1.56.1 pngjs@7.0.0 sass@1.77.8
           /tmp/fire-entry-tools/node_modules/.bin/playwright install --with-deps chromium
           sudo apt-get install -y fonts-noto-cjk
+      - name: Verify consent, nickname and personality flows
+        run: node 绿岛/scripts/verify-consent-personality-browser.mjs
       - name: Verify fluid tabs
         run: node 绿岛/scripts/verify-fluid-tabs-browser.mjs
       - name: Verify restored quick entry and loading feedback
