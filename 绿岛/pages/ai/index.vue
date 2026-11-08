@@ -23,7 +23,7 @@
     <view v-else class="chat-shell">
       <view class="chat-meta">
         <button class="meta-link" @tap="goPersonality('')">我的性格 ›</button>
-        <text class="meta-note">建议仅供参考</text>
+        <text class="meta-note">单次回复 ≤500 字</text>
         <button class="meta-link quota-link" @tap="goMembership">{{ quotaText() }} ›</button>
         <button class="meta-link" @tap="drawerOpen=true">历史</button>
       </view>
@@ -37,7 +37,7 @@
       <view class="composer">
         <view class="input-row">
           <button class="profile-button" aria-label="结合我的情况给建议" :disabled="loading" @tap="sendProfile">建议</button>
-          <input v-model="question" class="question" confirm-type="send" :adjust-position="false" placeholder="聊聊你的想法…" placeholder-class="placeholder" @focus="focusComposer" @blur="inputFocused=false" @confirm="send" />
+          <input v-model="question" maxlength="2000" class="question" confirm-type="send" :adjust-position="false" placeholder="聊聊你的想法…" placeholder-class="placeholder" @focus="focusComposer" @blur="inputFocused=false" @confirm="send" />
           <button class="send" :disabled="loading" @tap="send">发送</button>
         </view>
       </view>
@@ -46,6 +46,7 @@
 </template>
 
 <script>
+import { limitAIAnswer } from '@/utils/ai-answer.js'
 import { accountId } from '@/utils/account-cache.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import FireOverlay from '@/components/FireOverlay.vue'
@@ -128,7 +129,7 @@ export default {
     quotaText() { return this.isMember?'VIP 已开通':this.freeUsed>=3?'升级会员':'免费 '+Math.max(0,3-this.freeUsed)+' 次' },
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
     newChat() { this.drawerOpen=false; this.currentChatId='chat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); this.messages=[]; this.question=''; this.lastMessageId='' },
-    selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x})):[]; this.drawerOpen=false; this.scrollToLast() },
+    selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x,text:x.role==='assistant'?limitAIAnswer(x.text):x.text})):[]; this.drawerOpen=false; this.scrollToLast() },
     async saveCurrentChat() { if(this.accountUid!==accountId()||!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)]; this.currentChatId=chat.id; state.aiChats=this.chats; persist(); try{await saveAIChats(this.chats)}catch(error){console.warn('[chat-sync]',error.code||'CLOUD_CALL_FAILED')} },
     personalitySummary() { const p=state.personalityTests||{}, names=[]; if(p.bigfive) names.push('大五人格已完成'); if(p.mbti) names.push('MBTI '+String(p.mbti.title||'已完成').replace('你的 MBTI 参考类型：','')); return names.join(' · ') || '尚未完成测试' },
     personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
@@ -141,18 +142,17 @@ export default {
     sendCountdown() { this.sendContext(this.countdownText()) },
     sendProfile() { this.sendContext('请结合我的财务情况和性格测试结果，分析目前最需要调整的生活习惯，并给出可执行的建议。') },
     scrollToLast() { this.lastMessageId='';this.$nextTick(() => { this.lastMessageId='chat-bottom' }) },
-    formatAnswer(value) {
-      return String(value||'').replace(/[\uFFFD�]+/g,'').replace(/\*\*/g,'').replace(/__/g,'').trim()
-    },
+    formatAnswer(value) { return limitAIAnswer(value) },
 
     typeAnswer(text) {
       return new Promise(resolve => {
         const message={role:'assistant',text:''}
         this.messages.push(message)
+        const characters=Array.from(limitAIAnswer(text))
         let index=0
         const step=()=>{
-          if(index>=text.length){this.scrollToLast();resolve();return}
-          message.text += text.charAt(index++)
+          if(index>=characters.length){this.scrollToLast();resolve();return}
+          message.text += characters[index++]
           this.scrollToLast()
           setTimeout(step, Math.max(16, text.length>240 ? 12 : 26))
         }
@@ -168,22 +168,25 @@ export default {
       const question = this.question.trim()
       if (!question || this.loading) return
       this.question = ''
-      if (!this.isMember) this.consumeQuota()
       this.messages.push({ role: 'user', text: question })
       this.scrollToLast()
       this.saveCurrentChat()
       this.loading = true
+      const requestOwner=this.accountUid
       const startedAt = Date.now()
       try {
         const result = await askBehaviorAI({ question, finance: state.finance, countdown: this.countdownText(), personality: this.personalityPayload() })
+        if(requestOwner!==accountId())return
         const answer = result && (result.reply || result.message || result.content)
         if (!answer) throw new Error('AI 暂时没有返回建议')
+        if(!this.isMember){if(Number.isSafeInteger(result.used)){this.freeUsed=result.used;state.toolUsage=state.toolUsage||{};state.toolUsage.aiDaily={date:this.todayKey(),count:result.used};persist()}else this.consumeQuota()}
         const elapsed = Date.now() - startedAt
         if (elapsed < 1200) await new Promise(resolve => setTimeout(resolve, 1200 - elapsed))
+        if(requestOwner!==accountId())return
         await this.typeAnswer(this.formatAnswer(String(answer)))
         this.saveCurrentChat()
       } catch (error) {
-        this.messages.push({ role: 'assistant', text: error.message || 'AI 暂时无法回答，请稍后再试' })
+        if(requestOwner===accountId())this.messages.push({ role: 'assistant', text: this.formatAnswer(error.message || 'AI 暂时无法回答，请稍后再试') })
       } finally { this.loading = false; this.scrollToLast() }
     },
   },
