@@ -1,6 +1,7 @@
 <template>
   <view class="community-view fire-page-community-index" :style="pageLayoutStyle" :class="{ 'page-entry-reset': pageEntryReset }">
     <AppFeedback :owner-id="feedbackOwnerId" />
+    <view class="fire-tab-content" :class="{ 'tab-content-reset':pageEntryReset, 'tab-content-slide':!pageEntryReset }" :style="tabEntryStyle">
 
     <!-- 头 -->
     <view class="community-head">
@@ -150,6 +151,7 @@
       <text v-else-if="visiblePosts.length > 0 && allPosts.length > 0" class="no-more">没有更多了</text>
     </view>
 
+    </view>
     <!-- FAB -->
     <view class="fab" @tap="openPost">
       <text class="fab-icon">＋</text>
@@ -358,7 +360,7 @@
         </view>
       </view>
     </FireOverlay>
-    <BottomTabs v-if="modal !== 'post'" current="community" />
+    <BottomTabs ref="bottomNav" v-if="modal !== 'post'" current="community" />
   </view>
 </template>
 
@@ -679,6 +681,7 @@ export default {
 </script>
 
 <style>
+@import '../../utils/tab-content.css';
 .community-view {
   min-height: 100vh;
   background: #e8efe4;
@@ -1065,7 +1068,7 @@ export default {
 .tag-wrap{display:flex;align-items:center;gap:6px}.journey-tag{font-size:11px;padding:4px 7px;border-radius:6px;background:#e4f0e4;color:#39705b}
 @media screen and (max-width:390px){.community-view{padding:calc(14px + var(--fire-status-top, env(safe-area-inset-top))) 12px calc(82px + env(safe-area-inset-bottom))}.community-head{gap:8px;padding:8px 0 12px}.head-h1{font-size:21px}.head-sub{font-size:11px}.fav-entry{padding:7px 9px}.fav-entry-text{font-size:11px}.tabs{margin-bottom:12px;padding:4px}.tab{padding:9px 6px}.tab-text{font-size:12px}.list{gap:9px}.card{border-radius:13px}.card-head{padding:12px 12px 0}.card-main{padding:12px}.card-title{font-size:16px}.card-summary,.card-sub{font-size:12px}.card-foot{padding:9px 12px}.foot-text{font-size:11px}.fab{right:14px;width:50px;height:50px;border-radius:25px;bottom:calc(72px + env(safe-area-inset-bottom))}.fab-icon{font-size:26px}}
 /* Reset only entry animations; page nodes and scroll position stay intact. */
-.community-view.page-entry-reset .card{animation:none;opacity:0}
+.community-view.page-entry-reset .card{animation:none}
 .community-sync-note{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;margin-bottom:12px;border-radius:12px;background:#fff;color:#8a5f38;font-size:12px;line-height:1.6}
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */

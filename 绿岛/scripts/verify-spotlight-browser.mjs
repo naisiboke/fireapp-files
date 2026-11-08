@@ -44,7 +44,7 @@ uni.setStorageSync('fire_login_status',true)
 document.addEventListener('click',event=>event.target.dispatchEvent(new Event('tap',{bubbles:true,cancelable:true})),true)
 createApp(App).mount('#app')
 `)
-const homeStyle=fs.readFileSync(path.join(root,'pages/index/index.vue'),'utf8').match(/<style[^>]*>([\s\S]*?)<\/style>/)[1]
+const homeStyle=fs.readFileSync(path.join(root,'pages/index/index.vue'),'utf8').match(/<style[^>]*>([\s\S]*?)<\/style>/)[1].replace("@import '../../utils/tab-content.css';",fs.readFileSync(path.join(root,'utils/tab-content.css'),'utf8'))
 fs.writeFileSync(path.join(temp,'Harness.vue'),`
 <template>
  <view class="page home-page" :style="pageLayoutStyle">

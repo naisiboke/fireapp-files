@@ -1,0 +1,7 @@
+.fire-tab-content{opacity:1;transform:none}
+.fire-tab-content.tab-content-reset{animation:none!important;opacity:0}
+.fire-tab-content.tab-content-slide{animation:fireTabContent 280ms cubic-bezier(.22,.75,.25,1) backwards}
+@keyframes fireTabContent{from{opacity:0;transform:translateX(var(--tab-enter-x,0px))}to{opacity:1;transform:translateX(0)}}
+/* Animate content once as a group while keeping loading indicators running. */
+.fire-tab-content .home-masthead,.fire-tab-content .home-metrics,.fire-tab-content .task-row,.fire-tab-content .goal-card,.fire-tab-content .tool-card,.fire-tab-content .menu-item,.fire-tab-content .card{animation:none!important}
+@media(prefers-reduced-motion:reduce){.fire-tab-content.tab-content-slide{animation:none!important}.fire-tab-content.tab-content-reset{opacity:1}}
