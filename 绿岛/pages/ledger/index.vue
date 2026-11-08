@@ -19,7 +19,7 @@
    <view class="qe-distribution-legend"><view v-for="c in distribution" :key="c.key"><view class="qe-legend-label"><view class="qe-legend-dot" :style="{background:c.color}"></view><text>{{c.label}} {{shareOf(c.cents,expenseTotal)}}</text></view><text class="qe-legend-amount">¥{{money(c.cents/100)}}</text></view></view>
   </view>
   <view class="qe-ledger-main">
-   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded && !showAdd" @ready="refreshEntryArrow" />
+   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded" @ready="refreshEntryArrow" />
    <view v-if="records.length" id="ledger-records" class="qe-list-section">
     <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
     <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id">{{f.name}}</button></view></view>
@@ -32,23 +32,13 @@
     <text class="qe-list-note">{{recordFilter==='income'?'占比按本月实际收入计算':'占比按本月实际支出计算，收入单独统计'}} · 点按记录可修改或删除</text>
    </view>
   </view>
-  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded && !showAdd}" aria-label="记一笔" @tap="goAdd">＋</button>
+  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded}" aria-label="记一笔" @tap="goAdd">＋</button>
   <view v-if="entryFly" class="qe-flight" :style="entryFly.style" aria-hidden="true"><text class="qe-flight-label">{{entryFly.title}}</text><text class="qe-flight-amount">{{entryFly.amount}}</text></view>
-  <QuietEntrySheet :visible="entryVisible && (budgetExpanded || showAdd)" :owner-id="feedbackOwnerId" :title="budgetExpanded?'本月预算':editingId?'修改记录':'记一笔'" :busy="saving" @close="closeEntrySheet" @ready="entryFocus=true">
-   <template v-if="budgetExpanded">
-    <text class="qe-label">本月支出预算（元）</text><input class="qe-input" type="digit" aria-label="本月支出预算" :adjust-position="false" :focus="entryFocus" v-model="budgetInput" maxlength="12" placeholder="例如 3000" />
-    <text class="qe-label">本月收入目标（元）</text><input class="qe-input" type="digit" aria-label="本月收入目标" :adjust-position="false" v-model="incomeInput" maxlength="12" placeholder="例如 8000" />
-    <text class="qe-form-hint">这是本月计划，真实收支请另外记一笔。</text>
-   </template>
-   <template v-else>
-    <view class="qe-type-tabs"><button :class="{active:draft.type==='expense'}" @tap="setRecordType('expense')">支出</button><button :class="{active:draft.type==='income'}" @tap="setRecordType('income')">收入</button></view>
-    <text class="qe-label">金额</text><view class="qe-amount-line"><text class="qe-amount-currency">¥</text><input class="qe-input qe-input-amount" type="digit" aria-label="记账金额" :adjust-position="false" :focus="entryFocus" v-model="draft.amount" maxlength="12" placeholder="0.00" /></view>
-    <view class="qe-form-options"><view><text class="qe-label">分类</text><picker :range="categories" range-key="label" :value="categoryIndex" @change="chooseCategory"><view class="qe-picker-row">{{currentCategoryLabel}} <text>⌄</text></view></picker></view><view><text class="qe-label">日期</text><picker mode="date" :value="draft.date" :start="month+'-01'" :end="lastDay" @change="draft.date=$event.detail.value"><view class="qe-picker-row">{{draft.date.slice(5)}} <text>⌄</text></view></picker></view></view>
-    <text class="qe-label">{{draft.type==='income'?'收入来源 / 备注（选填）':'消费内容 / 备注（选填）'}}</text><input class="qe-input" aria-label="记账备注" :adjust-position="false" v-model="draft.note" maxlength="120" :placeholder="draft.type==='income'?'例如：工资、兼职':'例如：午饭、日用品'" />
-    <view v-if="draft.type==='expense'"><text class="qe-label">必要度（选填）</text><view class="qe-cooling-options"><button v-for="n in necessities" :key="n.id" :class="{active:draft.necessity===n.id}" @tap="draft.necessity=draft.necessity===n.id?null:n.id">{{n.name}}</button></view></view>
-   </template>
-   <text v-if="errorText" class="qe-error" role="alert">{{errorText}}</text>
-   <template #footer><button class="qe-primary" :disabled="saving" @tap="budgetExpanded?saveTargets():submitRecord()">{{saving?'保存中…':budgetExpanded?'保存本月计划':editingId?'保存修改':'添加'}}</button><button v-if="!budgetExpanded && editingId" class="qe-danger-text" :disabled="saving" @tap="confirmDelete(selectedRecord)">删除这笔记录</button></template>
+  <QuietEntrySheet :visible="entryVisible && budgetExpanded" :owner-id="feedbackOwnerId" title="本月预算" :busy="saving" @close="closeEntrySheet" @ready="entryFocus=true">
+   <text class="qe-label">本月支出预算（元）</text><input class="qe-input" type="digit" aria-label="本月支出预算" :adjust-position="false" :focus="entryFocus" v-model="budgetInput" maxlength="12" placeholder="例如 3000" />
+   <text class="qe-label">本月收入目标（元）</text><input class="qe-input" type="digit" aria-label="本月收入目标" :adjust-position="false" v-model="incomeInput" maxlength="12" placeholder="例如 8000" />
+   <text class="qe-form-hint">这是本月计划，真实收支请另外记一笔。</text><text v-if="errorText" class="qe-error" role="alert">{{errorText}}</text>
+   <template #footer><button class="qe-primary" :disabled="saving" @tap="saveTargets">{{saving?'保存中…':'保存本月计划'}}</button></template>
   </QuietEntrySheet>
  </view>
 </template>
@@ -57,16 +47,17 @@ import AppFeedback from '@/components/AppFeedback.vue'
 import QuietEmptyState from '@/components/QuietEmptyState.vue'
 import QuietEntrySheet from '@/components/QuietEntrySheet.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
-import { quietEntryPageMixin, measureEntryTarget } from '@/utils/quiet-entry-page.js'
-import { showDialog, showNotice } from '@/utils/feedback.js'
+import { quietEntryPageMixin } from '@/utils/quiet-entry-page.js'
+import { showNotice } from '@/utils/feedback.js'
 import { clearOptionsDraft } from '@/utils/session-drafts.js'
+import { offerLedgerDraft, cancelLedgerDraft } from '@/utils/ledger-draft-handoff.js'
 import { accountId } from '@/utils/account-cache.js'
 import { state, persistNow } from '@/store/index.js'
-import { LocalDay, LedgerSummary, LedgerCategoryLabel, LedgerCategories, MonthlyStatus } from '@/utils/engine.js'
-import { defaultLedgerDraft, commitMonthlyPlan, commitLedgerRecord, removeLedgerRecord, expenseDistribution, shareOf } from '@/utils/quiet-ledger.js'
+import { LocalDay, LedgerSummary, LedgerCategoryLabel, MonthlyStatus } from '@/utils/engine.js'
+import { defaultLedgerDraft, commitMonthlyPlan, expenseDistribution, shareOf } from '@/utils/quiet-ledger.js'
 export default{
  components:{AppFeedback,QuietEmptyState,QuietEntrySheet},mixins:[feedbackPageMixin,quietEntryPageMixin],
- data(){return{state,month:'',maxMonth:'',budgetInput:'',incomeInput:'',budgetExpanded:false,showAdd:false,addAfterPlan:false,editingId:null,draft:defaultLedgerDraft(LocalDay().slice(0,7)),recordFilter:'all',saving:false,errorText:'',filters:[{id:'all',name:'全部'},{id:'expense',name:'支出'},{id:'income',name:'收入'}],necessities:[{id:'necessary',name:'必要'},{id:'comfort',name:'改善生活'},{id:'impulse',name:'一时心动'}]}},
+ data(){return{state,month:'',maxMonth:'',budgetInput:'',incomeInput:'',budgetExpanded:false,showAdd:false,addAfterPlan:false,editingId:null,editorNavigating:false,draft:defaultLedgerDraft(LocalDay().slice(0,7)),recordFilter:'all',saving:false,errorText:'',filters:[{id:'all',name:'全部'},{id:'expense',name:'支出'},{id:'income',name:'收入'}],necessities:[{id:'necessary',name:'必要'},{id:'comfort',name:'改善生活'},{id:'impulse',name:'一时心动'}]}},
  computed:{
   monthText(){const parts=this.month.split('-');return parts[0]+'年'+Number(parts[1])+'月'},
   summary(){return LedgerSummary(state,this.month,'expense')},incomeSummary(){return LedgerSummary(state,this.month,'income')},
@@ -81,15 +72,10 @@ export default{
   budgetRemaining(){return this.budgetAmount===null?0:this.budgetAmount-this.expenseTotal},
   budgetProgress(){return this.budgetAmount>0?Math.min(100,this.expenseTotal/this.budgetAmount*100):0},
   showFirstGuide(){return !this.records.length&&!(state.ledger||[]).length&&this.entryIsFirst('ledger')},
-  categories(){const list=LedgerCategories(state,this.draft.type);if(this.editingId&&!list.some(x=>x.id===this.draft.category)){const current=LedgerCategories(state,this.draft.type,true).find(x=>x.id===this.draft.category);if(current)return list.concat([current])}return list},
-  categoryIndex(){return Math.max(0,this.categories.findIndex(x=>x.id===this.draft.category))},
-  currentCategoryLabel(){return this.categories.find(x=>x.id===this.draft.category)?.label||'请选择'},
-  selectedRecord(){return (state.ledger||[]).find(x=>x.id===this.editingId)||null},
-  lastDay(){if(this.month===LocalDay().slice(0,7))return LocalDay();const[y,m]=this.month.split('-').map(Number);return this.month+'-'+new Date(y,m,0).getDate()},
  },
  watch:{budgetExpanded(){this.entryFocus=false;this.errorText='';this.$nextTick(()=>this.refreshEntryArrow())},showAdd(){this.$nextTick(()=>this.refreshEntryArrow())}},
- onLoad(options){this.maxMonth=LocalDay().slice(0,7);this.month=/^\d{4}-(0[1-9]|1[0-2])$/.test(options?.month||'')&&options.month>='1900-01'&&options.month<=this.maxMonth?options.month:this.maxMonth;this.loadTargetInputs();this.budgetExpanded=!this.targetsReady;this.addAfterPlan=options?.add==='1';if(this.addAfterPlan&&this.targetsReady)this.showAdd=true},
- onShow(){if(!this.budgetExpanded)this.loadTargetInputs()},
+ onLoad(options){this.maxMonth=LocalDay().slice(0,7);this.month=/^\d{4}-(0[1-9]|1[0-2])$/.test(options?.month||'')&&options.month>='1900-01'&&options.month<=this.maxMonth?options.month:this.maxMonth;this.loadTargetInputs();this.budgetExpanded=!this.targetsReady;this.addAfterPlan=options?.add==='1';this.showAdd=false},
+ onShow(){if(!this.budgetExpanded)this.loadTargetInputs();if(this.addAfterPlan&&this.targetsReady){this.addAfterPlan=false;this.$nextTick(()=>this.goAdd())}},
  onBackPress(event){return this.handleEntryBack(event)},
  methods:{
   shareOf,catLabel(x){return LedgerCategoryLabel(state,x)},money(value){return Number(value||0).toLocaleString('zh-CN',{maximumFractionDigits:2})},fmt(value){return this.money(value)},
@@ -110,31 +96,14 @@ export default{
   onMonthChange(event){this.changeMonth(String(event.detail.value).slice(0,7))},
   prevMonth(){const d=new Date(this.month+'-01T12:00:00');d.setMonth(d.getMonth()-1);this.changeMonth(LocalDay(d).slice(0,7))},
   nextMonth(){if(this.month>=this.maxMonth)return;const d=new Date(this.month+'-01T12:00:00');d.setMonth(d.getMonth()+1);this.changeMonth(LocalDay(d).slice(0,7))},
-  goAdd(){if(this.saving)return;if(!this.targetsReady){this.toggleBudget();return}if(this.editingId||this.draft.date?.slice(0,7)!==this.month)this.resetEntryDraft();this.editingId=null;this.entryFocus=false;this.errorText='';this.showAdd=true},
-  editRecord(x){if(!x||this.saving)return;this.budgetExpanded=false;this.editingId=x.id;this.draft={type:x.type||'expense',category:x.category,amount:String(x.cents/100),date:x.date,note:x.note||'',necessity:x.necessity||null};this.errorText='';this.entryFocus=false;this.showAdd=true},
-  setRecordType(type){if(type===this.draft.type)return;this.draft.type=type;this.draft.category=LedgerCategories(state,type)[0]?.id||'';this.draft.necessity=null},
-  chooseCategory(event){const item=this.categories[Number(event.detail.value)];if(item)this.draft.category=item.id},
-  async submitRecord(){
-   if(this.saving||!this.showAdd)return
-   if(!this.entryCanSave()){this.errorText='账号或同步状态已变化，请稍后重新打开';return}
-   if(!this.editingId&&!this.targetsReady){this.showAdd=false;this.toggleBudget();return}
-   this.saving=true;this.errorText=''
-   const operation=this.entryOperation(),uid=accountId(),origin=await measureEntryTarget(this,'#quiet-entry-fab')
-   if(uid!==accountId()||!this.entryCanSave(operation)){this.saving=false;this.errorText='账号已变化，当前输入已保留';return}
-   const wasEmpty=!this.records.length,first=!(state.ledger||[]).length&&this.entryIsFirst('ledger'),wasEditing=!!this.editingId
-   const record=commitLedgerRecord(state,this.month,{...this.draft,...(this.editingId?{id:this.editingId}:{})},persistNow)
-   if(!record){this.saving=false;this.errorText='保存失败，请检查金额、日期和设备存储后重试';return}
-   this.rememberEntry('ledger');this.recordFilter=record.type==='income'?'income':'expense'
-   this.saving=false;this.closeEntrySheet();this.draft=defaultLedgerDraft(this.month);this.editingId=null;clearOptionsDraft(this)
-   if(wasEditing)showNotice({title:'修改已保存',icon:'success'})
-   else this.animateEntry(record.id,'#'+this.rowId(record.id),record.note||this.catLabel(record),(record.type==='income'?'+':'−')+'¥'+this.money(record.cents/100),first,origin,{tip:'第一笔已记下',leaving:wasEmpty})
-  },
-  async confirmDelete(record){
-   if(!record||this.saving)return;const operation=this.entryOperation(),uid=accountId(),id=record.id
-   const result=await showDialog({title:'删除这笔记录？',content:(record.note||this.catLabel(record))+' · ¥'+this.money(record.cents/100)+'。删除后无法恢复。',confirmText:'删除',danger:true})
-   if(!result.confirm||uid!==accountId()||!this.entryCanSave(operation))return
-   if(!removeLedgerRecord(state,id,persistNow)){this.errorText='删除未保存，请检查设备存储后重试';return}
-   this.closeEntrySheet();this.resetEntryDraft();clearOptionsDraft(this);showNotice({title:'已删除',icon:'none'});this.$nextTick(()=>this.refreshEntryArrow())
+  goAdd(){if(this.saving||this.editorNavigating)return;if(!this.targetsReady){this.addAfterPlan=true;this.toggleBudget();return}if(this.editingId)this.resetEntryDraft();this.openClassicEditor()},
+  editRecord(record){if(record&&!this.saving&&!this.editorNavigating)this.openClassicEditor(record)},
+  openClassicEditor(record){
+   const uid=accountId();if(!uid||!this.entryCanSave()){showNotice({title:'请先完成登录或同步后重试',icon:'none'});return}
+   this.editorNavigating=true
+   const ticket=record?false:offerLedgerDraft(uid,this.month,this.draft)
+   const url=record?'/pages/ledger/edit?id='+encodeURIComponent(String(record.id)):'/pages/ledger/edit'+(this.month===LocalDay().slice(0,7)?'':'?month='+this.month)
+   uni.navigateTo({url,success:()=>{if(ticket){this.resetEntryDraft();clearOptionsDraft(this)}},fail:()=>{if(ticket)cancelLedgerDraft(uid,ticket);showNotice({title:'暂时无法打开记账，请重试',icon:'none'})},complete:()=>{this.editorNavigating=false}})
   },
  },
 }

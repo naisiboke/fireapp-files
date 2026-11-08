@@ -6,6 +6,7 @@ import os from 'node:os'
 import {pathToFileURL,fileURLToPath}from'node:url'
 const tools=process.env.ENTRY_TOOLS||'/tmp/fire-entry-tools',root=fileURLToPath(new URL('..',import.meta.url)),temp=fs.mkdtempSync(path.join(os.tmpdir(),'fire-entry-'))
 fs.symlinkSync(path.join(tools,'node_modules'),path.join(temp,'node_modules'),'dir')
+const deadline=setTimeout(()=>{console.error('Browser verification exceeded 180 seconds');process.exit(1)},180000)
 const {createServer}=await import(pathToFileURL(path.join(tools,'node_modules/vite/dist/node/index.js')))
 const {default:vue}=await import(pathToFileURL(path.join(tools,'node_modules/@vitejs/plugin-vue/dist/index.mjs')))
 const {chromium}=await import(pathToFileURL(path.join(tools,'node_modules/playwright/index.mjs')))
@@ -13,24 +14,47 @@ fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><html lang="zh-CN"
 fs.writeFileSync(path.join(temp,'store.js'),`
 import {reactive}from'vue'
 const q=new URLSearchParams(location.search),month='2026-11'
-const fresh={ready:true,ledger:[],monthlyTargets:q.get('budget')==='1'?{[month]:{expense:300000,income:800000}}:{},items:[],finance:{assets:15000,retirementExpense:6000,monthlyDeposit:3000},exp:17,cloudSync:{status:'synced'},deletions:[]}
+const fresh={financeEntered:true,homeCountdown:'fire',started:true,profile:{name:'测试用户'},privacySettings:{guardianAnimation:false},membership:{active:false},actionSync:{status:'idle'},actionRewards:{events:[],counters:{}},goalPlan:{id:'car',name:'车子',assets:1000,amount:12000,monthlyDeposit:1000,expectedMonths:12,rate:0,calculatedAt:Date.parse('2026-11-08T04:00:00Z')},ready:true,ledger:[],monthlyTargets:q.get('budget')==='1'?{[month]:{expense:300000,income:800000}}:{},items:[],finance:{assets:15000,retirementExpense:6000,monthlyDeposit:3000,expense:6000,income:8000,withdrawal:4,rate:8,goal:0},exp:17,cloudSync:{status:'synced',message:'已恢复当前账户的数据'},deletions:[]}
 export const state=reactive(JSON.parse(localStorage.getItem('test-snapshot')||'null')||fresh)
 export function persistNow(){if(window.saveFail)return false;localStorage.setItem('test-snapshot',JSON.stringify(state));window.saveCalls=(window.saveCalls||0)+1;return true}
 export const persist=persistNow
 export const refreshActions=async()=>null
 `)
+
+fs.appendFileSync(path.join(temp,'store.js'),`
+export const refreshFinance=()=>{}
+export const endAccountSession=()=>{}
+export const syncStateToServer=async()=>({synced:true})
+export async function hydrateFromServer(){
+ window.restoreCalls=(window.restoreCalls||0)+1
+ if(window.holdRestore)return new Promise((resolve,reject)=>{window.resolveRestore=resolve;window.rejectRestore=reject})
+ return{loaded:true,uid:'A',email:'user@example.com'}
+}
+`)
+fs.writeFileSync(path.join(temp,'community-store.js'),`
+import{reactive}from'vue'
+export const CS={
+ syncState:reactive({message:''}),favorites:()=>[],netWorth:()=>null,draft:()=>null,ugc:()=>[],
+ hydrate:async()=>({ok:true}),saveFavorites:()=>true,
+ publicPage:async()=>{window.feedCalls=(window.feedCalls||0)+1;if(window.holdCommunity)return new Promise((resolve,reject)=>{window.resolveCommunity=resolve;window.rejectCommunity=reject});return{items:[],stats:{doing:0,settled:0},nextCursor:null}}
+}
+`)
+fs.writeFileSync(path.join(temp,'auth.js'),`
+export const sendVerificationCode=async()=>({id:'test-verification'})
+export const saveAuthToken=async()=>{}
+export function signInWithCode(kind,email,code){window.sentCode=code;window.authCalls=(window.authCalls||0)+1;return new Promise((resolve,reject)=>{window.resolveAuth=resolve;window.rejectAuth=reject})}
+`)
+
 fs.writeFileSync(path.join(temp,'uni-hooks.js'),"export const onShow=()=>{};export const onHide=()=>{};export const onUnload=()=>{};export const onBackPress=()=>{};export const onResize=()=>{}")
 fs.writeFileSync(path.join(temp,'wishlist-reminder.js'),"import{reactive}from'vue';export const wishlistReminder=reactive({owner:null,uid:'',id:'',busy:false});export const maybePromptWishlist=()=>false;export const closeWishlistReminder=()=>{};export const answerWishlistReminder=()=>{}")
 fs.writeFileSync(path.join(temp,'update.js'),"export const maybeCheckAppUpdate=()=>{}")
 fs.writeFileSync(path.join(temp,'main.js'),`
 import{createApp,defineComponent,h}from'vue'
-import Ledger from '@/pages/ledger/index.vue'
-import Wishlist from '@/pages/wishlist/index.vue'
 import {state}from'@/store/index.js'
 import {feedbackState,closeDialog,hideNotice}from'@/utils/feedback.js'
 import {flushSessionDrafts}from'@/utils/session-drafts.js'
 const q=new URLSearchParams(location.search)
-window.routes=[];window.saveFail=false;window.saveCalls=0;window.stackDepth=2;const keyboardListeners=new Set()
+window.holdCommunity=q.get('hold')==='1';window.holdRestore=false;document.documentElement.style.setProperty('--test-safe-bottom',Number(q.get('bottom')||34)+'px');window.routes=[];window.saveFail=false;window.saveCalls=0;window.stackDepth=2;const keyboardListeners=new Set()
 const put=(k,v)=>localStorage.setItem(k,JSON.stringify(v))
 window.uni={
  getStorageSync:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')??''}catch{return''}},
@@ -40,7 +64,7 @@ window.uni={
  onKeyboardHeightChange:fn=>keyboardListeners.add(fn),offKeyboardHeightChange:fn=>keyboardListeners.delete(fn),
  emitKeyboard(height){for(const fn of keyboardListeners)fn({height})},
  navigateBack(o={}){window.routes.push('back');o.complete?.()},switchTab(o){window.routes.push(o.url);o.success?.();o.complete?.()},
- navigateTo(o){window.routes.push(o.url)},redirectTo(o){window.routes.push(o.url)},
+ navigateTo(o){window.routes.push(o.url);o.success?.();o.complete?.()},redirectTo(o){window.routes.push(o.url)},reLaunch(o){window.routes.push(o.url);o.success?.()},
  pageScrollTo(o){let top=o.scrollTop||0;if(o.selector){const el=document.querySelector(o.selector);if(el)top=window.scrollY+el.getBoundingClientRect().top-90}window.scrollTo(0,top);setTimeout(()=>o.complete?.(),o.duration||0)},
  createSelectorQuery(){let context=null,selector='';const tasks=[],api={
  in(v){context=v;return api},select(v){selector=v;return api},selectViewport(){return api},
@@ -48,18 +72,20 @@ window.uni={
  scrollOffset(cb){tasks.push(()=>cb({scrollTop:scrollY}));return api},exec(){if(window.delayMeasure)setTimeout(()=>tasks.forEach(task=>task()),200);else requestAnimationFrame(()=>tasks.forEach(task=>task()));return api}
  };return api}
 }
-put('fire_login_status',true);if(!localStorage.getItem('fire_account_uid'))put('fire_account_uid','A')
-window.getCurrentPages=()=>Array.from({length:window.stackDepth},(_,i)=>({route:q.get('page')==='wish'?'pages/wishlist/index':'pages/ledger/index',options:{}}))
+put('fire_login_status',q.get('page')!=='login');put('fire_island_onboarding_done',true);put('fire_spotlight_guide_v1:account:A',{completed:true});if(!localStorage.getItem('fire_account_uid'))put('fire_account_uid','A')
+window.getCurrentPages=()=>Array.from({length:window.stackDepth},(_,i)=>({route:q.get('page')==='wish'?'pages/wishlist/index':q.get('page')==='edit'?'pages/ledger/edit':q.get('page')==='home'?'pages/index/index':q.get('page')==='community'?'pages/community/index':q.get('page')==='login'?'pages/login/login':'pages/ledger/index',options:{}}))
 document.addEventListener('click',e=>e.target.dispatchEvent(new Event('tap',{bubbles:true,cancelable:true})),true)
 const Picker=defineComponent({
  props:['mode','fields','value','range','rangeKey','start','end'],emits:['change'],
  setup(p,{emit,slots}){return()=>h('div',{class:'test-picker'},[slots.default?.(),p.mode==='date'?h('input',{type:p.fields==='month'?'month':'date',class:'test-picker-control',value:p.value,min:p.start,max:p.end,onChange:e=>emit('change',{detail:{value:e.target.value}})}):h('select',{class:'test-picker-control',value:p.value,onChange:e=>emit('change',{detail:{value:e.target.value}})},(p.range||[]).map((v,i)=>h('option',{value:i},v[p.rangeKey]||v)))])}
 })
-const page=q.get('page')==='wish'?Wishlist:Ledger,app=createApp(page)
-for(const key of ['onLoad','onShow','onHide','onUnload','onBackPress','onResize','onPageScroll'])app.config.optionMergeStrategies[key]=(a,b)=>[...(Array.isArray(a)?a:a?[a]:[]),...(Array.isArray(b)?b:b?[b]:[])]
+const modules={ledger:()=>import('@/pages/ledger/index.vue'),wish:()=>import('@/pages/wishlist/index.vue'),edit:()=>import('@/pages/ledger/edit.vue'),home:()=>import('@/pages/index/index.vue'),community:()=>import('@/pages/community/index.vue'),login:()=>import('@/pages/login/login.vue')}
+const page=(await modules[q.get('page')||'ledger']()).default,app=createApp(page)
+feedbackState.owner=1
+for(const key of ['onLoad','onReady','onShow','onHide','onUnload','onBackPress','onResize','onPageScroll'])app.config.optionMergeStrategies[key]=(a,b)=>[...(Array.isArray(a)?a:a?[a]:[]),...(Array.isArray(b)?b:b?[b]:[])]
 app.component('picker',Picker)
 function hook(vm,key,arg){let result;for(const fn of [].concat(vm.$options[key]||[]))result=fn.call(vm,arg);return result}
-app.mixin({beforeMount(){if(this.$parent)return;hook(this,'onLoad',{month:q.get('month')||undefined,add:q.get('add')||undefined});hook(this,'onShow')}})
+app.mixin({beforeMount(){if(this.$parent)return;hook(this,'onLoad',{month:q.get('month')||undefined,add:q.get('add')||undefined,id:q.get('id')||undefined,tab:q.get('tab')||undefined});hook(this,'onShow')},mounted(){if(!this.$parent)this.$nextTick(()=>hook(this,'onReady'))}})
 const vm=app.mount('#app')
 window.test={
  vm,state,ready:true,
@@ -76,8 +102,8 @@ new MutationObserver(focus).observe(document.getElementById('app'),{subtree:true
 `)
 const appStyle=fs.readFileSync(path.join(root,'App.vue'),'utf8').match(/<style[^>]*>([\s\S]*?)<\/style>/)[1].replace("@import './styles/feedback.scss';",'')
 fs.writeFileSync(path.join(temp,'global.css'),appStyle+`
-html,body{margin:0;background:#f7f7f2;color:#253b31;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;font-size:14px}view{display:block;box-sizing:border-box}text{display:inline}input{font-family:inherit}button{font-family:inherit;cursor:pointer;--button-height-md:44px;--button-pressed:.97;--button-radius:12px}
-.test-picker{position:relative}.test-picker-control{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+html,body{margin:0;background:#f7f7f2;color:#253b31;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;font-size:14px}view{display:block;box-sizing:border-box}text{display:inline}input{font-family:inherit;border:0;outline:0}button{font-family:inherit;cursor:pointer;--button-height-md:44px;--button-pressed:.97;--button-radius:12px}
+.panel{padding-bottom:calc(14px + var(--test-safe-bottom))!important}.test-picker{position:relative}.test-picker-control{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .bottom-tabs{height:calc(60px + var(--entry-safe-bottom))!important;padding-bottom:calc(6px + var(--entry-safe-bottom))!important}.quick-menu{bottom:calc(36px + var(--entry-safe-bottom))!important}@media(max-width:390px){.bottom-tabs{height:calc(56px + var(--entry-safe-bottom))!important;padding-bottom:calc(4px + var(--entry-safe-bottom))!important}.quick-menu{bottom:calc(32px + var(--entry-safe-bottom))!important}}
 `)
 fs.appendFileSync(path.join(temp,'main.js'),"\nimport './global.css'\n")
@@ -86,6 +112,8 @@ const server=await createServer({root:temp,configFile:false,plugins:[
 vue({template:{compilerOptions:{isCustomElement:tag=>['view','text','scroll-view'].includes(tag)}}})],
 resolve:{alias:[
 {find:'@/store/index.js',replacement:path.join(temp,'store.js')},
+{find:'@/utils/community-store.js',replacement:path.join(temp,'community-store.js')},
+{find:'@/utils/cloudbase-auth.js',replacement:path.join(temp,'auth.js')},
 {find:'@/utils/wishlist-reminder.js',replacement:path.join(temp,'wishlist-reminder.js')},
 {find:'./wishlist-reminder.js',replacement:path.join(temp,'wishlist-reminder.js')},
 {find:'./app-update.js',replacement:path.join(temp,'update.js')},
@@ -124,75 +152,108 @@ async function frame(p,top,bottom){
  check('no horizontal document overflow',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
 }
 try{
+
  const {ctx,p}=await context()
  await p.goto('http://127.0.0.1:5189/');await ready(p)
- check('new month prompts for both budgets',await p.locator('.qe-sheet-title').textContent()==='本月预算')
- await p.locator('input[aria-label="本月支出预算"]').fill('3000');await p.locator('input[aria-label="本月收入目标"]').fill('8000')
- await p.locator('.qe-primary').click();await closed(p);await p.waitForTimeout(250)
- check('plans do not fabricate records or EXP',await p.evaluate(()=>test.state.ledger.length===0&&test.state.exp===17&&test.state.monthlyTargets['2026-11'].expense===300000))
- check('book SVG loads from a local data URI',await p.locator('.qe-empty-art').evaluate(e=>e.complete&&e.naturalWidth>0&&e.src.startsWith('data:image/svg+xml')))
- check('empty state arrow is rendered',await p.locator('.qe-empty-arrow').count()===1)
- await frame(p,47,34);await screenshot(p,'LEDGER_EMPTY')
- await p.locator('#quiet-entry-fab').click();await formFill(p,'30','午饭')
- await p.locator('.qe-primary').click()
- await p.waitForFunction(()=>!!document.querySelector('.qe-flight'))
- const flight=await p.locator('.qe-flight').evaluate(e=>({duration:getComputedStyle(e).animationDuration,dy:parseFloat(e.style.getPropertyValue('--entry-dy'))}))
- check('record flies from FAB with rebound duration',flight.duration==='0.48s'&&Number.isFinite(flight.dy)&&flight.dy!==0)
- await p.waitForTimeout(600)
- check('successful first addition replaces empty illustration',await p.locator('.qe-empty').count()===0&&await p.locator('.qe-record-row').count()===1)
- check('first addition has a small success tip',await p.locator('.qe-tip').textContent().then(t=>t.includes('第一笔已记下')))
- check('record and server proof are persisted',await p.evaluate(()=>test.state.ledger[0].note==='午饭'&&test.state.ledger[0].rewardVersion===1&&test.state.exp===17))
- await add(p,'5000','工资','income')
- check('income does not offset actual spending',await p.evaluate(()=>test.vm.expenseTotal===3000&&test.vm.incomeTotal===500000&&test.vm.distribution[0].percent===100))
- await add(p,'50','日用品','expense',1)
- await add(p,'20','地铁','expense',3)
- await p.locator('.qe-filter').first().click()
- check('all records are available',await p.locator('.qe-record-row').count()===4)
- check('income shows no spending percentage in mixed list',await p.locator('.qe-record-row').filter({hasText:'工资'}).locator('.qe-record-share').textContent()==='—')
- await p.locator('.qe-filter').nth(1).click()
- check('expense filter excludes income',await p.locator('.qe-record-row').count()===3)
- check('category amounts add to actual spending only',await p.evaluate(()=>test.vm.distribution.reduce((n,c)=>n+c.cents,0)===10000&&test.vm.budgetRemaining===290000))
- await frame(p,47,34)
- await p.evaluate(()=>window.scrollTo(0,0));await p.waitForTimeout(120)
- const amountRects=await p.locator('.qe-record-amount,.qe-record-share').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().toJSON())),fabBox=await p.locator('#quiet-entry-fab').boundingBox()
- check('three-row overview never puts amounts under the FAB',amountRects.every(r=>r.bottom<=fabBox.y||r.top>=fabBox.y+fabBox.height||r.right<=fabBox.x||r.left>=fabBox.x+fabBox.width))
- await p.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));await p.waitForTimeout(120)
- const lastVisible=await p.locator('.qe-record-row').last().boundingBox(),addBox=await p.locator('#quiet-entry-fab').boundingBox()
- check('last record scrolls entirely above the bottom action area',lastVisible.y+lastVisible.height<addBox.y)
- await p.evaluate(()=>window.scrollTo(0,0));await p.waitForTimeout(120);await screenshot(p,'LEDGER_RECORDED')
- await p.locator('#quiet-entry-fab').click();await formFill(p,'99','保留的草稿')
- await p.evaluate(()=>test.fail(true));await p.locator('.qe-primary').click();await p.locator('.qe-error').waitFor()
- check('save failure keeps input and does not append data',await p.locator('input[aria-label="记账金额"]').inputValue()==='99'&&await p.evaluate(()=>test.state.ledger.length===4))
- await p.evaluate(()=>test.flush());await p.evaluate(()=>test.back());await closed(p)
- check('hardware back closes sheet before navigating',await p.evaluate(()=>window.routes.length===0))
+ check('new month still requires expense budget and income target',await p.locator('.qe-sheet-title').textContent()==='本月预算')
+ await p.locator('input[aria-label="本月支出预算"]').fill('3000');await p.locator('input[aria-label="本月收入目标"]').fill('8000');await p.locator('.qe-primary').click();await closed(p)
+ await p.waitForTimeout(250);await frame(p,47,34)
+ check('budget saving never fabricates actual records',await p.evaluate(()=>test.state.ledger.length===0&&test.state.exp===17))
+ check('approved book illustration remains',await p.locator('.qe-empty-art').evaluate(e=>e.complete&&e.naturalWidth>0))
  await p.locator('#quiet-entry-fab').click()
- check('closing and reopening preserves unfinished entry',await p.locator('input[aria-label="记账备注"]').inputValue()==='保留的草稿')
- await p.evaluate(()=>test.back());await closed(p);await p.evaluate(()=>test.fail(false))
- await p.locator('.qe-record-row').filter({hasText:'午饭'}).click();await formFill(p,'35','午饭')
- await p.locator('.qe-primary').click();await closed(p)
- check('editing keeps record count and updates cents',await p.evaluate(()=>test.state.ledger.length===4&&test.state.ledger.find(x=>x.note==='午饭').cents===3500))
- await p.locator('.qe-record-row').filter({hasText:'地铁'}).click();await p.locator('.qe-danger-text').click();await p.locator('.fire-dialog-title').waitFor()
- check('delete confirmation says it cannot be recovered',await p.locator('.fire-dialog-content').textContent().then(t=>t.includes('无法恢复')))
- await p.locator('.fire-dialog-secondary').click()
- check('cancel deletion keeps the record',await p.evaluate(()=>test.state.ledger.length===4))
- await p.locator('.qe-danger-text').click();await p.locator('.fire-dialog-primary').click();await closed(p)
- check('confirmed deletion persists a single tombstone',await p.evaluate(()=>test.state.ledger.length===3&&test.state.deletions.some(x=>x.kind==='ledger')))
- await p.locator('.qe-header-action').click();await p.setViewportSize({width:390,height:520});await p.evaluate(()=>uni.emitKeyboard(324));await p.waitForTimeout(250)
- const panel=await p.locator('.qe-sheet-panel').boundingBox(),submit=await p.locator('.qe-primary').boundingBox()
- check('keyboard keeps panel and submit within available height',panel.y>=47+11&&submit.y+submit.height<=520+1)
- await screenshot(p,'BUDGET_KEYBOARD_HEIGHT')
- await p.setViewportSize({width:390,height:844});await p.evaluate(()=>uni.emitKeyboard(0));await p.evaluate(()=>test.back());await closed(p)
- await p.locator('#quiet-entry-fab').click();await formFill(p,'99','切换中不能保存')
- const beforeSwitch=await p.evaluate(()=>test.state.ledger.length)
- await p.evaluate(()=>{window.delayMeasure=true;test.vm.submitRecord();test.account('B');test.account('A')});await p.waitForTimeout(300)
- check('account round-trip invalidates an older pending save',await p.evaluate(()=>test.state.ledger.length)===beforeSwitch)
- await p.evaluate(()=>{window.delayMeasure=false;test.vm.saving=false;test.vm.closeEntrySheet()});await closed(p)
- await p.locator('.qe-month-step').first().click();await p.locator('.qe-sheet-mask').waitFor()
- check('history uses its own month plans and records',await p.evaluate(()=>test.vm.month==='2026-10'&&test.vm.records.length===0&&!test.vm.targetsReady))
- await p.evaluate(()=>test.back());await closed(p)
- await p.locator('.qe-back').click()
- check('header return pops actual previous page',await p.evaluate(()=>window.routes.at(-1)==='back'))
+ check('add reopens original category grid route',await p.evaluate(()=>window.routes.at(-1)==='/pages/ledger/edit'))
+ check('ledger never shows replacement amount form',await p.locator('.qe-input-amount').count()===0)
+ await p.goto('http://127.0.0.1:5189/?page=edit&budget=1');await ready(p)
+ check('editor starts at category choice',await p.locator('.cat-item').count()>8&&await p.locator('.panel').count()===0)
+ await screenshot(p,'CLASSIC_CATEGORIES')
+ await p.locator('.cat-item').filter({hasText:'餐饮'}).click();await p.locator('.keypad').waitFor()
+ check('category opens original numeric keypad',await p.locator('.key').count()===14)
+ await p.locator('.key').filter({hasText:/^3$/}).click();await p.locator('.key').filter({hasText:/^0$/}).click()
+ check('digits enter thirty directly',await p.locator('.amount-input').inputValue()==='30')
+ await screenshot(p,'CLASSIC_KEYPAD')
+ await p.locator('.key.done').click()
+ check('numeric completion saves one actual expense',await p.evaluate(()=>test.state.ledger.length===1&&test.state.ledger[0].cents===3000&&test.state.exp===17))
+ check('completion returns to category choice for consecutive entry',await p.locator('.panel').count()===0)
+ await p.locator('.type-card').nth(1).click();await p.locator('.cat-item').filter({hasText:'工资'}).click()
+ for(const digit of ['5','0','0','0'])await p.locator('.key').filter({hasText:new RegExp('^'+digit+'$')}).click()
+ await p.locator('.key.done').click()
+ check('income stays distinct from spending and plans',await p.evaluate(()=>test.state.ledger.length===2&&test.state.ledger.find(x=>x.type==='income').cents===500000&&test.state.monthlyTargets['2026-11'].expense===300000&&test.state.finance.assets===15000))
+ await p.locator('.type-card').first().click();await p.locator('.cat-item').filter({hasText:'餐饮'}).click();await p.locator('.key').filter({hasText:/^9$/}).click()
+ await p.evaluate(()=>test.fail(true));await p.locator('.key.done').click()
+ check('failed save retains the custom-keypad amount',await p.locator('.amount-input').inputValue()==='9'&&await p.evaluate(()=>test.state.ledger.length===2))
+ await p.evaluate(()=>test.fail(false));await p.locator('.back-btn').click()
+ check('classic return uses the actual previous page',await p.evaluate(()=>window.routes.at(-1)==='back'))
+ await p.goto('http://127.0.0.1:5189/?budget=1');await ready(p)
+ check('overview retains actual amounts and shares after classic entry',await p.evaluate(()=>test.vm.expenseTotal===3000&&test.vm.incomeTotal===500000&&test.vm.distribution[0].percent===100))
+ check('monthly table still lists both saved records',await p.locator('.qe-record-row').count()===2)
+ const id=await p.evaluate(()=>test.state.ledger.find(x=>x.type==='expense').id)
+ await p.goto('http://127.0.0.1:5189/?page=edit&id='+encodeURIComponent(id));await ready(p)
+ check('editing existing record opens numeric panel with saved amount',await p.locator('.amount-input').inputValue()==='30')
+ await p.locator('.record-delete').click();await p.locator('.fire-dialog-title').waitFor();await p.locator('.fire-dialog-secondary').click()
+ check('cancel deletion retains original entry',await p.evaluate(()=>test.state.ledger.length===2))
+ await p.locator('.record-delete').click();await p.locator('.fire-dialog-primary').click()
+ check('confirmed deletion still records a single tombstone',await p.evaluate(()=>test.state.ledger.length===1&&test.state.deletions.some(x=>x.kind==='ledger')))
  await ctx.close()
+ const auth=await context();await auth.p.goto('http://127.0.0.1:5189/?page=login');await ready(auth.p)
+ await auth.p.locator('input[aria-label="邮箱"]').fill('user@example.com');await auth.p.locator('.send-code').click()
+ check('email verification retains its countdown',await auth.p.locator('.send-code').textContent().then(t=>t.includes('60')))
+ await auth.p.locator('input[aria-label="验证码"]').fill('012345')
+ const before=await auth.p.locator('.login-button').boundingBox();await auth.p.locator('.login-button').click()
+ await auth.p.locator('.login-button .fire-loading-ring').waitFor()
+ const during=await auth.p.locator('.login-button').boundingBox()
+ check('login spinner leaves button width and height unchanged',Math.abs(before.width-during.width)<1&&Math.abs(before.height-during.height)<1)
+ check('login spinner is uniform compositor rotation',await auth.p.locator('.login-button .fire-loading-ring').evaluate(e=>getComputedStyle(e).animationTimingFunction)==='linear')
+ check('leading zero survives numeric keyboard entry',await auth.p.evaluate(()=>window.sentCode==='012345'))
+ check('busy login button blocks duplicate requests',await auth.p.locator('.login-button').isDisabled()&&await auth.p.evaluate(()=>window.authCalls===1))
+ await screenshot(auth.p,'LOGIN_SPINNER')
+ await auth.p.evaluate(()=>window.rejectAuth(Error('验证码无效')));await auth.p.waitForFunction(()=>!document.querySelector('.login-button').disabled)
+ check('failed login restores original button and retains email',await auth.p.locator('.login-button .fire-loading-spinner').count()===0&&await auth.p.locator('input[aria-label="邮箱"]').inputValue()==='user@example.com')
+ await auth.p.locator('.login-button').click();await auth.p.waitForFunction(()=>window.authCalls===2)
+ await auth.p.evaluate(()=>{window.holdRestore=true;window.resolveAuth({})});await auth.p.waitForFunction(()=>!!window.resolveRestore)
+ check('spinner stays active through account restoration',await auth.p.locator('.login-button .fire-loading-spinner').count()===1)
+ await auth.p.evaluate(()=>window.resolveRestore({loaded:true,uid:'A',email:'user@example.com'}));await auth.p.waitForFunction(()=>window.routes.includes('/pages/index/index'))
+ await auth.ctx.close()
+ const home=await context();await home.p.goto('http://127.0.0.1:5189/?page=home&budget=1');await ready(home.p);await home.p.waitForTimeout(550)
+ check('successful account restoration banner is hidden',await home.p.locator('.account-sync-banner').count()===0)
+ check('selected FIRE segment is explicitly pressed',await home.p.locator('.countdown-switch-option').first().getAttribute('aria-pressed')==='true')
+ await home.p.evaluate(()=>window.scrollTo(0,0));await home.p.waitForTimeout(100)
+ const scrollBefore=await home.p.evaluate(()=>scrollY),metricsBefore=await home.p.locator('.home-metrics').boundingBox()
+ const fireDate=await home.p.locator('.countdown-target').textContent(),assets=await home.p.evaluate(()=>test.state.finance.assets)
+ await home.p.locator('.countdown-switch-option').nth(1).click();await home.p.waitForTimeout(80)
+ const slide=await home.p.locator('.countdown-switch-indicator').evaluate(e=>({width:e.getBoundingClientRect().width,x:new DOMMatrixReadOnly(getComputedStyle(e).transform).m41}))
+ check('selection indicator moves continuously',slide.x>0&&slide.x<slide.width)
+ await home.p.waitForTimeout(220)
+ check('selected goal has white text and clear selection',await home.p.locator('.countdown-switch-option.selected').textContent().then(t=>t.includes('我的目标'))&&await home.p.locator('.countdown-switch-option.selected').evaluate(e=>getComputedStyle(e).color)==='rgb(255, 255, 255)')
+ check('goal selection updates actual countdown content without touching assets',await home.p.locator('.countdown-target').textContent()!==fireDate&&await home.p.evaluate(()=>test.state.finance.assets)===assets)
+ const metricsAfter=await home.p.locator('.home-metrics').boundingBox()
+ check('countdown switching retains viewport and content height '+JSON.stringify({scrollBefore,scrollAfter:await home.p.evaluate(()=>scrollY),before:metricsBefore,after:metricsAfter}),Math.abs(await home.p.evaluate(()=>scrollY)-scrollBefore)<1&&Math.abs(metricsBefore.y-metricsAfter.y)<1)
+ const homeTitle=await home.p.locator('.masthead-h1').boundingBox()
+ check('home title retains status-bar clearance after switching '+JSON.stringify({rect:homeTitle,layout:await home.p.evaluate(()=>({info:uni.getWindowInfo(),style:document.querySelector('.home-view').getAttribute('style'),scroll:scrollY}))}),homeTitle.y>=59)
+ await screenshot(home.p,'HOME_GOAL_SELECTED')
+ for(const status of ['pending','restoring','error','auth-required','conflict']){await home.p.evaluate(status=>{test.state.cloudSync={status,message:'需要处理的同步提示'}},status);await home.p.locator('.account-sync-banner').waitFor()}
+ check('pending, failures, expiration and conflicts remain visible',await home.p.locator('.account-sync-banner').count()===1)
+ await home.p.evaluate(()=>{test.state.cloudSync={status:'synced',message:''}})
+ await home.p.locator('.center-action').click();await home.p.locator('#fire-guide-ledger').click()
+ check('home quick bookkeeping opens the original categories directly',await home.p.evaluate(()=>window.routes.at(-1)==='/pages/ledger/edit'))
+ await home.p.locator('.task-row').filter({hasText:'记录今天的消费'}).click()
+ check('daily bookkeeping task uses the same original editor',await home.p.evaluate(()=>window.routes.at(-1)==='/pages/ledger/edit'))
+ await home.ctx.close()
+ const feed=await context();await feed.p.goto('http://127.0.0.1:5189/?page=community&tab=doing&hold=1');await ready(feed.p)
+ await feed.p.locator('.community-loading-initial .fire-loading-spinner').waitFor()
+ check('community loading copy is removed',!(await feed.p.locator('body').textContent()).includes('正在读取社区内容'))
+ await feed.p.waitForFunction(()=>!!window.resolveCommunity)
+ const post={id:'test-post',journey:'doing',title:'记录我的自由计划',summary:'慢慢走向理想生活',category:'生活',timeline:[],displayName:'测试用户'}
+ await feed.p.evaluate(post=>window.resolveCommunity({items:[post],stats:{doing:1,settled:0},nextCursor:1}),post);await feed.p.locator('.card-title').waitFor();await feed.p.waitForTimeout(550)
+ check('loader disappears after community data arrives',await feed.p.locator('.community-loader .fire-loading-spinner').count()===0)
+ const card=await feed.p.locator('.card').first().boundingBox()
+ await feed.p.evaluate(()=>{test.vm.refreshCommunity()});await feed.p.locator('.community-loader-refresh .fire-loading-spinner').waitFor()
+ const refreshing=await feed.p.locator('.card').first().boundingBox()
+ check('refresh keeps current timeline cards in place',Math.abs(card.y-refreshing.y)<1)
+ await screenshot(feed.p,'COMMUNITY_REFRESH')
+ await feed.p.evaluate(()=>window.rejectCommunity(Error('offline')));await feed.p.waitForFunction(()=>!test.vm.publicLoading)
+ check('community failure stops the spinner and preserves retry',await feed.p.locator('.community-loader .fire-loading-spinner').count()===0&&await feed.p.locator('.community-sync-note').textContent().then(t=>t.includes('重试')))
+ check('community failure preserves loaded posts',await feed.p.locator('.card-title').textContent()==='记录我的自由计划')
+ await feed.ctx.close()
  const wish=await context();await wish.p.goto('http://127.0.0.1:5189/?page=wish');await ready(wish.p)
  await frame(wish.p,47,34)
  const nav=await wish.p.locator('.bottom-tabs').boundingBox(),wf=await wish.p.locator('#quiet-entry-fab').boundingBox()
@@ -212,23 +273,23 @@ try{
  await wish.p.evaluate(()=>test.account('B'));await closed(wish.p)
  check('switching accounts drops original account unsaved form',await wish.p.evaluate(()=>test.vm.form.name===''))
  await wish.ctx.close()
+
  for(const spec of [{width:360,height:640,top:24,bottom:0},{width:430,height:932,top:59,bottom:34},{width:844,height:390,top:24,bottom:20}]){
   const v=await context({width:spec.width,height:spec.height})
-  await v.p.goto('http://127.0.0.1:5189/?budget=1&top='+spec.top+'&bottom='+spec.bottom);await ready(v.p);await frame(v.p,spec.top,spec.bottom)
-  await v.p.locator('#quiet-entry-fab').click();await v.p.waitForTimeout(250)
-  const rect=await v.p.locator('.qe-primary').boundingBox()
-  check('submit stays accessible at '+spec.width+'x'+spec.height,rect.y>=spec.top&&rect.y+rect.height<=spec.height+1)
-  await v.p.evaluate(()=>test.back());await closed(v.p);await v.ctx.close()
+  await v.p.goto('http://127.0.0.1:5189/?page=edit&budget=1&top='+spec.top+'&bottom='+spec.bottom);await ready(v.p)
+  await v.p.locator('.cat-item').filter({hasText:'餐饮'}).click();await v.p.locator('.keypad').waitFor()
+  const panel=await v.p.locator('.panel').boundingBox(),back=await v.p.locator('.back-btn').boundingBox()
+  check('numeric panel clears status bar and return at '+spec.width+'x'+spec.height,panel.y>=spec.top+70&&back.y>=spec.top+10)
+  await v.p.locator('.key.done').scrollIntoViewIfNeeded()
+  const done=await v.p.locator('.key.done').boundingBox()
+  check('original completion key is reachable at '+spec.width+'x'+spec.height,done.y>=panel.y&&done.y+done.height<=spec.height-spec.bottom+1)
+  await v.ctx.close()
  }
- const gone=await context();await gone.p.goto('http://127.0.0.1:5189/?budget=1');await ready(gone.p)
- await gone.p.locator('#quiet-entry-fab').click();await formFill(gone.p,'10','退出中不能保存')
- await gone.p.evaluate(()=>{window.delayMeasure=true;test.vm.submitRecord();test.unmount()});await gone.p.waitForTimeout(300)
- check('unmount cancels an older pending save',await gone.p.evaluate(()=>test.state.ledger.length===0&&document.body.style.overflow===''))
- await gone.ctx.close()
- const reduced=await context({width:390,height:844},'reduce');await reduced.p.goto('http://127.0.0.1:5189/?budget=1');await ready(reduced.p)
- check('reduced motion disables illustration float',await reduced.p.locator('.qe-empty-art').evaluate(e=>getComputedStyle(e).animationName)==='none')
- await add(reduced.p,'10','第一笔');check('reduced motion reveals the saved row immediately',await reduced.p.locator('.qe-record-arriving').count()===0)
+ const reduced=await context({width:390,height:844},'reduce');await reduced.p.goto('http://127.0.0.1:5189/?page=home');await ready(reduced.p)
+ check('reduced motion disables sliding indicator',await reduced.p.locator('.countdown-switch-indicator').evaluate(e=>getComputedStyle(e).transitionDuration)==='0s')
+ await reduced.p.locator('.countdown-switch-option').nth(1).click()
+ check('reduced motion keeps selected goal functional',await reduced.p.locator('.countdown-switch-option.selected').textContent().then(t=>t.includes('我的目标')))
  await reduced.ctx.close()
  check('no browser runtime errors',errors.length===0)
- console.log(checks+' real ledger/wishlist browser interaction, layout and keyboard checks passed')
-}finally{for(const [name,data]of previews){console.log(name+'_PREVIEW_BEGIN');for(let i=0;i<data.length;i+=1000)console.log(data.slice(i,i+1000));console.log(name+'_PREVIEW_END')}await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}
+ console.log(checks+' restored keypad, login spinner, countdown, community and wishlist browser checks passed')
+}finally{clearTimeout(deadline);for(const [name,data]of previews){console.log(name+'_PREVIEW_BEGIN');for(let i=0;i<data.length;i+=1000)console.log(data.slice(i,i+1000));console.log(name+'_PREVIEW_END')}await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}

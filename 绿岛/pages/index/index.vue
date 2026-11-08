@@ -11,7 +11,7 @@
         <text class="masthead-date">fireday.cn</text>
       </view>
 
-      <view v-if="state.goalPlan && state.goalPlan.name" class="countdown-tabs"><button :class="{active:!activeGoal}" @tap.stop="selectCountdown('fire')">自由日</button><button :class="{active:activeGoal}" @tap.stop="selectCountdown('goal')">我的目标</button></view>
+      <CountdownSwitch v-if="state.goalPlan && state.goalPlan.name" :active-goal="activeGoal" @change="selectCountdown" />
       <view v-if="!displayConfigured" class="home-unconfigured">
         <text class="unconfigured-sub">填写资料，看看离自由还有多远。</text>
         <view id="fire-guide-finance" class="btn-primary" @tap="goCalculator">
@@ -47,7 +47,7 @@
         </view>
 
         <text class="countdown-target">{{ targetText }}</text>
-        <text v-if="!activeGoal" class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text>
+        <view class="home-plan-context" :aria-hidden="activeGoal"><text v-if="!activeGoal" class="inflation-note">通胀参考：中国近五年 CPI 年化约 0.5%–1.0%</text></view>
 
         <view class="progress"><view class="progress-fill" :style="{ width: displayResult.progress + '%' }"></view></view>
 
@@ -60,7 +60,7 @@
 
 
     <view class="home-content">
-      <view v-if="state.cloudSync && ['error','pending','restoring','synced','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" :class="{ synced: state.cloudSync.status === 'synced' }" @tap="retryAccountSync">
+      <view v-if="state.cloudSync && ['error','pending','restoring','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" @tap="retryAccountSync">
         <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'conflict' ? '选择版本 ›' : state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
       </view>
 
@@ -123,6 +123,7 @@
 </template>
 
 <script>
+import CountdownSwitch from '@/components/CountdownSwitch.vue'
 import SpotlightGuide from '@/components/SpotlightGuide.vue'
 import { spotlightHomeMixin } from '@/utils/spotlight-home.js'
 import { pageEntryMixin } from '@/utils/page-entry.js'
@@ -155,7 +156,7 @@ function svgUri(svg) {
 export default {
   mixins: [feedbackPageMixin, pageEntryMixin, spotlightHomeMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  components: { AppFeedback, BottomTabs, AnimatedNumber, SpotlightGuide },
+  components: { AppFeedback, BottomTabs, AnimatedNumber, SpotlightGuide, CountdownSwitch },
   data() {
     return {
       state,
@@ -394,14 +395,14 @@ export default {
       if(!result.synced&&!result.skipped)showNotice({title:state.cloudSync.message,icon:'none'})
     },
     goCalculator() { uni.navigateTo({ url: '/pages/calculator/index' }) },
-    selectCountdown(mode){state.homeCountdown=mode;persistNow();this.startCountdown()},
+    selectCountdown(mode){if(!['fire','goal'].includes(mode)||(mode==='goal'&&!state.goalPlan?.name)||state.homeCountdown===mode)return;const previous=state.homeCountdown;state.homeCountdown=mode;if(persistNow()===false){state.homeCountdown=previous;showNotice({title:'切换未保存，请稍后重试',icon:'none'});return}this.startCountdown()},
     goResult() { uni.navigateTo({ url: this.activeGoal?'/pages/calculator/index?mode=goal&from=home':'/pages/calculator/index' }) },
     goGoal() { uni.navigateTo({ url: '/pages/calculator/index?mode=goal&from=home' }) },
     goLedger() { uni.navigateTo({ url: '/pages/ledger/index' }) },
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买';if(wishlistDue(item,this.actionNow))return '待确认是否购买';return '冷静期剩余 '+Math.ceil((coolingEnd(item)-this.actionNow)/86400000)+' 天'},
     retryActions(){if(state.actionSync?.status!=='syncing')refreshActions().catch(()=>{})},
-    goTask(t){if(t.url)uni.navigateTo({url:t.url})},
+    goTask(t){if(t.id==='ledger'){const budget=state.monthlyTargets?.[LocalDay().slice(0,7)]||{};const ready=Number.isSafeInteger(budget.expense)&&budget.expense>0&&Number.isSafeInteger(budget.income)&&budget.income>0;uni.navigateTo({url:ready?'/pages/ledger/edit':'/pages/ledger/index?add=1'});return}if(t.url)uni.navigateTo({url:t.url})},
 
   },
 }
@@ -516,6 +517,8 @@ export default {
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-index-index .home-masthead{padding-top:var(--fire-page-top)}
  .fire-page-index-index .home-unconfigured{padding-top:30px;padding-bottom:24px} .fire-page-index-index .home-unconfigured .btn-primary{margin-top:18px} .fire-page-index-index .account-sync-banner{padding:10px 12px;font-size:12px;line-height:1.6}
-.countdown-tabs{position:relative;z-index:4;display:inline-flex;gap:6px;padding:4px;border-radius:16px;background:rgba(255,255,255,.18);margin-top:14px}.countdown-tabs button{min-height:36px;font-size:13px;padding:8px 16px;background:transparent;color:#dce7db;border-radius:12px}.countdown-tabs .active{background:#f3f6ec;color:#173d35;font-weight:600}
+
 .action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:8px 0;color:#6b7e70;background:#edf3e8;border-radius:10px;font-size:12px;line-height:1.6}.action-sync.failed{background:#fbf2e9;color:#93643b}.action-sync text:last-child{flex-shrink:0}
+.home-view{overflow-anchor:none}.home-plan-context{height:15px;margin-top:-14px;margin-bottom:16px}.home-plan-context .inflation-note{margin:0;line-height:15px}
+
 </style>
