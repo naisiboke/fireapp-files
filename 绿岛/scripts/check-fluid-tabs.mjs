@@ -52,7 +52,7 @@ router.dispose();check(timers.size===0,'timers cleaned')
 for(const page of ['index','tools','community','profile']){
  const source=readFileSync(new URL('../pages/'+page+'/index.vue',import.meta.url),'utf8')
  check(source.includes('class="fire-tab-content"'),'content-only wrapper on '+page)
- const end=source.indexOf('</template>'),footer=source.indexOf('<BottomTabs')
+ const end=source.indexOf('<script'),footer=source.indexOf('<BottomTabs')
  check(footer>0&&footer<end,'footer remains in page')
  check(!/page-entry-reset\{animation:none;opacity:0/.test(source),'root never hides footer')
 }

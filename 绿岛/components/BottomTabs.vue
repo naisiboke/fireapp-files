@@ -21,7 +21,7 @@
 
 <script>
 import { tabMotion, navigateTab, resizeTabMotion } from '../utils/tab-motion.js'
-import { TAB_KEYS, FLOW_DURATION, tabRect, flowRect } from '../utils/tab-motion-core.js'
+import { TAB_KEYS, TAB_PATHS, FLOW_DURATION, tabRect, flowRect } from '../utils/tab-motion-core.js'
 import { state } from '@/store/index.js'
 import { LocalDay } from '@/utils/engine.js'
 
@@ -42,6 +42,7 @@ export default {
     return {
       motionClock: 0,
       viewportWidth: 390,
+      isMainRoute: true,
       expanded: false,
       tabs: [
         { path: '/pages/index/index', key: 'home', label: '首页' },
@@ -52,13 +53,13 @@ export default {
     }
   },
   computed: {
-    selectedKey(){return tabMotion.selected||this.current},
-    flowMoving(){return !!tabMotion.motion},
+    selectedKey(){return this.isMainRoute?(tabMotion.selected||this.current):this.current},
+    flowMoving(){return this.isMainRoute&&!!tabMotion.motion},
     flowKey(){return String(tabMotion.motion?.id||'rest')+':'+this.motionClock},
     pulseStyle(){return {'animation-delay':this.flowMoving?'-'+Math.min(FLOW_DURATION,Math.max(0,Date.now()-tabMotion.motion.started))+'ms':'0ms'}},
     flowStyle(){
       this.motionClock
-      const motion=tabMotion.motion
+      const motion=this.isMainRoute?tabMotion.motion:null
       const fallback=tabRect(Math.max(0,TAB_KEYS.indexOf(this.selectedKey)),this.viewportWidth)
       const result={}
       const frames=[0,.12,.24,.38,.52,.68,.82,.92,1]
@@ -101,6 +102,7 @@ export default {
       let width=390
       try{width=uni.getSystemInfoSync().windowWidth||390}catch{}
       this.viewportWidth=width
+      try{const pages=getCurrentPages();this.isMainRoute=TAB_PATHS.includes('/'+String(pages[pages.length-1]?.route||'').replace(/^\//,''))}catch{this.isMainRoute=true}
       resizeTabMotion(width,this.current)
     },
     iconUri(key, active) {

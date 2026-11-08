@@ -19,15 +19,15 @@ fs.writeFileSync(path.join(temp,'style.css'),"\nhtml,body{margin:0;background:#f
 const server=await createServer({root:temp,configFile:false,plugins:[
 {name:'uni-image',enforce:'pre',transform(s,id){if(id.endsWith('.vue'))return s.replace(/<image\b/g,'<img')}},
 vue({template:{compilerOptions:{isCustomElement:t=>['view','text','scroll-view'].includes(t)}}})
-],resolve:{alias:[{find:'@/store/index.js',replacement:path.join(temp,'store.js')},{find:'@',replacement:root}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,temp,tools]}}})
+],resolve:{alias:[{find:/^vue$/,replacement:path.join(tools,'node_modules/vue/dist/vue.esm-bundler.js')},{find:'@/store/index.js',replacement:path.join(temp,'store.js')},{find:'@',replacement:root}]},server:{host:'127.0.0.1',port:0,fs:{allow:[root,temp,tools]}}})
 await server.listen()
 const url='http://127.0.0.1:'+server.httpServer.address().port
 const browser=await chromium.launch({headless:true})
-let checks=0,preview=null
+let checks=0,preview=null,page=null
 const check=(ok,label)=>{assert.ok(ok,label);checks++}
 const errors=[]
 try{
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1})
+ page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1})
  page.on('pageerror',e=>errors.push(e.message))
  await page.goto(url);await page.waitForFunction(()=>window.test?.ready);await page.waitForTimeout(500)
  const nav=()=>page.locator('.bottom-tabs:visible')
@@ -92,6 +92,7 @@ try{
  check(errors.length===0,errors.join('\n'))
  console.log('Fluid tabs real Vue mobile browser: '+checks+' checks passed')
 }finally{
+ if(!preview&&page){preview=await page.screenshot({type:'jpeg',quality:72});console.log('Failure state:',JSON.stringify(await page.evaluate(()=>({labels:[...document.querySelectorAll('.tab-label')].map(x=>x.textContent),body:document.body.innerText.slice(0,500),actual:window.actual,selected:window.test?.selected}))))}
  if(preview){console.log('FLUID_TABS_PREVIEW_BEGIN');const data=preview.toString('base64');for(let i=0;i<data.length;i+=1000)console.log(data.slice(i,i+1000));console.log('FLUID_TABS_PREVIEW_END')}
  console.log('Browser errors:',JSON.stringify(errors))
  await browser.close();await server.close();clearTimeout(timer);fs.rmSync(temp,{recursive:true,force:true})
