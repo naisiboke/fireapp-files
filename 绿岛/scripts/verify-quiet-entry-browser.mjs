@@ -213,7 +213,7 @@ try{
  check('spinner stays active through account restoration',await auth.p.locator('.login-button .fire-loading-spinner').count()===1)
  await auth.p.evaluate(()=>window.resolveRestore({loaded:true,uid:'A',email:'user@example.com'}));await auth.p.waitForFunction(()=>window.routes.includes('/pages/index/index'))
  await auth.ctx.close()
- const home=await context();await home.p.goto('http://127.0.0.1:5189/?page=home&budget=1');await ready(home.p)
+ const home=await context();await home.p.goto('http://127.0.0.1:5189/?page=home&budget=1');await ready(home.p);await home.p.waitForTimeout(550)
  check('successful account restoration banner is hidden',await home.p.locator('.account-sync-banner').count()===0)
  check('selected FIRE segment is explicitly pressed',await home.p.locator('.countdown-switch-option').first().getAttribute('aria-pressed')==='true')
  await home.p.evaluate(()=>window.scrollTo(0,0));await home.p.waitForTimeout(100)

@@ -19,7 +19,7 @@
         </view>
       </view>
 
-      <view v-else :key="activeGoal ? 'goal' : 'fire'" class="freedom-summary" @tap="goResult">
+      <view v-else class="freedom-summary" @tap="goResult">
         <view class="freedom-head">
           <text class="freedom-label">{{activeGoal ? state.goalPlan.name+'目标倒计时' : '预计自由日'}}</text>
           <text id="fire-guide-finance" class="plan-link">查看计划 ›</text>
@@ -520,7 +520,5 @@ export default {
 
 .action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:8px 0;color:#6b7e70;background:#edf3e8;border-radius:10px;font-size:12px;line-height:1.6}.action-sync.failed{background:#fbf2e9;color:#93643b}.action-sync text:last-child{flex-shrink:0}
 .home-view{overflow-anchor:none}.home-plan-context{height:15px;margin-top:-14px;margin-bottom:16px}.home-plan-context .inflation-note{margin:0;line-height:15px}
-.freedom-summary{animation:homeCountdownSwap .2s ease-out}
-@keyframes homeCountdownSwap{from{opacity:.45;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
-@media(prefers-reduced-motion:reduce){.freedom-summary{animation:none}}
+
 </style>

@@ -2,8 +2,8 @@
 <template>
  <view class="countdown-switch" role="group" aria-label="倒计时类型">
   <view class="countdown-switch-indicator" :class="{'on-goal':activeGoal}" aria-hidden="true"></view>
-  <button class="countdown-switch-option" :class="{selected:!activeGoal}" :aria-pressed="!activeGoal" @tap.stop="$emit('change','fire')" @keydown.right.prevent="$emit('change','goal')"><view class="countdown-switch-mark" aria-hidden="true"></view><text>自由日</text></button>
-  <button class="countdown-switch-option" :class="{selected:activeGoal}" :aria-pressed="activeGoal" @tap.stop="$emit('change','goal')" @keydown.left.prevent="$emit('change','fire')"><view class="countdown-switch-mark" aria-hidden="true"></view><text>我的目标</text></button>
+  <button class="countdown-switch-option" :class="{selected:!activeGoal}" :aria-pressed="!activeGoal" @mousedown.prevent @tap.stop="$emit('change','fire')" @keydown.right.prevent="$emit('change','goal')"><view class="countdown-switch-mark" aria-hidden="true"></view><text>自由日</text></button>
+  <button class="countdown-switch-option" :class="{selected:activeGoal}" :aria-pressed="activeGoal" @mousedown.prevent @tap.stop="$emit('change','goal')" @keydown.left.prevent="$emit('change','fire')"><view class="countdown-switch-mark" aria-hidden="true"></view><text>我的目标</text></button>
  </view>
 </template>
 <script>
