@@ -3,15 +3,22 @@ import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {validateNickname} from '../utils/nickname.js'
 const require=createRequire(import.meta.url)
-const acorn=createRequire((process.env.REGEX_TOOLS||'/tmp/fire-regex-tools')+'/compat-check.cjs')('acorn')
+let acorn=null
+try{acorn=createRequire((process.env.REGEX_TOOLS||'/tmp/fire-regex-tools')+'/compat-check.cjs')('acorn')}
+catch(error){
+ if(process.env.REQUIRE_LEGACY_REGEX_CHECK==='1')throw error
+ console.log('Optional ES2017 parser not installed; mandatory source and behavior checks still run.')
+}
 const client=readFileSync(new URL('../utils/nickname.js',import.meta.url),'utf8')
 const server=readFileSync(new URL('../../cloudfunctions/accountData/service.js',import.meta.url),'utf8')
 let checks=0
 const check=(ok,label)=>{assert.ok(ok,label);checks++}
+const serverValidation=server.slice(server.indexOf('function nicknameCharactersAllowed'),server.indexOf('function strictPublicProfile'))
+if(acorn){
 assert.throws(()=>acorn.parse(String.raw`const value=/^[\p{Script=Han}A-Za-z0-9]+$/u`,{ecmaVersion:2017}),/regular expression|escape|Invalid/i);checks++
 acorn.parse(client,{ecmaVersion:2017,sourceType:'module'});checks++
-const serverValidation=server.slice(server.indexOf('function nicknameCharactersAllowed'),server.indexOf('function strictPublicProfile'))
 acorn.parse(serverValidation,{ecmaVersion:2017,sourceType:'script'});checks++
+}
 for(const [name,source]of [['client',client],['server',server]]){
  check(!source.includes('\\p{')&&!source.includes('\\P{'),'no Unicode property escapes in '+name)
 }

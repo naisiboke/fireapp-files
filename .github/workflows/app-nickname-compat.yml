@@ -16,9 +16,27 @@ jobs:
       - name: Install legacy-syntax checker
         run: npm install --prefix /tmp/fire-regex-tools --ignore-scripts --no-audit --no-fund acorn@6.4.2
       - name: Existing and new business regressions
+        env:
+          REQUIRE_LEGACY_REGEX_CHECK: '1'
         working-directory: 绿岛
         run: |
           for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Verify cumulative hotfix archive
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, zipfile
+          with zipfile.ZipFile('updates/fire-nickname-compat-20261108.zip') as bundle:
+              assert bundle.testzip() is None
+              assert len(bundle.namelist()) == 36
+              for name in bundle.namelist():
+                  assert not name.startswith('/') and '..' not in pathlib.PurePosixPath(name).parts
+                  content = bundle.read(name)
+                  assert content.decode('utf-8').strip(), name
+                  if os.environ.get('GITHUB_REF_NAME') == 'app-nickname-regex-compat':
+                      target = pathlib.Path('绿岛/docs/nickname-compat-fix.md' if name == '使用说明.txt' else name)
+                      assert content == target.read_bytes(), name
+          print('Nickname compatibility cumulative ZIP: CRC, paths and all 36 source files verified')
+          PY
       - name: Install pinned app dependencies
         working-directory: 绿岛
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
