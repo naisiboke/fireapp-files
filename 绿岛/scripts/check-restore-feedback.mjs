@@ -82,4 +82,5 @@ Home.methods.selectCountdown.call(home,'goal');check('goal toggle commits the se
 Home.methods.selectCountdown.call(home,'goal');check('reselecting the active segment does not restart content',starts===1)
 Home.methods.selectCountdown.call(home,'fire');check('FIRE toggle preserves goal and financial values',homeState.homeCountdown==='fire'&&JSON.stringify(homeState.goalPlan)===JSON.stringify(original.goalPlan)&&homeState.finance.assets===15000&&homeState.exp===17)
 saveWorks=false;Home.methods.selectCountdown.call(home,'goal');check('failed toggle save restores the previous mode',homeState.homeCountdown==='fire'&&notices.at(-1).includes('切换未保存'));saveWorks=true
+login=loginFixture();login.api.code.value=123456;const numericCode=login.api.login();check('numeric code values never crash the login handler',login.api.loading.value);login.auth.reject(Error('test'));console.error=()=>{};try{await numericCode}finally{console.error=oldError}
 console.log(checks.length+' restored quick entry, login lifecycle, community race and countdown checks passed')

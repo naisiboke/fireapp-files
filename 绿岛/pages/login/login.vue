@@ -8,7 +8,7 @@
     <view class="email-heading">邮箱验证码登录</view>
     <view class="form" aria-live="polite">
       <view class="field"><input v-model="email" :disabled="loading || sending" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/></view>
-      <view class="code-row"><view class="field code-field"><input v-model="code" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" :disabled="sending || countdown > 0" @tap="sendCode">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
+      <view class="code-row"><view class="field code-field"><input :value="code" @input="code=String($event.detail?.value ?? $event.target?.value ?? '').slice(0,6)" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" :disabled="sending || countdown > 0" @tap="sendCode">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
       <view class="form-meta"><text class="forgot" @tap="toast('验证码登录不需要密码')">登录帮助</text></view>
       <button class="login-button fire-button-primary fire-button-lg" :disabled="loading" :aria-busy="loading && loginAction==='login'" @tap="login"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='login'" :size="18" light label="正在登录"/><text>{{loading && loginAction==='login'?'登录中':'登录'}}</text></view></button>
     </view>
@@ -75,11 +75,11 @@ async function login(){
  if(loading.value)return
  const value=account()
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))return toast('请输入正确的邮箱地址')
- if(!code.value.trim())return toast('请输入验证码')
+ if(!String(code.value??'').trim())return toast('请输入验证码')
  if(!verificationInfo||sentEmail!==value)return toast('请先获取当前邮箱的验证码')
  loginAction.value='login';loading.value=true
  try{
-   const loginState=await signInWithCode('email',value,code.value.trim(),verificationInfo)
+   const loginState=await signInWithCode('email',value,String(code.value??'').trim(),verificationInfo)
    endAccountSession();uni.setStorageSync('fire_login_status',false)
    await saveAuthToken(loginState);uni.setStorageSync('fire_login_status',true)
    canResume.value=true

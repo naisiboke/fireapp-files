@@ -41,7 +41,7 @@ export const CS={
 fs.writeFileSync(path.join(temp,'auth.js'),`
 export const sendVerificationCode=async()=>({id:'test-verification'})
 export const saveAuthToken=async()=>{}
-export function signInWithCode(){window.authCalls=(window.authCalls||0)+1;return new Promise((resolve,reject)=>{window.resolveAuth=resolve;window.rejectAuth=reject})}
+export function signInWithCode(kind,email,code){window.sentCode=code;window.authCalls=(window.authCalls||0)+1;return new Promise((resolve,reject)=>{window.resolveAuth=resolve;window.rejectAuth=reject})}
 `)
 
 fs.writeFileSync(path.join(temp,'uni-hooks.js'),"export const onShow=()=>{};export const onHide=()=>{};export const onUnload=()=>{};export const onBackPress=()=>{};export const onResize=()=>{}")
@@ -196,12 +196,13 @@ try{
  const auth=await context();await auth.p.goto('http://127.0.0.1:5189/?page=login');await ready(auth.p)
  await auth.p.locator('input[aria-label="邮箱"]').fill('user@example.com');await auth.p.locator('.send-code').click()
  check('email verification retains its countdown',await auth.p.locator('.send-code').textContent().then(t=>t.includes('60')))
- await auth.p.locator('input[aria-label="验证码"]').fill('123456')
+ await auth.p.locator('input[aria-label="验证码"]').fill('012345')
  const before=await auth.p.locator('.login-button').boundingBox();await auth.p.locator('.login-button').click()
  await auth.p.locator('.login-button .fire-loading-ring').waitFor()
  const during=await auth.p.locator('.login-button').boundingBox()
  check('login spinner leaves button width and height unchanged',Math.abs(before.width-during.width)<1&&Math.abs(before.height-during.height)<1)
  check('login spinner is uniform compositor rotation',await auth.p.locator('.login-button .fire-loading-ring').evaluate(e=>getComputedStyle(e).animationTimingFunction)==='linear')
+ check('leading zero survives numeric keyboard entry',await auth.p.evaluate(()=>window.sentCode==='012345'))
  check('busy login button blocks duplicate requests',await auth.p.locator('.login-button').isDisabled()&&await auth.p.evaluate(()=>window.authCalls===1))
  await screenshot(auth.p,'LOGIN_SPINNER')
  await auth.p.evaluate(()=>window.rejectAuth(Error('验证码无效')));await auth.p.waitForFunction(()=>!document.querySelector('.login-button').disabled)
