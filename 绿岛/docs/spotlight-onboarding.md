@@ -24,4 +24,4 @@
 - `node scripts/check-*.mjs` 中的现有回归脚本逐个运行：资产任务、记账、经验、登录恢复等。
 - `node scripts/verify-spotlight-browser.mjs`：真实 Vue 引导组件和首页引导逻辑，在 Chromium 的手机视口中验证连续转场、遮罩、跳过、重看、账号切换、重要弹窗暂停及减少动态效果。
 - 浏览器测试使用隔离的本地账号与财务展示数据、模拟 uni 接口，不访问生产云端。它不能代替最终签名 APK 的真机验收。
-- 工作流还验证 H5 构建与未签名 App JavaScript 编译；不会生成可安装 APK。
+- 工作流还验证 H5 构建。App 端使用 HBuilderX 配套的原生运行时重新打包，本次不生成可安装 APK；请在最终签名 APK 中验收。
