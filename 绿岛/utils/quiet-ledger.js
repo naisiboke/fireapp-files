@@ -11,7 +11,7 @@ export function defaultLedgerDraft(month,day=LocalDay()){
  return{type:'expense',category:'food',amount:'',date,note:'',necessity:null}
 }
 export function validLedgerDate(date,month,day=LocalDay()){
- if(!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(date))||date>day||date.slice(0,7)!==month)return false
+ if(!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(date))||date>day||month<'1900-01'||date.slice(0,7)!==month)return false
  const [year,m,d]=date.split('-').map(Number)
  return d<=new Date(year,m,0).getDate()
 }

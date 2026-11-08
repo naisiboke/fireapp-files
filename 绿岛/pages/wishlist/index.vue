@@ -6,7 +6,7 @@
   <view class="qe-wishlist-summary"><view><text>挑战成功，留下</text><text class="qe-wishlist-saved">¥{{money(saved)}}</text></view><text>{{activeCount}} 项进行中</text></view>
   <view class="qe-wishlist-tabs"><button v-for="t in tabs" :key="t.id" :class="{active:filter===t.id}" :aria-pressed="filter===t.id" @tap="filter=t.id">{{t.name}}</button></view>
   <view class="qe-wishlist-main">
-   <QuietEmptyState v-if="showEmpty || entryEmptyLeaving" ref="emptyGuide" kind="wishlist" title="给想买的东西一点时间" description="记下来，过几天再决定。" :leaving="entryEmptyLeaving" :pointing="showFirstGuide && !showAdd" @ready="refreshEntryArrow" />
+   <QuietEmptyState v-if="showEmpty || entryEmptyLeaving" ref="emptyGuide" kind="wishlist" title="给想买的东西一点时间" description="记下来，过几天再决定。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !showAdd" @ready="refreshEntryArrow" />
    <view v-else-if="!filtered.length" class="qe-empty-filter">这里还没有记录</view>
    <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
    <view v-for="item in filtered" :id="rowId(item.id)" :key="item.id" class="qe-wish-card" :class="{'qe-record-arriving':entryArrivingId===String(item.id)}" @tap="open(item)">
@@ -80,4 +80,5 @@ export default{
 </script>
 <style lang="scss">
 @import '@/styles/quiet-entry.scss';
+.wishlist-page{padding-top:var(--fire-page-top)}
 </style>

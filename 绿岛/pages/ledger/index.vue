@@ -19,7 +19,7 @@
    <view class="qe-distribution-legend"><view v-for="c in distribution" :key="c.key"><view class="qe-legend-label"><view class="qe-legend-dot" :style="{background:c.color}"></view><text>{{c.label}} {{shareOf(c.cents,expenseTotal)}}</text></view><text class="qe-legend-amount">¥{{money(c.cents/100)}}</text></view></view>
   </view>
   <view class="qe-ledger-main">
-   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="showFirstGuide && !budgetExpanded && !showAdd" @ready="refreshEntryArrow" />
+   <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded && !showAdd" @ready="refreshEntryArrow" />
    <view v-if="records.length" id="ledger-records" class="qe-list-section">
     <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
     <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id">{{f.name}}</button></view></view>
@@ -88,7 +88,7 @@ export default{
   lastDay(){if(this.month===LocalDay().slice(0,7))return LocalDay();const[y,m]=this.month.split('-').map(Number);return this.month+'-'+new Date(y,m,0).getDate()},
  },
  watch:{budgetExpanded(){this.entryFocus=false;this.errorText='';this.$nextTick(()=>this.refreshEntryArrow())},showAdd(){this.$nextTick(()=>this.refreshEntryArrow())}},
- onLoad(options){this.maxMonth=LocalDay().slice(0,7);this.month=/^\d{4}-(0[1-9]|1[0-2])$/.test(options?.month||'')&&options.month<=this.maxMonth?options.month:this.maxMonth;this.loadTargetInputs();this.budgetExpanded=!this.targetsReady;this.addAfterPlan=options?.add==='1';if(this.addAfterPlan&&this.targetsReady)this.showAdd=true},
+ onLoad(options){this.maxMonth=LocalDay().slice(0,7);this.month=/^\d{4}-(0[1-9]|1[0-2])$/.test(options?.month||'')&&options.month>='1900-01'&&options.month<=this.maxMonth?options.month:this.maxMonth;this.loadTargetInputs();this.budgetExpanded=!this.targetsReady;this.addAfterPlan=options?.add==='1';if(this.addAfterPlan&&this.targetsReady)this.showAdd=true},
  onShow(){if(!this.budgetExpanded)this.loadTargetInputs()},
  onBackPress(event){return this.handleEntryBack(event)},
  methods:{
@@ -141,4 +141,5 @@ export default{
 </script>
 <style lang="scss">
 @import '@/styles/quiet-entry.scss';
+.fire-page-ledger-index{padding-top:var(--fire-page-top)}
 </style>

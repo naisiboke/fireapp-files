@@ -27,7 +27,7 @@ export const quietEntryPageMixin={
  onHide(){const r=session(this);r.visible=false;this.entryVisible=false;this.entryFocus=false;stop(this);this.closeEntrySheet()},
  onUnload(){session(this).visible=false;stop(this);sessions.delete(this)},
  beforeUnmount(){session(this).visible=false;stop(this);sessions.delete(this)},
- onResize(){stop(this);this.refreshEntryLayout();this.$nextTick(()=>this.refreshEntryArrow())},
+ onResize(){if(this.entryFly){this.entryFly=null;this.entryArrivingId=''}this.refreshEntryLayout();this.$nextTick(()=>this.refreshEntryArrow())},
  onPageScroll(){this.refreshEntryArrow()},
  methods:{
   refreshEntryLayout(){
@@ -44,7 +44,11 @@ export const quietEntryPageMixin={
    this.entryArrivingId=String(id);this.entryEmptyLeaving=options.leaving===undefined?first:options.leaving
    if(this.entryEmptyLeaving)later(this,()=>{this.entryEmptyLeaving=false},230)
    if(first){this.entryTip=options.tip||'第一条已添加';later(this,()=>{this.entryTip=''},2400)}
+   if(typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){this.entryArrivingId='';this.entryEmptyLeaving=false;return}
    await this.$nextTick()
+   await new Promise(resolve=>setTimeout(resolve,220))
+   if(!r.visible||r.epoch!==epoch||r.uid!==accountId())return
+   origin=await measureEntryTarget(this,'#quiet-entry-fab')||origin
    let target=await measureEntryTarget(this,selector)
    if(!r.visible||r.epoch!==epoch||r.uid!==accountId())return
    let info={};try{info=uni.getWindowInfo?uni.getWindowInfo():uni.getSystemInfoSync()}catch(ignore){}

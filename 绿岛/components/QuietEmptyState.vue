@@ -39,6 +39,8 @@ export default{
    this.lastPage=page;this.lastSelector=selector
    if(!this.pointing||this.leaving)return
    try{
+    uni.createSelectorQuery().in(this).select('.qe-empty').boundingClientRect(root=>{
+    if(!root)return
     uni.createSelectorQuery().in(this).select('.qe-empty-copy').boundingClientRect(copy=>{
      if(!copy||!this.pointing||this.leaving)return
      uni.createSelectorQuery().in(page).select(selector).boundingClientRect(target=>{
@@ -47,9 +49,10 @@ export default{
       const x=copy.left+copy.width*.52,y=copy.top+copy.height+16,tx=target.left+5,ty=target.top+5
       if(y>ty-30||y<0||ty>h||tx>w){this.arrow='';return}
       const middle=(y+ty)/2,path='M '+x+' '+y+' C '+x+' '+(y+55)+', '+(tx-42)+' '+(middle-12)+', '+tx+' '+ty
-      this.arrowStyle={width:w+'px',height:h+'px'}
+      this.arrowStyle={left:-root.left+'px',top:-root.top+'px',width:w+'px',height:h+'px'}
       this.arrow=svgUri('<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><path d="'+path+'" fill="none" stroke="#7b8e7e" stroke-width="1.6" stroke-dasharray="4 7" stroke-linecap="round"/><path d="m '+(tx-11)+' '+(ty-3)+' 11 3 -2 -11" fill="none" stroke="#7b8e7e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
      }).exec()
+    }).exec()
     }).exec()
    }catch(ignore){this.arrow=''}
   },
@@ -60,7 +63,7 @@ export default{
 .qe-empty{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;padding:24px 10px 70px;box-sizing:border-box;transition:opacity .22s ease,transform .22s ease}
 .qe-empty-art{display:block;width:174px;height:140px;margin-bottom:18px;animation:qeArtFloat 4s ease-in-out infinite}
 .qe-empty-copy{text-align:center;max-width:320px}.qe-empty-title{display:block;font-size:21px;font-weight:600;line-height:1.5;color:#253b31}.qe-empty-description{display:block;font-size:13px;line-height:1.75;color:#788177;margin-top:8px}
-.qe-empty-arrow{position:fixed;left:0;top:0;z-index:15;pointer-events:none}
+.qe-empty-arrow{position:absolute;left:0;top:0;z-index:15;pointer-events:none}
 .qe-empty-leaving{position:absolute;top:0;left:0;right:0;opacity:0;transform:scale(.9);pointer-events:none}
 @keyframes qeArtFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @media(max-height:720px){.qe-empty{min-height:225px;padding-top:12px;padding-bottom:55px}.qe-empty-art{width:142px;height:110px;margin-bottom:10px}.qe-empty-title{font-size:19px}}
