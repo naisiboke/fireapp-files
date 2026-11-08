@@ -96,7 +96,7 @@ export default{
   onMonthChange(event){this.changeMonth(String(event.detail.value).slice(0,7))},
   prevMonth(){const d=new Date(this.month+'-01T12:00:00');d.setMonth(d.getMonth()-1);this.changeMonth(LocalDay(d).slice(0,7))},
   nextMonth(){if(this.month>=this.maxMonth)return;const d=new Date(this.month+'-01T12:00:00');d.setMonth(d.getMonth()+1);this.changeMonth(LocalDay(d).slice(0,7))},
-  goAdd(){if(this.saving||this.editorNavigating)return;if(!this.targetsReady){this.addAfterPlan=true;this.toggleBudget();return}this.openClassicEditor()},
+  goAdd(){if(this.saving||this.editorNavigating)return;if(!this.targetsReady){this.addAfterPlan=true;this.toggleBudget();return}if(this.editingId)this.resetEntryDraft();this.openClassicEditor()},
   editRecord(record){if(record&&!this.saving&&!this.editorNavigating)this.openClassicEditor(record)},
   openClassicEditor(record){
    const uid=accountId();if(!uid||!this.entryCanSave()){showNotice({title:'请先完成登录或同步后重试',icon:'none'});return}
