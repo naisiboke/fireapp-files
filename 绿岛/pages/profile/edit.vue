@@ -5,17 +5,17 @@
     <view class="account-card"><text class="account-label">绑定邮箱</text><text class="account-email">{{ boundEmail || '暂未绑定邮箱' }}</text><text class="account-hint">{{ boundEmail ? '用于登录和接收安全通知' : '请使用邮箱验证码登录后完成绑定' }}</text></view>
     <view class="card">
       <text class="label">昵称</text>
-      <input v-model="name" :disabled="saving" aria-label="昵称" class="name-input" maxlength="20" placeholder="请输入昵称" placeholder-class="placeholder" />
-      <text class="hint">经 AI 审核通过后，昵称会同步到个人主页和社区作者名</text>
+      <input v-model="name" :disabled="saving" aria-label="昵称" class="name-input" maxlength="8" placeholder="请输入昵称" placeholder-class="placeholder" />
+      <text class="hint">经 AI 审核通过后，昵称会同步到个人主页和社区作者名</text><text v-if="reviewRequired" class="limit-hint">昵称规则已更新，请重新审核后公开展示</text>
       <text v-if="!pro && lastChangedAt" class="limit-hint">{{ nextChangeText }}</text>
       <text v-else-if="pro" class="limit-hint pro-hint">Pro 会员不限修改次数</text>
     </view>
     <view class="rules">
       <text class="rules-title">昵称规范</text>
-      <text class="rule">· 2-20 个字符</text>
+      <text class="rule">· 2–8 个字符，仅中文、字母和数字</text>
       <text class="rule">· 30 天最多修改一次（Pro 会员不限次数）</text>
       <text class="rule">· 不得包含政治人物、政府机构或政党名称</text>
-      <text class="rule">· 不得包含辱骂、仇恨、侮辱或冒充官方内容</text>
+      <text class="rule">· 不得包含辱骂、谐音暗骂、隐晦攻击、歧视或冒充内容</text>
       <text class="rule">· 不得包含手机号、邮箱或链接</text>
     </view>
     <text v-if="reviewMessage" class="review-message" role="alert">{{reviewMessage}}</text>
@@ -43,7 +43,7 @@ export default {
   components: { AppFeedback, LoadingSpinner },
   mixins: [feedbackPageMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  data() { return { name: '', email: '', saving: false, lastChangedAt: 0, pro: false, reviewMessage:'', profileVisible:true } },
+  data() { return { name: '', email: '', saving: false, lastChangedAt: 0, pro: false, reviewMessage:'', profileVisible:true, reviewRequired:false } },
   computed: {
     boundEmail() { return this.email },
     nextChangeText() {
@@ -56,6 +56,7 @@ export default {
   onLoad() {
     const profile = state.profile || {}
     this.name = profile.name || '自由的旅人'
+    this.reviewRequired=profile.nicknameReviewStatus==='needs_review'
     this.email = profile.email || uni.getStorageSync('fire_account_email') || uni.getStorageSync('fire_login_email') || ''
     this.lastChangedAt = profile.nicknameReviewStatus==='approved'?(Number(profile.nicknameUpdatedAt)||0):0
     this.pro = isProMember()
@@ -82,6 +83,7 @@ export default {
         state.profile={...(state.profile||{}),...approved}
         this.lastChangedAt=approved.nicknameUpdatedAt
         this.name=approved.name
+        this.reviewRequired=false
         const saved=persist()
         if(saved)clearOptionsDraft(this)
         if(this.profileVisible)showNotice({title:saved?'昵称审核通过，社区作者名已更新':'昵称已在云端更新，本机缓存保存失败，请重试同步',icon:'none'})

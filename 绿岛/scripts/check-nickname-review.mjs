@@ -40,7 +40,7 @@ let result=await handler({action:'state.save',state:base,revision:0})
 check(result.ok,'initial account archive')
 uid=null;result=await handler({action:'profile.nickname',name:'新的旅人'});check(result.code==='AUTH_REQUIRED'&&calls===0,'nickname requires verified account')
 uid='A';result=await handler({action:'profile.nickname',name:'新的旅人',expectedUid:'B'});check(result.code==='ACCOUNT_MISMATCH'&&calls===0,'stale account intent rejected')
-for(const name of ['','a','http://site.cn','mail@example.com','旅人13800138000','a\u200bb']){
+for(const name of ['','a','http://site.cn','mail@example.com','旅人13800138000','a\u200bb','一二三四五六七八九','S B','傻B','nmsl']){
  result=await handler({action:'profile.nickname',name});check(!result.ok&&calls===0,'invalid nickname never sent to AI')
 }
 await db.collection('community_posts').doc('old-post').set({id:'old-post',ownerId:'A',displayName:'伪造旧名',title:'过去的经历',content:'我的一段真实生活经历',status:'approved',deleted:false,journey:'doing',createdAt:at})

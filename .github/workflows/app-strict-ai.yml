@@ -1,0 +1,63 @@
+name: Strict nickname review and concise AI
+on:
+  push:
+    branches: [app-strict-ai-limits]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Existing and new business regressions
+        working-directory: 绿岛
+        run: |
+          for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Verify cumulative source update archive
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, zipfile
+          with zipfile.ZipFile('updates/fire-strict-ai-20261108.zip') as bundle:
+              assert bundle.testzip() is None
+              assert len(bundle.namelist()) == 33
+              for name in bundle.namelist():
+                  assert not name.startswith('/') and '..' not in pathlib.PurePosixPath(name).parts
+                  content = bundle.read(name)
+                  assert content.decode('utf-8').strip(), name
+                  if os.environ.get('GITHUB_REF_NAME') == 'app-strict-ai-limits':
+                      target = pathlib.Path('绿岛/docs/strict-ai-update.md' if name == '使用说明.txt' else name)
+                      assert content == target.read_bytes(), name
+          print('Strict AI cumulative ZIP: CRC, paths and all 33 source files verified')
+          PY
+      - name: Install pinned app dependencies
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Build uni-app H5
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install browser test dependencies
+        run: |
+          npm install --prefix /tmp/fire-entry-tools --ignore-scripts --no-audit --no-fund vue@3.4.21 vite@5.2.8 @vitejs/plugin-vue@5.0.4 playwright@1.56.1 pngjs@7.0.0 sass@1.77.8
+          /tmp/fire-entry-tools/node_modules/.bin/playwright install --with-deps chromium
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Verify strict nickname, short AI and full MBTI
+        run: node 绿岛/scripts/verify-strict-ai-browser.mjs
+      - name: Verify consent, nickname and personality flows
+        run: node 绿岛/scripts/verify-consent-personality-browser.mjs
+      - name: Verify fluid tabs
+        run: node 绿岛/scripts/verify-fluid-tabs-browser.mjs
+      - name: Verify restored quick entry and loading feedback
+        run: node 绿岛/scripts/verify-quiet-entry-browser.mjs
+      - name: Preserve the existing spotlight guide
+        run: SPOTLIGHT_TOOLS=/tmp/fire-entry-tools node 绿岛/scripts/verify-spotlight-browser.mjs

@@ -96,7 +96,12 @@ export async function deleteUserData(){throw new Error('清除本机缓存不会
 export async function requestAccountDeletion(){return callAccountData({action:'deletion.request',expectedUid:accountId()})}
 
 export async function askBehaviorAI(payload) {
-  return apiRequest('/v1/ai/chat', { method: 'POST', data: payload, timeout: 30000 })
+  const uid=accountId()
+  if(!uid)throw new Error('请先登录后使用 AI')
+  const result=await callAccountData({...payload,action:'ai.chat',expectedUid:uid})
+  assertOwner(uid)
+  if(typeof result.reply!=='string'||result.reviewed!==true)throw new Error('AI 回答尚未通过审核，请重试')
+  return result
 }
 export async function fetchMembership() {
   const uid=accountId()
@@ -164,6 +169,6 @@ export async function reviewAndSaveNickname(name){
  if(!uid)throw new Error('请先登录后修改昵称')
  const result=await callAccountData({action:'profile.nickname',name,expectedUid:uid})
  assertOwner(uid)
- if(result.profile?.nicknameReviewStatus!=='approved'||!result.profile?.name)throw new Error('昵称审核结果无效，请重试')
+ if(result.profile?.nicknameReviewStatus!=='approved'||result.profile?.nicknamePolicyVersion!==2||!result.profile?.name)throw new Error('昵称审核结果无效，请重试')
  return result.profile
 }
