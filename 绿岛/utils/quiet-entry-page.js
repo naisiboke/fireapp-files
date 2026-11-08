@@ -53,12 +53,12 @@ export const quietEntryPageMixin={
    let target=await measureEntryTarget(this,selector)
    if(!r.visible||r.epoch!==epoch||r.uid!==accountId())return
    let info={};try{info=uni.getWindowInfo?uni.getWindowInfo():uni.getSystemInfoSync()}catch(ignore){}
-   const height=Number(info.windowHeight)||844
-   if(target&&(target.top<70||target.top+target.height>height-140)){
+   const height=Number(info.windowHeight)||844,inset=Math.max(0,Number(info.statusBarHeight)||Number(info.safeAreaInsets?.top)||0),clearBottom=(origin?.top||height-128)-12
+   if(target&&(target.top<inset+64||target.top+target.height>clearBottom)){
     let scrollTop=0
     try{scrollTop=await new Promise(resolve=>{let done=false;const finish=value=>{if(done)return;done=true;clearTimeout(timer);resolve(Number(value?.scrollTop)||0)};const timer=setTimeout(()=>finish(null),300);uni.createSelectorQuery().in(this).selectViewport().scrollOffset(finish).exec()})}catch(ignore){}
-    const inset=Math.max(0,Number(info.statusBarHeight)||Number(info.safeAreaInsets?.top)||0)
-    try{uni.pageScrollTo({scrollTop:Math.max(0,scrollTop+target.top-inset-74),duration:160})}catch(ignore){}
+    const destination=target.top<inset+64?scrollTop+target.top-inset-74:scrollTop+target.top+target.height-clearBottom+12
+    try{uni.pageScrollTo({scrollTop:Math.max(0,destination),duration:160})}catch(ignore){}
     await new Promise(resolve=>setTimeout(resolve,190))
     if(!r.visible||r.epoch!==epoch||r.uid!==accountId())return
     target=await measureEntryTarget(this,selector)
