@@ -23,6 +23,11 @@ jobs:
       - name: Build uni-app H5
         working-directory: 绿岛
         run: UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Compile App JavaScript without signing
+        working-directory: 绿岛
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false @dcloudio/uni-app-plus@3.0.0-4070620250821001
+          UNI_INPUT_DIR="$PWD" npm run build:app
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 12
