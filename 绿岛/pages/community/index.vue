@@ -24,7 +24,7 @@
       </view>
     </view>
 
-    <view class="community-loading-state" :class="{'community-loading-initial':publicLoading && !loadingMore && !visiblePosts.length}" :aria-busy="publicLoading"><view v-if="publicLoading && !loadingMore" class="community-loader" :class="{'community-loader-refresh':visiblePosts.length}"><LoadingSpinner :size="20" label="社区内容加载中" /></view></view>
+    <view class="community-loading-state" :class="{'community-loading-initial':publicLoading && !loadingMore && !visiblePosts.length,'community-loading-refresh':publicLoading && !loadingMore && visiblePosts.length}" :aria-busy="publicLoading"><view v-if="publicLoading && !loadingMore" class="community-loader" :class="{'community-loader-refresh':visiblePosts.length}"><LoadingSpinner :size="20" label="社区内容加载中" /></view></view>
     <!-- 列表 -->
     <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
     <view class="list">
@@ -665,7 +665,7 @@ export default {
           id:'ugc-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
           title:this.postDraft.title.trim(),content:this.postDraft.content.trim(),
           tags:[...this.postDraft.tags],category:this.postDraft.tags.join(' · '),journey:'doing',
-          timeline:this.validTimeline.map(row=>({year:row.year,desc:row.title})),displayName:'社区用户',
+          timeline:this.validTimeline.map(row=>({year:row.year,desc:row.title})),displayName:state.profile?.name||'社区用户',
         })
         if(saved.status==='approved'){CS.clearDraft();this.postDraft=EMPTY_DRAFT();this.modal=null;this.tab='doing';await this.refreshCommunity()}
         showNotice({title:saved.status==='approved'?'云端审核通过，经历已发布':saved.reviewReason||'内容已保存，请查看状态',icon:'none'})
@@ -1074,5 +1074,5 @@ export default {
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-community-index{padding-top:var(--fire-page-top)}
  .fire-page-community-index .community-head{padding-top:0}
-.community-loading-state{position:relative;height:0}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:absolute;right:0;top:-27px;z-index:2;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.community-loading-state{position:relative;height:32px;display:flex;align-items:center;justify-content:center}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:static;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.community-loading-refresh{height:32px;display:flex;align-items:center;justify-content:center}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 </style>

@@ -158,3 +158,12 @@ export async function fetchCommunityPosts(journey,cursor=0){
   const uid=accountId(),result=await callAccountData({action:'posts.public',journey,cursor,expectedUid:uid})
   assertOwner(uid);return result
 }
+
+export async function reviewAndSaveNickname(name){
+ const uid=accountId()
+ if(!uid)throw new Error('请先登录后修改昵称')
+ const result=await callAccountData({action:'profile.nickname',name,expectedUid:uid})
+ assertOwner(uid)
+ if(result.profile?.nicknameReviewStatus!=='approved'||!result.profile?.name)throw new Error('昵称审核结果无效，请重试')
+ return result.profile
+}

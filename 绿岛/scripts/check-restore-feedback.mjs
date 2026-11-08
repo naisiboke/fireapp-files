@@ -1,3 +1,4 @@
+import {CONSENT_MESSAGE,consentRecord} from '../utils/login-consent.js'
 
 import assert from 'node:assert/strict'
 import{readFileSync}from'node:fs'
@@ -58,8 +59,8 @@ function loginFixture(){
  const values=new Map(),local={cloudSync:{status:'synced'},profile:{},finance:{assets:15000}},routes=[],messages=[]
  const uni={getStorageSync:k=>values.get(k),setStorageSync:(k,v)=>values.set(k,v),removeStorageSync:k=>values.delete(k),reLaunch:o=>routes.push(o.url)}
  let script=clean(src('pages/login/login.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1]).replace('import.meta.env.DEV','false').replace("import('@/utils/community-store.js')","Promise.resolve({CS:{hydrate:async()=>{}}})")
- const inject={ref,watch(){},onMounted(){},onBeforeUnmount(){},useFeedbackPage:()=>1,showNotice:o=>messages.push(o.title),state:local,persist(){},hydrateFromServer:()=>restore.promise,endAccountSession(){},sendVerificationCode:async()=>({id:'verified'}),signInWithCode:()=>{authCalls++;return auth.promise},saveAuthToken:async()=>{},safeReturnRoute:()=>'/pages/index/index',finishSessionRecovery:()=>'/pages/index/index',getCurrentPages:()=>[],uni,setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}}
- const api=new Function(...Object.keys(inject),script+';return{email,code,loading,loginAction,countdown,sendCode,login,resumeLogin,allowCode(){verificationInfo={};sentEmail=account()}}')(...Object.values(inject))
+ const inject={CONSENT_MESSAGE,consentRecord,ref,watch(){},onMounted(){},onBeforeUnmount(){},useFeedbackPage:()=>1,showNotice:o=>messages.push(o.title),state:local,persist(){},hydrateFromServer:()=>restore.promise,endAccountSession(){},sendVerificationCode:async()=>({id:'verified'}),signInWithCode:()=>{authCalls++;return auth.promise},saveAuthToken:async()=>{},safeReturnRoute:()=>'/pages/index/index',finishSessionRecovery:()=>'/pages/index/index',getCurrentPages:()=>[],uni,setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}}
+ const api=new Function(...Object.keys(inject),script+';return{email,code,loading,loginAction,countdown,sendCode,login,resumeLogin,allowCode(){consentAccepted.value=true;verificationInfo={};sentEmail=account()}}')(...Object.values(inject))
  api.email.value='user@example.com';api.code.value='123456';api.allowCode()
  return{api,auth,restore,local,routes,messages,calls:()=>authCalls}
 }

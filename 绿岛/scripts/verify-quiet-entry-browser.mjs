@@ -195,6 +195,7 @@ try{
  check('confirmed deletion still records a single tombstone',await p.evaluate(()=>test.state.ledger.length===1&&test.state.deletions.some(x=>x.kind==='ledger')))
  await ctx.close()
  const auth=await context();await auth.p.goto('http://127.0.0.1:5189/?page=login');await ready(auth.p)
+ await auth.p.locator('.consent-check').click()
  await auth.p.locator('input[aria-label="邮箱"]').fill('user@example.com');await auth.p.locator('.send-code').click()
  check('email verification retains its countdown',await auth.p.locator('.send-code').textContent().then(t=>t.includes('60')))
  await auth.p.locator('input[aria-label="验证码"]').fill('012345')
