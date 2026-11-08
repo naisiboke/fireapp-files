@@ -1,0 +1,25 @@
+name: Restore quick bookkeeping and loading feedback
+on:
+  push:
+    branches: [app-restore-quick-ledger]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Existing and new business regressions
+        working-directory: 绿岛
+        run: |
+          for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Install pinned app dependencies
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Build uni-app H5
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5

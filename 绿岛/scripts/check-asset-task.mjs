@@ -77,7 +77,7 @@ check('asset page waits for server-confirmed rewards',fixture.notices.at(-1).tit
 const taskModule=new Function(source('utils/action-tasks.js').replace(/\bexport (const|function)/g,'$1')+';return {todayActions,ACTION_RULES}')()
 s.actionRewards={events:[{kind:'ledger',day},{kind:'assets',day}],counters:{}}
 const cards=taskModule.todayActions(s,{member:false,at:Date.parse(day+'T12:00:00Z')})
-const Home=component('pages/index/index.vue',{state:s,AppFeedback:{},BottomTabs:{},SpotlightGuide:{},spotlightHomeMixin:{},AnimatedNumber:{},feedbackPageMixin:{},pageEntryMixin:{}})
+const Home=component('pages/index/index.vue',{state:s,AppFeedback:{},BottomTabs:{},CountdownSwitch:{},SpotlightGuide:{},spotlightHomeMixin:{},AnimatedNumber:{},feedbackPageMixin:{},pageEntryMixin:{}})
 const Hero=component('pages/hero/index.vue',{state:s,AppFeedback:{},feedbackPageMixin:{},HeroLevel,ACTION_RULES:taskModule.ACTION_RULES,uni:{navigateTo:options=>fixture.notices.push(options)}})
 check('home count includes server confirmed assets and ledger',Home.computed.todayCount.call({todayTasks:cards})===2)
 check('home shows server confirmed asset task as completed',Home.methods.taskDone.call({todayTasks:cards},'assets')===true)

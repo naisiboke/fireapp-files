@@ -20,7 +20,7 @@ function loadPage(path, dependencies) {
 }
 const common = { state, HeroDay:engine.HeroDay,persistNow:()=>true, MonthlyStatus, LocalDay: () => currentDay, feedbackPageMixin: {}, AppFeedback: {} }
 const Home = loadPage('pages/index/index.vue', {
-  ...common, CS:{ugc:()=>[]},refreshActions:async()=>null, pageEntryMixin: {}, BottomTabs:{},SpotlightGuide:{},spotlightHomeMixin:{}, AnimatedNumber: {}, refreshFinance() {},
+  ...common, CS:{ugc:()=>[]},refreshActions:async()=>null, pageEntryMixin: {}, BottomTabs:{},CountdownSwitch:{},SpotlightGuide:{},spotlightHomeMixin:{}, AnimatedNumber: {}, refreshFinance() {},
   uni: { hideTabBar() {}, getStorageSync() { return null } },
 })
 const Ledger = loadPage('pages/ledger/index.vue', { ...common, QuietEmptyState:{},QuietEntrySheet:{},quietEntryPageMixin:{},shareOf:()=>'' })
