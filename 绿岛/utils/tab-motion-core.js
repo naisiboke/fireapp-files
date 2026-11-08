@@ -25,7 +25,13 @@ export function flowRect(from,to,progress) {
   return {left,top:mix(from.top,to.top,p)+(mix(from.height,to.height,p)-height)/2,width:Math.max(12,edge-left),height}
 }
 export function sampleMotion(motion, now, fallback) {
-  return motion ? flowRect(motion.from,motion.to,(now-motion.started)/FLOW_DURATION) : {...fallback}
+  if(!motion)return {...fallback}
+  const p=clamp((now-motion.started)/FLOW_DURATION)
+  const stops=[0,.12,.24,.38,.52,.68,.82,.92,1]
+  const index=Math.max(0,stops.findIndex(n=>n>=p)-1)
+  const a=flowRect(motion.from,motion.to,stops[index]),b=flowRect(motion.from,motion.to,stops[index+1])
+  const t=(p-stops[index])/(stops[index+1]-stops[index])
+  return Object.fromEntries(Object.keys(a).map(key=>[key,mix(a[key],b[key],t)]))
 }
 export function createTabRouter({navigate,onIntent=()=>{},onArrival=()=>{},onFailure=()=>{},schedule=setTimeout,cancel=clearTimeout}) {
   let actual='',desired='',pending=null,sequence=0,timer=null

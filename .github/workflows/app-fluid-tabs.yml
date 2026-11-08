@@ -17,6 +17,22 @@ jobs:
         working-directory: 绿岛
         run: |
           for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Verify source update archive
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, zipfile
+          with zipfile.ZipFile('updates/fire-fluid-tabs-20261108.zip') as bundle:
+              assert bundle.testzip() is None
+              assert len(bundle.namelist()) == 13
+              for name in bundle.namelist():
+                  assert not name.startswith('/') and '..' not in pathlib.PurePosixPath(name).parts
+                  content = bundle.read(name)
+                  assert content.decode('utf-8').strip(), name
+                  if os.environ.get('GITHUB_REF_NAME') == 'app-fluid-tabs':
+                      target = pathlib.Path('绿岛/docs/fluid-tabs-update.md' if name == '使用说明.txt' else name)
+                      assert content == target.read_bytes(), name
+          print('Fluid tab update ZIP: CRC, paths and all 13 files verified')
+          PY
       - name: Install pinned app dependencies
         working-directory: 绿岛
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false

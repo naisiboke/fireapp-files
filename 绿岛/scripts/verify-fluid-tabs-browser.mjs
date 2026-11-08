@@ -50,6 +50,16 @@ try{
  await tap('首页');await page.waitForTimeout(110)
  check(await page.locator('.fire-tab-content').evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--tab-enter-x')))<0,'leftward content direction')
  await page.waitForTimeout(420)
+ await tap('我的');await page.waitForTimeout(100)
+ const continuity=await page.evaluate(async()=>{
+  const before=document.querySelector('.bottom-tabs .tab-flow').getBoundingClientRect().toJSON()
+  document.querySelector('.bottom-tabs [aria-label="首页"]').dispatchEvent(new Event('tap',{bubbles:true}))
+  await new Promise(requestAnimationFrame)
+  const after=document.querySelector('.bottom-tabs .tab-flow').getBoundingClientRect().toJSON()
+  return {before,after}
+ })
+ check(Math.abs(continuity.after.x-continuity.before.x)<32&&Math.abs(continuity.after.width-continuity.before.width)<32,'interrupted capsule continues from current body')
+ await page.waitForTimeout(600)
  await page.locator('input').fill('保留草稿')
  await page.evaluate(()=>{window.navDelay=160;const tabs=document.querySelectorAll('.bottom-tabs .tab-item');for(const i of [1,2,3])tabs[i].dispatchEvent(new Event('tap',{bubbles:true}))})
  await page.waitForTimeout(800)
