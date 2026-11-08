@@ -1,6 +1,6 @@
 const DAY=86400000
 export const ACTION_RULES=[
- {id:'ledger',title:'记录今天的消费',xp:5,desc:'每天首次保存当日支出',url:'/pages/ledger/edit'},
+ {id:'ledger',title:'记录今天的消费',xp:5,desc:'每天首次保存当日支出',url:'/pages/ledger/index?add=1'},
  {id:'assets',title:'记录本月资产',xp:8,desc:'每月最多2次，两次至少间隔14天',url:'/pages/assets/index'},
  {id:'goal',title:'检视储蓄目标',xp:8,desc:'每周保存或检视目标1次',url:'/pages/calculator/index?mode=goal&from=home'},
  {id:'favorite',title:'收藏一篇社区帖子',xp:2,desc:'每篇只奖励1次，每天最多3篇',url:'/pages/community/index'},

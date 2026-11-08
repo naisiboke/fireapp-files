@@ -5,7 +5,7 @@ const active = new Set()
 const optionsDrafts = new WeakMap()
 const fieldsByRoute = {
   'pages/community/index': ['postDraft','netWorthInput','modal'],
-  'pages/ledger/index': ['month','budgetInput','incomeInput','budgetExpanded'],
+  'pages/ledger/index': ['month','budgetInput','incomeInput','budgetExpanded','draft','editingId','showAdd'],
   'pages/savings-curve/index': ['age','lifeExpectancy','started','profileStep','questionIndex','answers','customAnswers','customEditing','customDraft','customEvents'],
   'pages/wishlist/index': ['form','showAdd'],
   'pages/ai/index': ['question'],

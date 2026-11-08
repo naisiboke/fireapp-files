@@ -104,6 +104,7 @@
 </template>
 
 <script>
+import { returnFromEntryPage } from '@/utils/quiet-entry-page.js'
 import { clearOptionsDraft } from '@/utils/session-drafts.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
@@ -199,12 +200,10 @@ export default {
 
   methods: {
     back() {
-      if (this._backPending) return
+      if (dismissFeedback(this.feedbackOwnerId) || this._backPending) return
       this._backPending = true
-      uni.redirectTo({
-        url: '/pages/ledger/index',
-        complete: () => { setTimeout(() => { this._backPending = false }, 300) }
-      })
+      returnFromEntryPage('/pages/index/index')
+      setTimeout(() => { this._backPending = false }, 350)
     },
 
     setType(type) {
@@ -323,7 +322,8 @@ export default {
     },
   },
 
-  onBackPress() {
+  onBackPress(event) {
+    if (event?.from === 'navigateBack') return false
     if (dismissFeedback(this.feedbackOwnerId)) return true
 
     this.back()
