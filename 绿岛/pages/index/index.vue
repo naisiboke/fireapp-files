@@ -402,7 +402,7 @@ export default {
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买';if(wishlistDue(item,this.actionNow))return '待确认是否购买';return '冷静期剩余 '+Math.ceil((coolingEnd(item)-this.actionNow)/86400000)+' 天'},
     retryActions(){if(state.actionSync?.status!=='syncing')refreshActions().catch(()=>{})},
-    goTask(t){if(t.url)uni.navigateTo({url:t.url})},
+    goTask(t){if(t.id==='ledger'){const budget=state.monthlyTargets?.[LocalDay().slice(0,7)]||{};const ready=Number.isSafeInteger(budget.expense)&&budget.expense>0&&Number.isSafeInteger(budget.income)&&budget.income>0;uni.navigateTo({url:ready?'/pages/ledger/edit':'/pages/ledger/index?add=1'});return}if(t.url)uni.navigateTo({url:t.url})},
 
   },
 }
