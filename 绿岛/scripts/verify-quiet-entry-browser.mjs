@@ -214,6 +214,11 @@ try{
   check('submit stays accessible at '+spec.width+'x'+spec.height,rect.y>=spec.top&&rect.y+rect.height<=spec.height+1)
   await v.p.evaluate(()=>test.back());await closed(v.p);await v.ctx.close()
  }
+ const gone=await context();await gone.p.goto('http://127.0.0.1:5189/?budget=1');await ready(gone.p)
+ await gone.p.locator('#quiet-entry-fab').click();await formFill(gone.p,'10','退出中不能保存')
+ await gone.p.evaluate(()=>{window.delayMeasure=true;test.vm.submitRecord();test.unmount()});await gone.p.waitForTimeout(300)
+ check('unmount cancels an older pending save',await gone.p.evaluate(()=>test.state.ledger.length===0&&document.body.style.overflow===''))
+ await gone.ctx.close()
  const reduced=await context({width:390,height:844},'reduce');await reduced.p.goto('http://127.0.0.1:5189/?budget=1');await ready(reduced.p)
  check('reduced motion disables illustration float',await reduced.p.locator('.qe-empty-art').evaluate(e=>getComputedStyle(e).animationName)==='none')
  await add(reduced.p,'10','第一笔');check('reduced motion reveals the saved row immediately',await reduced.p.locator('.qe-record-arriving').count()===0)

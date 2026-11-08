@@ -25,8 +25,8 @@ export const quietEntryPageMixin={
   this.$nextTick(()=>this.refreshEntryArrow())
  },
  onHide(){const r=session(this);r.visible=false;this.entryVisible=false;this.entryFocus=false;stop(this);this.closeEntrySheet()},
- onUnload(){session(this).visible=false;stop(this);sessions.delete(this)},
- beforeUnmount(){session(this).visible=false;stop(this);sessions.delete(this)},
+ onUnload(){session(this).visible=false;this.entryVisible=false;this.entryFocus=false;stop(this);sessions.delete(this)},
+ beforeUnmount(){session(this).visible=false;this.entryVisible=false;this.entryFocus=false;stop(this);sessions.delete(this)},
  onResize(){if(this.entryFly){this.entryFly=null;this.entryArrivingId=''}this.refreshEntryLayout();this.$nextTick(()=>this.refreshEntryArrow())},
  onPageScroll(){this.refreshEntryArrow()},
  methods:{
