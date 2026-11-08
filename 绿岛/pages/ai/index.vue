@@ -29,7 +29,7 @@
       </view>
       <scroll-view class="messages" scroll-y :show-scrollbar="false" :scroll-into-view="lastMessageId">
         <view class="message-list">
-        <view v-for="(message, index) in messages" :id="'message-' + index" :key="index" class="message-row" :class="message.role"><view class="message-bubble">{{ message.text }}</view></view>
+        <view v-for="(message, index) in messages" :id="'message-' + index" :key="index" class="message-row" :class="message.role"><view class="message-bubble">{{ message.role==='assistant'?formatAnswer(message.text):message.text }}</view></view>
         <view v-if="loading" class="message-row assistant"><view class="message-bubble typing">正在整理建议…</view></view>
           <view id="chat-bottom" class="scroll-anchor"></view>
         </view>
@@ -129,7 +129,7 @@ export default {
     quotaText() { return this.isMember?'VIP 已开通':this.freeUsed>=3?'升级会员':'免费 '+Math.max(0,3-this.freeUsed)+' 次' },
     formatChatDate(value) { if (!value) return ''; const d=new Date(value); return (d.getMonth()+1)+'/'+d.getDate() },
     newChat() { this.drawerOpen=false; this.currentChatId='chat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); this.messages=[]; this.question=''; this.lastMessageId='' },
-    selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x,text:x.role==='assistant'?limitAIAnswer(x.text):x.text})):[]; this.drawerOpen=false; this.scrollToLast() },
+    selectChat(id) { const chat=this.chats.find(x=>x.id===id); if(!chat)return; this.currentChatId=chat.id; this.messages=Array.isArray(chat.messages)?chat.messages.map(x=>({...x})):[]; this.drawerOpen=false; this.scrollToLast() },
     async saveCurrentChat() { if(this.accountUid!==accountId()||!this.messages.length)return; const first=this.messages.find(x=>x.role==='user'); const existing=this.chats.find(x=>x.id===this.currentChatId); const chat={id:this.currentChatId||('chat-'+Date.now()),title:existing&&existing.title||((first&&first.text)||'新对话').slice(0,28),messages:this.messages.map(x=>({...x})),updatedAt:Date.now()}; this.chats=[chat,...this.chats.filter(x=>x.id!==chat.id)]; this.currentChatId=chat.id; state.aiChats=this.chats; persist(); try{await saveAIChats(this.chats)}catch(error){console.warn('[chat-sync]',error.code||'CLOUD_CALL_FAILED')} },
     personalitySummary() { const p=state.personalityTests||{}, names=[]; if(p.bigfive) names.push('大五人格已完成'); if(p.mbti) names.push('MBTI '+String(p.mbti.title||'已完成').replace('你的 MBTI 参考类型：','')); return names.join(' · ') || '尚未完成测试' },
     personalityPayload() { const p=state.personalityTests||{}, legacy=state.personality||{}; return { bigFive:p.bigfive || (legacy.type==='bigfive'?legacy.result:'暂未填写'), mbti:p.mbti || (legacy.type==='mbti'?legacy.result:'暂未填写') } },
