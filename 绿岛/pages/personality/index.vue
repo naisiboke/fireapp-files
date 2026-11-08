@@ -61,7 +61,7 @@ function start(next){
  unlock();manualOpen.value=false;type.value=next;started.value=true;finished.value=false;index.value=0;answers.value=[];result.value=null
 }
 function openManual(){
- unlock();testDraft.clear();started.value=false;finished.value=false;manualOpen.value=true
+ unlock();testDraft.clear();type.value='mbti';started.value=false;finished.value=false;manualOpen.value=true
  manualType.value=savedMbti.value?.mbtiType||validMbti(savedMbti.value?.title?.slice(0,4))||'';manualError.value=''
 }
 function commitResult(data){
@@ -105,10 +105,11 @@ function close(){unlock();uni.switchTab({url:'/pages/index/index'})}
 onLoad(options=>{if(options?.type==='bigfive'||options?.type==='mbti')start(options.type)})
 onBackPress(()=>{if(dismissFeedback(feedbackOwnerId))return true;if(started.value||manualOpen.value||finished.value){back();return true}return false})
 onBeforeUnmount(unlock)
-const testDraft=useSessionDraft(()=>({version:QUESTION_VERSION,type:type.value,started:started.value,index:index.value,answers:answers.value}),draft=>{
+const testDraft=useSessionDraft(()=>({version:QUESTION_VERSION,type:type.value,started:started.value,index:index.value,answers:answers.value,manualOpen:manualOpen.value,manualType:manualType.value}),draft=>{
  if(!['bigfive','mbti'].includes(draft?.type)||!Array.isArray(draft.answers))return
  if(draft.version!==QUESTION_VERSION){showNotice({title:'题库已更新，请重新答题。历史结果仍保留。',icon:'none'});return}
  type.value=draft.type
+ if(draft.manualOpen){manualType.value=String(draft.manualType||'').slice(0,8);manualOpen.value=true;started.value=false;finished.value=false;return}
  answers.value=draft.answers.slice(0,questions.value.length).map(value=>Number.isInteger(value)&&value>=1&&value<=5?value:null)
  const firstMissing=questions.value.findIndex((_,i)=>!Number.isInteger(answers.value[i]))
  index.value=Math.min(questions.value.length-1,Math.max(0,Math.min(Number(draft.index)||0,firstMissing<0?questions.value.length-1:firstMissing)))

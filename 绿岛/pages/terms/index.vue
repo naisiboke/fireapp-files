@@ -17,7 +17,12 @@ export default{
  components:{AppFeedback},mixins:[feedbackPageMixin],
  data(){return{version:LEGAL_VERSION,sections:termsSections}},
  methods:{close(){closeLegalPage()}},
- onBackPress(){if(dismissFeedback(this.feedbackOwnerId))return true;this.close();return true},
+ onBackPress(event){
+  if(dismissFeedback(this.feedbackOwnerId))return true
+  if(event?.from==='navigateBack')return false
+  try{if(getCurrentPages().length>1)return false}catch{}
+  this.close();return true
+ },
 }
 </script>
 <style>

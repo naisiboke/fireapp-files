@@ -74,4 +74,19 @@ closeLegalPage();check(legalRoutes.at(-1)==='back','legal back returns through s
 depth=1;closeLegalPage();check(legalRoutes.at(-1)==='/pages/login/login','unauthenticated legal fallback stays public')
 check(src('App.vue').includes("'pages/privacy/index', 'pages/terms/index'"),'both policies readable without login')
 check(!src('pages/community/index.vue').includes('right:0;top:-27px'),'community refresh spinner not pinned right')
+for(const kind of ['privacy','terms']){
+ const body=src('pages/'+kind+'/index.vue').match(/<script>([\s\S]*?)<\/script>/)[1]
+ const code=clean(body).replace('export default','return')
+ let exits=0,feedback=false
+ const inject={AppFeedback:{},feedbackPageMixin:{},LEGAL_VERSION:'test',privacySections:[],termsSections:[],dismissFeedback:()=>feedback,closeLegalPage:()=>exits++}
+ const component=new Function(...Object.keys(inject),code)(...Object.values(inject))
+ const vm={feedbackOwnerId:1,close:component.methods.close}
+ depth=2
+ check(component.onBackPress.call(vm,{from:'navigateBack'})===false&&exits===0,'programmatic return never recursively navigates '+kind)
+ check(component.onBackPress.call(vm,{from:'backbutton'})===false&&exits===0,'hardware back uses native stack '+kind)
+ depth=1
+ check(component.onBackPress.call(vm,{from:'backbutton'})===true&&exits===1,'direct legal page returns to public fallback '+kind)
+ feedback=true
+ check(component.onBackPress.call(vm,{from:'backbutton'})===true&&exits===1,'feedback dialog dismissed before page navigation '+kind)
+}
 console.log('Consent, question-bank and manual MBTI: '+checks+' checks passed')

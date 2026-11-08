@@ -184,6 +184,7 @@ try{
  check('terms render without authenticated session',await auth.p.locator('.legal-name').textContent()==='Fire生活用户协议')
  await auth.p.locator('.legal-back').click();await checkbox.waitFor()
  check('terms back preserves email and verification code',await auth.p.locator('input[aria-label="邮箱"]').inputValue()==='user@example.com'&&await auth.p.locator('input[aria-label="验证码"]').inputValue()==='012345')
+ check('returning from policy immediately shows retained form',await auth.p.locator('.form').evaluate(el=>getComputedStyle(el).opacity)==='1')
  check('reading does not accept terms',await checkbox.getAttribute('aria-checked')==='false')
  await auth.p.locator('.consent-link').nth(1).click();await auth.p.locator('.legal-name').waitFor()
  check('privacy policy is independent and readable',await auth.p.locator('.legal-name').textContent()==='Fire生活隐私政策'&&await auth.p.locator('.legal-section').count()>10)

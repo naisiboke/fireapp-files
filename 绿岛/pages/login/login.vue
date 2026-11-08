@@ -120,4 +120,6 @@ async function login(){
 .consent-link{color:#1768c4;text-decoration:underline;text-underline-offset:2px}
 .consent-error{border-color:#c64c45;background:#fff7f5}.consent-error .consent-check{border-color:#c64c45}
 .consent-message{display:block;margin:-3px 0 12px;color:#b8332d;font-size:12px;line-height:1.6}
+/* Keep the retained login form visible immediately after returning from either document. */
+.login-shell .brand,.login-shell .avatar,.login-shell .intro,.login-shell .form{animation:none}
 </style>
