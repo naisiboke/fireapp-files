@@ -9,6 +9,19 @@ export function accountTransportError(cause,stage='invoke') {
   const candidate=String(rawCode||'CLOUD_CALL_FAILED')
   const code=/^[A-Z0-9_.:-]{1,64}$/i.test(candidate)?candidate:'CLOUD_CALL_FAILED'
   const messages={
+    UNKNOWN_ACTION:'云端暂不支持此操作，请核对 accountData 的部署版本、入口和环境',
+    DATABASE_REQUEST_FAILED:'云端数据库操作失败，请查看对应请求的集合、索引和权限诊断',
+    NICKNAME_INVALID:'昵称格式不符合规则，请使用2–8个中文、字母或数字',
+    NICKNAME_REJECTED:'昵称未通过审核，请换一个友善、清晰的名字',
+    NICKNAME_COOLDOWN:'昵称暂未到可修改时间，请稍后再试',
+    NICKNAME_RATE_LIMIT:'昵称审核请求过于频繁，请十分钟后重试',
+    NICKNAME_CHANGED:'昵称已有更新，请重新打开个人资料',
+    REVIEW_UNAVAILABLE:'昵称审核服务暂未就绪，请稍后重试或检查云端AI配置',
+    AI_UNAVAILABLE:'AI 服务暂不可用，请稍后重试',
+    AI_BUSY:'上一次回答仍在处理中，请稍候',
+    AI_DAILY_LIMIT:'今日免费额度已用完，请查看会员权益',
+    AI_INPUT_INVALID:'请输入不超过2000个字符的问题',
+    AI_REQUEST_EXPIRED:'本次AI请求已过期，请重新发送',
     REDEEM_DOCUMENT_ID:'请填写 code 字段的兑换码，不是数据库 _id',
     REDEEM_INVALID:'兑换码格式或配置不正确，请检查后重试',
     REDEEM_NOT_FOUND:'兑换码不存在，请填写完整兑换码',
@@ -37,7 +50,16 @@ export function accountTransportError(cause,stage='invoke') {
     SYNC_CONFLICT:'云端已有更新，本机记录已保留，请重试恢复',
     EMPTY_OVERWRITE:'已阻止空白数据覆盖存档，请重试恢复',
   }
-  const error=new Error((messages[code]||'云端连接失败，本机记录已保留，请稍后重试')+'（'+code+'）')
+  const knownCollections=new Set(['user_states','user_collections','data_backups','community_posts','action_rewards','vip_codes','vip_redemptions','account_deletion_requests'])
+  const knownOperations=new Set(['read','list','snapshot-backup','save','post-backup','post-save','review-status-save','publication-save'])
+  const diagnostic=cause&&cause.diagnostic
+  let detail=''
+  if(code==='DATABASE_REQUEST_FAILED'&&knownCollections.has(diagnostic&&diagnostic.collection)&&knownOperations.has(diagnostic&&diagnostic.operation)){
+    const reasons={COLLECTION_MISSING:'缺少集合',INDEX_REQUIRED:'需配置索引',ACCESS_DENIED:'访问权限不足',CHECK_DATABASE_LOG:'请查云函数日志'}
+    detail='；'+diagnostic.collection+' / '+diagnostic.operation
+    if(reasons[diagnostic.reason])detail+='：'+reasons[diagnostic.reason]
+  }
+  const error=new Error((messages[code]||'云端连接失败，本机记录已保留，请稍后重试')+detail+'（'+code+'）')
   error.code=code
   error.stage=stage
   return error

@@ -1,38 +1,16 @@
-# FIRE Fire生活云端 API 对接清单
+# accountData 当前部署与排查
 
-当前前端已经统一通过 `utils/api-service.js` 访问云端。仓库中目前没有可用的业务 API 地址，所以必须先配置 `fire_api_base_url`，前端不会在未配置时伪造“保存成功”。本地 storage 只作为登录凭证、临时缓存和离线过渡缓存。
+App 的账户、昵称和社区操作使用已认证的 CloudBase accountData 云函数。环境为 `ziyoukedu-d0gyrczqk4de53b87`。
+配置旧的 `fire_api_base_url` 不能解决当前 accountData 的 UNKNOWN_ACTION。
 
-## 必需接口
+- 入口：`cloudfunctions/accountData/index.js`，加载同目录 `service.js`。
+- 昵称：`profile.nickname`。
+- 社区：`posts.submit`、`posts.public`、`posts.mine`、`posts.delete`。
+- 聊天：`ai.chat`，单次模型调用，输出参数 `max_tokens=500`。
+- 账户：`bootstrap`、`state.save`、`collection.read`、`collection.save`。
+- 只读版本检测：控制台测试 `{"action":"service.info"}`。只返回版本与功能列表，不读取账户或数据库。
+- 私有数据操作仍验证登录身份与 expectedUid，客户端不能指定其他用户来读取存档。
+- 云端错误日志只记录版本、操作、错误码和安全的数据库步骤，不记录用户内容或凭证。
 
-| 方法 | 路径 | 用途 |
-| --- | --- | --- |
-| GET | `/v1/me/state` | 读取账户、财务、记账、拔草、成长、社区、阅读和设置等合并状态 |
-| PUT | `/v1/me/state` | 保存合并状态，要求服务端按用户隔离并支持幂等更新 |
-| GET | `/v1/me/privacy` | 读取隐私设置 |
-| PUT | `/v1/me/privacy` | 更新隐私设置 |
-| GET | `/v1/me/export` | 导出用户可读的数据副本 |
-| DELETE | `/v1/me/state` | 删除账户数据（不等同于注销账户） |
-| POST | `/v1/me/deletion` | 提交账号注销申请并返回处理状态 |
-| GET | `/v1/me/membership` | 读取 Fire生活通用会员状态 |
-| POST | `/v1/me/membership/checkout` | 创建 ¥9/月通用会员订阅订单并返回支付地址 |
-| GET | `/v1/me/collections/:name` | 读取社区收藏、UGC 草稿和其他独立集合 |
-| PUT | `/v1/me/collections/:name` | 保存社区收藏、UGC 草稿和其他独立集合 |
-
-## 请求约定
-
-- 使用 HTTPS；登录凭证通过 `Authorization: Bearer <token>` 传递。
-- JSON 响应失败时返回 HTTP 4xx/5xx 和 `{ "message": "..." }`。
-- `/v1/me/state` 的响应可以直接返回状态对象，也可以返回 `{ "state": {...} }`。
-- 服务端必须以当前登录用户为主键，不能信任客户端传入的用户 ID。
-- 服务端应记录版本或更新时间，避免多设备覆盖较新的数据。
-
-## 本地构建
-
-在 HBuilderX 运行或打包前，进入 `绿岛` 项目目录执行一次 `npm install`，安装 `@cloudbase/js-sdk`。如果未安装，项目仍可编译，但登录时会提示缺少该依赖。
-
-## 配置
-
-在登录服务完成后，把业务 API 地址写入 `uni.setStorageSync('fire_api_base_url', 'https://your-api.example.com')`，把登录令牌写入 `fire_access_token`。请将占位地址和联系邮箱替换为真实配置后再面向用户发布。
-## 通用会员
-
-会员计划固定为 `fire-life-monthly`，价格为人民币 9 元/月。会员状态建议返回 `{ "active": true, "status": "active", "plan": "fire-life-monthly", "expiresAt": 0 }`；支付完成后必须由服务端确认并更新状态，客户端不会自行伪造开通结果。AI、社区发帖/套用配置和 FIRE 深度诊断统一读取该会员状态。
+完整部署、集合检查和实时日志步骤见仓库 `docs/accountData-deployment-help.md`。
+`updates/accountData-deploy-20261108.zip` 包含可直接覆盖到函数根目录的五个源文件和部署说明。

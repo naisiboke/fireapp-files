@@ -1,3 +1,33 @@
+const SERVICE_BUILD='2026-11-08-accountData-diagnostics-1'
+function safeLabel(value,fallback='unknown'){
+ const text=String(value||'')
+ return /^[A-Za-z0-9_.:-]{1,80}$/.test(text)?text:fallback
+}
+async function databaseStep(collection,operation,run){
+ try{return await run()}catch(error){
+  try{if(error&&typeof error==='object'&&!error.accountDataDatabase)error.accountDataDatabase={collection:safeLabel(collection),operation:safeLabel(operation)}}catch(ignore){}
+  throw error
+ }
+}
+function databaseReason(error){
+ const text=[error?.code,error?.message,error?.errMsg,error?.cause?.message,error?.originalError?.message].map(value=>String(value||'')).join(' ')
+ if(/collection[\s\S]{0,100}(?:not[\s_-]*exist|does not exist|not found)|集合[\s\S]{0,30}不存在|DATABASE_COLLECTION_NOT_EXIST|table[\s\S]{0,50}does not exist/i.test(text))return 'COLLECTION_MISSING'
+ if(/index[\s\S]{0,80}(?:required|not[\s_-]*exist|missing|create|not found)|索引[\s\S]{0,30}(?:缺少|不存在|创建)|(?:缺少|创建)[\s\S]{0,30}索引/i.test(text))return 'INDEX_REQUIRED'
+ if(/permission|access denied|not authorized|forbidden|权限|无权/i.test(text))return 'ACCESS_DENIED'
+ return 'CHECK_DATABASE_LOG'
+}
+function failureDiagnostic(error,action){
+ const diagnostic={serviceBuild:SERVICE_BUILD,action:safeLabel(action),code:safeLabel(error?.code,'INTERNAL')}
+ if(error?.accountDataDatabase){
+  diagnostic.collection=safeLabel(error.accountDataDatabase.collection)
+  diagnostic.operation=safeLabel(error.accountDataDatabase.operation)
+  diagnostic.reason=databaseReason(error)
+ }
+ const requestId=String(error?.requestId||error?.reqId||error?.requestID||'')
+ if(/^[A-Za-z0-9-]{1,80}$/.test(requestId))diagnostic.requestId=requestId
+ return diagnostic
+}
+
 const actions=require('./action-rewards.js')
 const crypto = require('node:crypto')
 const idFor = (...parts) => crypto.createHash('sha256').update(parts.join(':')).digest('hex')
@@ -96,7 +126,7 @@ async function reviewNickname(name){
  }finally{clearTimeout(timer)}
 }
 
-async function read(db, collection, id) { return first(await db.collection(collection).doc(id).get()) }
+async function read(db, collection, id) { return first(await databaseStep(collection,'read',()=>db.collection(collection).doc(id).get())) }
 
 function membershipFor(row, at=Date.now()) {
   const raw=row?.membership||row?.state?.membership||{}
@@ -165,9 +195,9 @@ async function commit(db, collection, id, uid, version, payload, kind) {
     const revision = Number(existing && existing.revision || 0)
     if (!Number.isSafeInteger(version) || version !== revision) fail('SYNC_CONFLICT','云端数据已有更新，本机副本已保留，请重新读取后同步')
     if (existing) {
-      await tx.collection('data_backups').doc(idFor(collection,id,revision)).set({
+      await databaseStep('data_backups','snapshot-backup',()=>tx.collection('data_backups').doc(idFor(collection,id,revision)).set({
         userId: uid, kind, originalId: id, revision, savedAt: Date.now(), snapshot: existing,
-      })
+      }))
     }
     const row = { ...payload, userId: uid, revision: revision + 1, updatedAt: Date.now() }
     if(collection==='user_states'){
@@ -177,7 +207,7 @@ async function commit(db, collection, id, uid, version, payload, kind) {
       row.membership=membershipFor(existing)
       if(row.state)row.state={...row.state,profile:reviewedProfile(existing,row.state.profile),membership:row.membership}
     }
-    await tx.collection(collection).doc(id).set(row)
+    await databaseStep(collection,'save',()=>tx.collection(collection).doc(id).set(row))
     return row
   })
 }
@@ -281,6 +311,8 @@ async function settleAI(db,uid,reservation,success){
 
 function createHandler({ db, identity, moderate = review, moderateNickname = reviewNickname, generateAIReply = generateAI, now = ()=>Date.now() }) {
   return async event => {
+    // Read-only deployment marker for console tests. No identity or database data is returned.
+    if(event?.action==='service.info')return {ok:true,serviceBuild:SERVICE_BUILD,capabilities:['profile.nickname','posts.submit','posts.public','ai.chat','bootstrap'],chatMaxTokens:500}
     try {
       const account = await identity()
       if (!account || !account.uid) fail('AUTH_REQUIRED','登录已失效，请重新登录后同步')
@@ -399,7 +431,7 @@ function createHandler({ db, identity, moderate = review, moderateNickname = rev
         const where = publicFeed ? {status:'approved',deleted:false} : {ownerId:uid,deleted:false}
         if (publicFeed && ['doing','settled'].includes(event.journey)) where.journey = event.journey
         const cursor = Math.max(0,Number(event.cursor)||0)
-        const result = await db.collection('community_posts').where(where).orderBy('createdAt','desc').skip(cursor).limit(50).get()
+        const result = await databaseStep('community_posts','list',()=>db.collection('community_posts').where(where).orderBy('createdAt','desc').skip(cursor).limit(50).get())
         const rows = result.data || []
         const authors=new Map()
         for(const post of rows)if(post.ownerId&&!authors.has(post.ownerId))authors.set(post.ownerId,read(db,'user_states',idFor('state',post.ownerId)))
@@ -442,16 +474,16 @@ function createHandler({ db, identity, moderate = review, moderateNickname = rev
         await db.runTransaction(async tx=>{
           const prior=await read(tx,'community_posts',id)
           if(prior && prior.ownerId!==uid) fail('FORBIDDEN','经历归属异常')
-          if(prior) await tx.collection('data_backups').doc(idFor('post',id,attempt)).set({userId:uid,kind:'post-edit',savedAt:Date.now(),snapshot:prior})
-          await tx.collection('community_posts').doc(id).set(post)
+          if(prior) await databaseStep('data_backups','post-backup',()=>tx.collection('data_backups').doc(idFor('post',id,attempt)).set({userId:uid,kind:'post-edit',savedAt:Date.now(),snapshot:prior}))
+          await databaseStep('community_posts','post-save',()=>tx.collection('community_posts').doc(id).set(post))
         })
         let verdict
         try { verdict=await moderate(post); if(typeof verdict.approved!=='boolean')throw Error('Invalid verdict') }
         catch(error) { verdict={failed:true,approved:false,reason:'内容已保存，审核服务暂时不可用，请重试审核'} }
         const status=verdict.failed?'review_failed':verdict.approved?'approved':'rejected'
-        await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({
+        await databaseStep('community_posts','review-status-save',()=>db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({
           status,reviewStatus:status,reviewReason:String(verdict.reason||'').slice(0,160),reviewedAt:Date.now(),updatedAt:Date.now(),
-        })
+        }))
         let latest=await read(db,'community_posts',id),rewardResult={}
         if(latest?.status==='approved'&&latest.reviewAttempt===attempt){
           const prior=latest.approvedContent,current={title:latest.title,content:latest.content,timeline:latest.timeline},fresh=!latest.firstPublishedAt,firstPublishedAt=latest.firstPublishedAt||now(),hash=idFor(JSON.stringify(current))
@@ -460,7 +492,7 @@ function createHandler({ db, identity, moderate = review, moderateNickname = rev
           for(let i=0;i<Math.min(before.length,after.length);i++)if(before[i]!==after[i])difference++
           const changed=prior&&(difference>=30||JSON.stringify(prior.timeline)!==JSON.stringify(current.timeline))
           const pendingActionReward=latest.pendingActionReward||(fresh?{kind:'publish',hash,firstPublishedAt}:changed?{kind:'edit',hash,firstPublishedAt}:null)
-          await db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({firstPublishedAt,approvedContent:current,pendingActionReward})
+          await databaseStep('community_posts','publication-save',()=>db.collection('community_posts').where({_id:id,ownerId:uid,reviewAttempt:attempt,deleted:false}).update({firstPublishedAt,approvedContent:current,pendingActionReward}))
           rewardResult=await rewardResponse(async()=>await settlePostReward(db,uid,id,now(),attempt)||await actions.wallet(db,uid,now()));latest=await read(db,'community_posts',id)
         }
         return {ok:true,uid,post:latest,...rewardResult}
@@ -485,9 +517,10 @@ function createHandler({ db, identity, moderate = review, moderateNickname = rev
       }
       fail('UNKNOWN_ACTION','数据服务操作不存在')
     } catch(error) {
-      console.error('[account-data]',error.code||'INTERNAL')
-      return {ok:false,code:error.code||'DATA_SERVICE_ERROR',message:error.code?error.message:'数据服务暂时不可用，未确认保存成功'}
+      const diagnostic=failureDiagnostic(error,event?.action)
+      console.error('[account-data]',JSON.stringify(diagnostic))
+      return {ok:false,code:error.code||'DATA_SERVICE_ERROR',message:error.accountDataDatabase||String(error.code||'').startsWith('DATABASE_')?'数据库操作失败，请根据诊断信息查看对应集合与云函数日志':error.code?error.message:'数据服务暂时不可用，未确认保存成功',diagnostic}
     }
   }
 }
-module.exports={createHandler}
+module.exports={createHandler,SERVICE_BUILD}
