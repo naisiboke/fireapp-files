@@ -53,14 +53,28 @@ export function accountTransportError(cause,stage='invoke') {
   const knownCollections=new Set(['user_states','user_collections','data_backups','community_posts','action_rewards','vip_codes','vip_redemptions','account_deletion_requests'])
   const knownOperations=new Set(['read','list','snapshot-backup','save','post-backup','post-save','review-status-save','publication-save'])
   const diagnostic=cause&&cause.diagnostic
+  const reasons={COLLECTION_MISSING:'缺少集合',INDEX_REQUIRED:'需配置索引',ACCESS_DENIED:'访问权限不足',CHECK_DATABASE_LOG:'请查云函数日志'}
+  const safeDiagnostic={}
+  if(diagnostic&&typeof diagnostic==='object'){
+    if(knownCollections.has(diagnostic.collection)&&knownOperations.has(diagnostic.operation)){
+      safeDiagnostic.collection=diagnostic.collection
+      safeDiagnostic.operation=diagnostic.operation
+      if(Object.prototype.hasOwnProperty.call(reasons,diagnostic.reason))safeDiagnostic.reason=diagnostic.reason
+    }
+    for(const key of ['serviceBuild','action','requestId']){
+      if(typeof diagnostic[key]==='string'&&/^[A-Za-z0-9_.:-]{1,80}$/.test(diagnostic[key]))safeDiagnostic[key]=diagnostic[key]
+    }
+  }
   let detail=''
-  if(code==='DATABASE_REQUEST_FAILED'&&knownCollections.has(diagnostic&&diagnostic.collection)&&knownOperations.has(diagnostic&&diagnostic.operation)){
-    const reasons={COLLECTION_MISSING:'缺少集合',INDEX_REQUIRED:'需配置索引',ACCESS_DENIED:'访问权限不足',CHECK_DATABASE_LOG:'请查云函数日志'}
-    detail='；'+diagnostic.collection+' / '+diagnostic.operation
-    if(reasons[diagnostic.reason])detail+='：'+reasons[diagnostic.reason]
+  if(code==='DATABASE_REQUEST_FAILED'&&safeDiagnostic.collection){
+    detail='；'+safeDiagnostic.collection+' / '+safeDiagnostic.operation
+    if(safeDiagnostic.reason)detail+='：'+reasons[safeDiagnostic.reason]
   }
   const error=new Error((messages[code]||'云端连接失败，本机记录已保留，请稍后重试')+detail+'（'+code+'）')
   error.code=code
   error.stage=stage
+  // invokeAccountData and callAccountData both normalize errors. Keep only the
+  // approved metadata so a second pass retains the database step without raw payloads.
+  if(Object.keys(safeDiagnostic).length)error.diagnostic=safeDiagnostic
   return error
 }

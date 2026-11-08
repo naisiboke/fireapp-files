@@ -94,4 +94,17 @@ check(database.message.includes('data_backups')&&database.message.includes('缺�
 const unsafe=accountTransportError({code:'DATABASE_REQUEST_FAILED',diagnostic:{collection:'private_token_12345',operation:'password',reason:'private-user'}})
 check(!unsafe.message.includes('private_token_12345')&&!unsafe.message.includes('password'),'unrecognized diagnostics do not expose arbitrary server text')
 check(accountTransportError({code:'NICKNAME_REJECTED'}).message.includes('未通过审核'),'nickname refusal is explained as review outcome')
+const wrapped=accountTransportError(database,'response')
+check(wrapped.message===database.message&&wrapped.diagnostic.collection==='data_backups'&&wrapped.diagnostic.operation==='post-backup','second transport normalization preserves database-step explanation')
+const wrappedAgain=accountTransportError(wrapped,'invoke')
+check(wrappedAgain.message===database.message&&wrappedAgain.diagnostic.reason==='COLLECTION_MISSING','repeated wrappers do not erase or duplicate diagnostic text')
+const metadata=accountTransportError({code:'DATABASE_REQUEST_FAILED',diagnostic:{collection:'community_posts',operation:'review-status-save',reason:'INDEX_REQUIRED',serviceBuild:SERVICE_BUILD,action:'posts.submit',requestId:'db-request-123',token:'private-token',content:'private-content',ownerId:'private-user'}})
+check(metadata.diagnostic.serviceBuild===SERVICE_BUILD&&metadata.diagnostic.action==='posts.submit'&&metadata.diagnostic.requestId==='db-request-123','approved deployment metadata survives normalization')
+check(!JSON.stringify(metadata.diagnostic).includes('private-'),'unknown payload fields stripped from preserved metadata')
+check(!unsafe.diagnostic,'invalid collection and operation are not retained')
+for(const bad of ['constructor','__proto__','toString','private-user']){
+ const result=accountTransportError({code:'DATABASE_REQUEST_FAILED',diagnostic:{collection:'community_posts',operation:'post-save',reason:bad,serviceBuild:'private token',requestId:'bad request'}})
+ check(!result.diagnostic.reason&&!result.diagnostic.serviceBuild&&!result.diagnostic.requestId&&!result.message.includes('[object '),'diagnostic whitelist rejects unsafe reason and labels '+bad)
+}
+
 console.log('Deployment marker and database-step diagnostics: '+checks+' checks passed')
