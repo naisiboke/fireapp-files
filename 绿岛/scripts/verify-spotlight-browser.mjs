@@ -139,7 +139,7 @@ async function geometry(page,top,bottom){
  check(b.bubble.bottom<=b.hole.top-8||b.bubble.top>=b.hole.bottom+8,'bubble does not cover target')
  check(b.skip.top>=top+11,'skip clears status bar')
  check(b.hole.left<=b.target.left+1&&b.hole.right>=b.target.right-1,'hole includes target horizontally')
- check(b.hole.top<=b.target.top+1&&b.hole.bottom>=b.target.bottom-1,'hole includes target vertically')
+ check(b.hole.top<=b.target.top+1&&b.hole.bottom>=b.target.bottom-1,'hole includes target vertically '+JSON.stringify({viewport:v,top,bottom,boxes:b,step:await page.evaluate(()=>window.tour.step())}))
 }
 async function preview(page,name){screens.push([name,(await page.screenshot({type:'jpeg',quality:72})).toString('base64')])}
 try{
