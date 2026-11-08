@@ -45,7 +45,7 @@ window.uni={
  createSelectorQuery(){let context=null,selector='';const tasks=[],api={
  in(v){context=v;return api},select(v){selector=v;return api},selectViewport(){return api},
  boundingClientRect(cb){const key=selector;tasks.push(()=>{const host=context?.$el instanceof Element?context.$el:document;const el=host.matches?.(key)?host:host.querySelector(key);cb(el?el.getBoundingClientRect().toJSON():null)});return api},
- scrollOffset(cb){tasks.push(()=>cb({scrollTop:scrollY}));return api},exec(){requestAnimationFrame(()=>tasks.forEach(task=>task()));return api}
+ scrollOffset(cb){tasks.push(()=>cb({scrollTop:scrollY}));return api},exec(){if(window.delayMeasure)setTimeout(()=>tasks.forEach(task=>task()),200);else requestAnimationFrame(()=>tasks.forEach(task=>task()));return api}
  };return api}
 }
 put('fire_login_status',true);if(!localStorage.getItem('fire_account_uid'))put('fire_account_uid','A')
@@ -176,6 +176,11 @@ try{
  check('keyboard keeps panel and submit within available height',panel.y>=47+11&&submit.y+submit.height<=520+1)
  await screenshot(p,'BUDGET_KEYBOARD_HEIGHT')
  await p.setViewportSize({width:390,height:844});await p.evaluate(()=>uni.emitKeyboard(0));await p.evaluate(()=>test.back());await closed(p)
+ await p.locator('#quiet-entry-fab').click();await formFill(p,'99','切换中不能保存')
+ const beforeSwitch=await p.evaluate(()=>test.state.ledger.length)
+ await p.evaluate(()=>{window.delayMeasure=true;test.vm.submitRecord();test.account('B');test.account('A')});await p.waitForTimeout(300)
+ check('account round-trip invalidates an older pending save',await p.evaluate(()=>test.state.ledger.length)===beforeSwitch)
+ await p.evaluate(()=>{window.delayMeasure=false;test.vm.saving=false;test.vm.closeEntrySheet()});await closed(p)
  await p.locator('.qe-month-step').first().click();await p.locator('.qe-sheet-mask').waitFor()
  check('history uses its own month plans and records',await p.evaluate(()=>test.vm.month==='2026-10'&&test.vm.records.length===0&&!test.vm.targetsReady))
  await p.evaluate(()=>test.back());await closed(p)

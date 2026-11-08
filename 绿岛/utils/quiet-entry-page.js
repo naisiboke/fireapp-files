@@ -36,7 +36,8 @@ export const quietEntryPageMixin={
    this.pageStyle={'--entry-height':(Number(info.windowHeight)||844)+'px','--entry-safe-bottom':Math.max(0,Number(info.safeAreaInsets?.bottom)||0)+'px'}
   },
   refreshEntryArrow(){if(this.entryVisible&&this.$refs.emptyGuide)this.$refs.emptyGuide.pointAt(this,'#quiet-entry-fab')},
-  entryCanSave(){return this.entryVisible&&!!accountId()&&uni.getStorageSync('fire_login_status')===true&&this.entryOwner===accountId()&&!['restoring','conflict','auth-required'].includes(this.state.cloudSync?.status)},
+  entryOperation(){return{epoch:session(this).epoch,uid:accountId()}},
+  entryCanSave(operation){return (!operation||(operation.epoch===session(this).epoch&&operation.uid===accountId()))&&this.entryVisible&&!!accountId()&&uni.getStorageSync('fire_login_status')===true&&this.entryOwner===accountId()&&!['restoring','conflict','auth-required'].includes(this.state.cloudSync?.status)},
   entryIsFirst(kind){try{return uni.getStorageSync(accountKey('fire_first_entry_'+kind))!==true}catch(ignore){return false}},
   rememberEntry(kind){try{uni.setStorageSync(accountKey('fire_first_entry_'+kind),true)}catch(ignore){}},
   async animateEntry(id,selector,title,amount,first,origin,options={}){

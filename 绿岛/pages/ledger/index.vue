@@ -119,8 +119,8 @@ export default{
    if(!this.entryCanSave()){this.errorText='账号或同步状态已变化，请稍后重新打开';return}
    if(!this.editingId&&!this.targetsReady){this.showAdd=false;this.toggleBudget();return}
    this.saving=true;this.errorText=''
-   const uid=accountId(),origin=await measureEntryTarget(this,'#quiet-entry-fab')
-   if(uid!==accountId()||!this.entryCanSave()){this.saving=false;this.errorText='账号已变化，当前输入已保留';return}
+   const operation=this.entryOperation(),uid=accountId(),origin=await measureEntryTarget(this,'#quiet-entry-fab')
+   if(uid!==accountId()||!this.entryCanSave(operation)){this.saving=false;this.errorText='账号已变化，当前输入已保留';return}
    const wasEmpty=!this.records.length,first=!(state.ledger||[]).length&&this.entryIsFirst('ledger'),wasEditing=!!this.editingId
    const record=commitLedgerRecord(state,this.month,{...this.draft,...(this.editingId?{id:this.editingId}:{})},persistNow)
    if(!record){this.saving=false;this.errorText='保存失败，请检查金额、日期和设备存储后重试';return}
@@ -130,9 +130,9 @@ export default{
    else this.animateEntry(record.id,'#'+this.rowId(record.id),record.note||this.catLabel(record),(record.type==='income'?'+':'−')+'¥'+this.money(record.cents/100),first,origin,{tip:'第一笔已记下',leaving:wasEmpty})
   },
   async confirmDelete(record){
-   if(!record||this.saving)return;const uid=accountId(),id=record.id
+   if(!record||this.saving)return;const operation=this.entryOperation(),uid=accountId(),id=record.id
    const result=await showDialog({title:'删除这笔记录？',content:(record.note||this.catLabel(record))+' · ¥'+this.money(record.cents/100)+'。删除后无法恢复。',confirmText:'删除',danger:true})
-   if(!result.confirm||uid!==accountId()||!this.entryCanSave())return
+   if(!result.confirm||uid!==accountId()||!this.entryCanSave(operation))return
    if(!removeLedgerRecord(state,id,persistNow)){this.errorText='删除未保存，请检查设备存储后重试';return}
    this.closeEntrySheet();this.resetEntryDraft();clearOptionsDraft(this);showNotice({title:'已删除',icon:'none'});this.$nextTick(()=>this.refreshEntryArrow())
   },

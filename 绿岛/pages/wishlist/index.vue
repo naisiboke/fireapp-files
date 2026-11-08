@@ -67,14 +67,14 @@ export default{
    if(this.saving||!this.showAdd)return
    if(!this.entryCanSave()){this.error='账号或同步状态已变化，请稍后重新打开';return}
    this.saving=true;this.error=''
-   const uid=accountId(),origin=await measureEntryTarget(this,'#quiet-entry-fab')
-   if(uid!==accountId()||!this.entryCanSave()){this.saving=false;this.error='账号已变化，当前输入已保留';return}
+   const operation=this.entryOperation(),uid=accountId(),origin=await measureEntryTarget(this,'#quiet-entry-fab')
+   if(uid!==accountId()||!this.entryCanSave(operation)){this.saving=false;this.error='账号已变化，当前输入已保留';return}
    const first=!(state.items||[]).length&&this.entryIsFirst('wishlist'),result=createWishlist(state,this.form,persistNow)
    if(!result){this.saving=false;this.error='请检查名称、金额和冷静期，并确认设备存储可用';return}
    this.rememberEntry('wishlist');this.filter='active';this.saving=false;this.closeEntrySheet();this.resetEntryDraft();clearOptionsDraft(this)
    this.animateEntry(result.id,'#'+this.rowId(result.id),result.name,'¥'+this.money(result.amount),first,origin,{tip:'第一件心愿已添加',leaving:first})
   },
-  async removeItem(item){if(this.deleting)return;this.deleting=true;const uid=accountId(),id=String(item.id);try{const result=await showDialog({title:'删除消费计划？',content:'删除后无法恢复，也不会保留在省下金额中。',confirmText:'删除',danger:true});if(!result.confirm||uid!==accountId()||!this.entryCanSave())return;showNotice({title:removeWishlist(state,id,persistNow)?'已删除':'保存失败，请重试',icon:'none'});this.$nextTick(()=>this.refreshEntryArrow())}finally{this.deleting=false}},
+  async removeItem(item){if(this.deleting)return;this.deleting=true;const operation=this.entryOperation(),uid=accountId(),id=String(item.id);try{const result=await showDialog({title:'删除消费计划？',content:'删除后无法恢复，也不会保留在省下金额中。',confirmText:'删除',danger:true});if(!result.confirm||uid!==accountId()||!this.entryCanSave(operation))return;showNotice({title:removeWishlist(state,id,persistNow)?'已删除':'保存失败，请重试',icon:'none'});this.$nextTick(()=>this.refreshEntryArrow())}finally{this.deleting=false}},
  },
 }
 </script>
