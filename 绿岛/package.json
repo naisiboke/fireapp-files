@@ -13,7 +13,8 @@
     "@dcloudio/uni-app": "3.0.0-4070620250821001",
     "@dcloudio/uni-h5": "3.0.0-4070620250821001",
     "vue": "3.4.21",
-    "@cloudbase/js-sdk": "2.27.3"
+    "@cloudbase/js-sdk": "2.27.3",
+    "vue-router": "4.5.1"
   },
   "devDependencies": {
     "@dcloudio/vite-plugin-uni": "3.0.0-4070620250821001",

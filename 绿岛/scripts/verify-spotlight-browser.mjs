@@ -7,6 +7,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url'
 const tools=process.env.SPOTLIGHT_TOOLS||'/tmp/fire-spotlight-tools'
 const root=path.resolve(fileURLToPath(new URL('..',import.meta.url)))
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'fire-spotlight-'))
+const testTimer=setTimeout(()=>{console.error('Browser test exceeded deadline');process.exit(1)},180000)
 const {createServer}=await import(pathToFileURL(path.join(tools,'node_modules/vite/dist/node/index.js')))
 const {default:vue}=await import(pathToFileURL(path.join(tools,'node_modules/@vitejs/plugin-vue/dist/index.mjs')))
 const {chromium}=await import(pathToFileURL(path.join(tools,'node_modules/playwright/index.mjs')))
@@ -19,6 +20,7 @@ fs.writeFileSync(path.join(temp,'main.js'),`
 import {createApp} from 'vue'
 import App from './Harness.vue'
 const q=new URLSearchParams(location.search)
+document.documentElement.style.setProperty('--test-bottom',Number(q.get('bottom')||34)+'px')
 window.routes=[];window.storageFail=false
 window.uni={
  getStorageSync(key){const v=localStorage.getItem(key);return v===null?'':JSON.parse(v)},
@@ -100,6 +102,7 @@ export default{
 <style>${homeStyle}
 html,body{margin:0;background:#fafbf7;color:#243830;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans CJK SC",sans-serif;font-size:14px}view{display:block}text{display:inline}button{font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 .page{min-height:100vh;box-sizing:border-box;padding:calc(var(--fire-status-top) + 12px) 16px 90px;background:linear-gradient(155deg,#315e4d 0,#c6d5c5 220px,#fafbf7 440px)}
+.bottom-tabs{height:calc(60px + var(--test-bottom))!important;padding-bottom:calc(6px + var(--test-bottom))!important}.quick-menu{bottom:calc(36px + var(--test-bottom))!important}@media(max-width:390px){.bottom-tabs{height:calc(56px + var(--test-bottom))!important;padding-bottom:calc(4px + var(--test-bottom))!important}.quick-menu{bottom:calc(32px + var(--test-bottom))!important}}
 .test-status{position:absolute;left:21px;right:21px;top:12px;display:flex;justify-content:space-between;font-weight:600;color:#fff}
 .masthead-title{display:block;font-size:25px;font-weight:650;line-height:1.4;color:#fff}.masthead-date{display:block;font-size:13px;margin-top:5px;color:#eff3ed}
 .freedom-summary{margin-top:42px;margin-bottom:24px}.eyebrow{display:block;font-size:15px;color:#35533f}.hero-title{display:block;font-size:28px;font-weight:650;margin-top:8px;line-height:1.35}.hero-description{display:block;margin:12px 0 18px;color:#566b5b;line-height:1.5}.btn-primary{width:100%;height:48px;border:0;border-radius:12px;background:#243f33;color:white;font-size:16px}.plan-link{display:inline-block;padding:10px 0;min-height:24px}
@@ -121,6 +124,8 @@ const server=await createServer({
 await server.listen()
 const browser=await chromium.launch({headless:true})
 const errors=[],screens=[]
+const originalContext=browser.newContext.bind(browser)
+browser.newContext=async options=>{const c=await originalContext(options);c.setDefaultTimeout(12000);return c}
 let checks=0
 const check=(value,message)=>{assert.ok(value,message);checks++}
 const settle=page=>page.waitForFunction(()=>!!document.querySelector('.fire-spotlight-next')&&!window.tour.busy())
@@ -133,12 +138,13 @@ async function geometry(page,top,bottom){
  check(b.bubble.left>=15&&b.bubble.right<=v.width-15&&b.bubble.top>=top+59&&b.bubble.bottom<=v.height-bottom+1,'bubble fits viewport '+JSON.stringify(b))
  check(b.bubble.bottom<=b.hole.top-8||b.bubble.top>=b.hole.bottom+8,'bubble does not cover target')
  check(b.skip.top>=top+11,'skip clears status bar')
- check(b.hole.left<=b.target.left+1&&b.hole.right>=b.target.right-1,'hole includes target')
+ check(b.hole.left<=b.target.left+1&&b.hole.right>=b.target.right-1,'hole includes target horizontally')
+ check(b.hole.top<=b.target.top+1&&b.hole.bottom>=b.target.bottom-1,'hole includes target vertically')
 }
 async function preview(page,name){screens.push([name,(await page.screenshot({type:'jpeg',quality:72})).toString('base64')])}
 try{
  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1})
- const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message))
+ const page=await context.newPage();page.on('pageerror',e=>{errors.push(e.message);console.error('BROWSER ERROR',e.message)});page.on('console',m=>{if(m.type()==='error')console.error('BROWSER CONSOLE',m.text())})
  await page.goto('http://127.0.0.1:5187/?auto=false')
  await page.waitForFunction(()=>!!window.tour)
  const before=PNG.sync.read(await page.screenshot())
@@ -206,4 +212,4 @@ try{
  check(errors.length===0,'browser runtime errors: '+errors.join('; '))
  console.log(checks+' browser interaction, geometry, persistence and accessibility checks passed')
  for(const [name,data]of screens){console.log(name+'_PREVIEW_BEGIN');for(let n=0;n<data.length;n+=1000)console.log(data.slice(n,n+1000));console.log(name+'_PREVIEW_END')}
-}finally{await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}
+}finally{clearTimeout(testTimer);await browser.close();await server.close();fs.rmSync(temp,{recursive:true,force:true})}
