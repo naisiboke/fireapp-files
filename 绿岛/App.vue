@@ -7,7 +7,7 @@ import { currentPageRoute } from './utils/session-drafts.js'
 import { beginWishlistVisit, maybePromptWishlist } from './utils/wishlist-reminder.js'
 import { feedbackState, showNotice } from './utils/feedback.js'
 
-const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register', 'pages/guide/index'])
+const PUBLIC_ROUTES = new Set(['pages/launch/index', 'pages/onboarding/onboarding', 'pages/login/login', 'pages/register/register', 'pages/guide/index', 'pages/privacy/index', 'pages/terms/index'])
 
 export default {
   onLaunch() {

@@ -2,113 +2,117 @@
   <view class="personality-page fire-page-personality-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="head"><view class="back" @tap="back">‹</view><text class="title">人格测试</text><view class="close" @tap="close">×</view></view>
-    <view v-if="!started && !finished" class="chooser">
+    <view v-if="!started && !finished && !manualOpen" class="chooser">
       <text class="hero-title">认识自己的行为方式</text><text class="hero-sub">选择一个测试开始，完成后可在应用内获取结合个人情况的 AI 建议。</text>
       <view class="test-card" @tap="start('bigfive')"><text class="test-name">大五人格 · 50题</text><text class="test-desc">开放性、尽责性、外向性、宜人性、情绪稳定性</text><text class="arrow">›</text></view>
-      <view class="test-card" @tap="start('mbti')"><text class="test-name">MBTI · 100题</text><text class="test-desc">从四组偏好了解你的思考和行动方式</text><text class="arrow">›</text></view>
+      <view class="test-card mbti-card"><text class="test-name">MBTI</text><text class="test-desc">已知类型可直接填写，也可以答题观察偏好</text><view class="mbti-actions"><button class="mbti-manual" @tap="openManual">我知道自己的类型</button><button class="mbti-quiz" @tap="start('mbti')">开始答题 · 100题</button></view></view>
       <view v-if="savedBigFive || savedMbti" class="my-personality">
         <view class="my-personality-head"><text class="my-personality-title">我的性格</text><text class="my-personality-sub">最近一次测试结果</text></view>
-        <view v-if="savedMbti" class="saved-result"><text class="saved-title">{{ savedMbti.title }}</text><text class="saved-summary">{{ savedMbti.summary }}</text><text v-if="savedMbti.detail" class="saved-detail">{{ savedMbti.detail }}</text><view v-for="row in (savedMbti.rows || [])" :key="'m-'+row.name" class="saved-row"><view class="saved-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="saved-bar"><view :style="{width:row.score+'%'}"></view></view><text class="saved-copy">{{ row.copy }}</text></view></view>
-        <view v-if="savedBigFive" class="saved-result"><text class="saved-title">{{ savedBigFive.title }}</text><text class="saved-summary">{{ savedBigFive.summary }}</text><view v-for="row in (savedBigFive.rows || [])" :key="'b-'+row.name" class="saved-row"><view class="saved-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="saved-bar"><view :style="{width:row.score+'%'}"></view></view><text class="saved-copy">{{ row.copy }}</text></view></view>
+        <view v-if="savedMbti" class="saved-result"><text class="result-source">{{savedMbti.source==='self_reported'?'自行填写':'答题结果'}}</text><text v-if="savedMbti.scoringVersion!==QUESTION_VERSION && savedMbti.source!=='self_reported'" class="legacy-result-note">此结果来自旧版问卷，可重新测试更新。</text><text class="saved-title">{{ savedMbti.title }}</text><text class="saved-summary">{{ savedMbti.summary }}</text><text v-if="savedMbti.detail" class="saved-detail">{{ savedMbti.detail }}</text><view v-for="row in (savedMbti.rows || [])" :key="'m-'+row.name" class="saved-row"><view class="saved-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="saved-bar"><view :style="{width:row.score+'%'}"></view></view><text class="saved-copy">{{ row.copy }}</text></view></view>
+        <view v-if="savedBigFive" class="saved-result"><text v-if="savedBigFive.scoringVersion!==QUESTION_VERSION" class="legacy-result-note">此结果来自旧版问卷，可重新测试更新。</text><text class="saved-title">{{ savedBigFive.title }}</text><text class="saved-summary">{{ savedBigFive.summary }}</text><view v-for="row in (savedBigFive.rows || [])" :key="'b-'+row.name" class="saved-row"><view class="saved-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="saved-bar"><view :style="{width:row.score+'%'}"></view></view><text class="saved-copy">{{ row.copy }}</text></view></view>
       </view>
       <text class="notice">完成的测试结果会保存在「我的性格」，可返回查看。</text>
+    </view>
+    <view v-else-if="manualOpen" class="manual-panel">
+      <text class="hero-title">填写我的 MBTI</text><text class="hero-sub">例如 INFP、ENTJ。只填写类型，不生成测试分数。</text>
+      <input class="mbti-input" v-model="manualType" maxlength="8" aria-label="我的 MBTI 类型" placeholder="例如 INFP" :disabled="savingManual"/>
+      <text v-if="manualError" class="assessment-error" role="alert">{{manualError}}</text>
+      <button class="manual-save" :disabled="savingManual" @tap="saveManual">保存类型</button>
+      <button class="manual-cancel" @tap="back">返回</button>
     </view>
     <view v-else-if="started && !finished" class="quiz">
       <view class="quiz-meta"><text>{{ type==='bigfive'?'大五人格':'MBTI' }}</text><text>{{ index + 1 }} / {{ questions.length }}</text></view>
       <view class="bar"><view :style="{width:((index+1)/questions.length*100)+'%'}"></view></view>
-      <view class="question-card"><text class="question">{{ questions[index].text }}</text><text class="question-tip">请选择最符合你的程度</text></view>
-      <view class="answers"><view v-for="item in scale" :key="item.value" class="answer" @tap="answer(item.value)"><text>{{ item.label }}</text></view></view>
+      <view class="question-card"><text class="question">{{ questions[index].text }}</text><text class="question-tip">按最近几个月的通常表现选择，没有好坏之分</text></view>
+      <view class="answers"><view v-for="item in scale" :key="item.value" class="answer" role="button" :class="{selected:answers[index]===item.value}" :aria-disabled="answerLocked" @tap="answer(item.value)"><text>{{ item.label }}</text></view></view>
     </view>
-    <view v-else class="result">
+    <view v-else class="result"><text v-if="result?.source==='self_reported'" class="result-source">自行填写</text><text v-if="result?.qualityWarning" class="assessment-error">{{result.qualityWarning}}</text>
       <text class="result-kicker">{{ type==='bigfive'?'大五人格结果':'MBTI 结果' }}</text>
       <text class="result-type">{{ resultTitle }}</text>
       <text class="result-summary">{{ resultSummary }}</text><text v-if="resultDetail" class="result-detail">{{ resultDetail }}</text>
       <view v-for="row in resultRows" :key="row.name" class="result-row"><view class="result-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="result-bar"><view :style="{width:row.score+'%'}"></view></view><text class="result-copy">{{ row.copy }}</text></view>
       <view class="result-note">结果已保存在「我的性格」。你可以在应用内让 AI 结合财务情况和性格结果提供建议。</view>
-      <view class="result-actions"><view class="again" @tap="start(type)">重新测试</view><view class="done" @tap="close">完成</view></view>
+      <view class="result-actions"><view class="again" @tap="result?.source==='self_reported'?openManual():start(type)">{{result?.source==='self_reported'?'修改类型':'重新测试'}}</view><view class="done" @tap="close">完成</view></view>
     </view>
   </view>
 </template>
 <script setup>
-import { useSessionDraft } from '@/utils/session-drafts.js'
-import { pageLayoutStyle } from '@/utils/page-layout.js'
+import {computed,ref,onBeforeUnmount} from 'vue'
+import {onLoad,onBackPress} from '@dcloudio/uni-app'
+import {useSessionDraft} from '@/utils/session-drafts.js'
+import {pageLayoutStyle} from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'
-import { useFeedbackPage } from '@/utils/feedback-page.js'
-const feedbackOwnerId = useFeedbackPage()
-import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { state, persist } from '@/store/index.js'
-import { savePersonalityResult } from '@/utils/personality-store.js'
+import {useFeedbackPage} from '@/utils/feedback-page.js'
+import {showNotice,dismissFeedback} from '@/utils/feedback.js'
+import {state,persist} from '@/store/index.js'
+import {savePersonalityResult} from '@/utils/personality-store.js'
+import {QUESTION_VERSION,BIG_FIVE_QUESTIONS,MBTI_QUESTIONS,scorePersonality,validMbti,manualMbtiResult} from '@/utils/personality-assessment.js'
+const feedbackOwnerId=useFeedbackPage({handleBack:false})
 const scale=[{value:1,label:'非常不像我'},{value:2,label:'不太像我'},{value:3,label:'一般'},{value:4,label:'比较像我'},{value:5,label:'非常像我'}]
-const bigTemplates={
- openness:['我喜欢接触陌生的观点和知识','我会主动尝试新的生活方式','我常常从不同角度思考问题','艺术、音乐或文字容易引起我的兴趣','我喜欢想象未来的各种可能','我愿意改变原有的做法','我对抽象问题有耐心','我会把日常经历联想到更大的主题','我喜欢探索不熟悉的地方','我能欣赏与自己不同的审美'],
- conscientiousness:['我会提前安排重要的事情','我通常能按计划完成任务','我会把物品和资料整理好','开始行动前我会确认细节','我能长期坚持一个目标','我会为自己的承诺负责','我习惯记录需要完成的事项','遇到困难时我会继续推进','我会复盘自己的决定','我做事时很少拖到最后'],
- extraversion:['和新认识的人交谈对我来说不难','我喜欢参加有人的活动','我会主动表达自己的想法','热闹的环境通常让我感到有能量','我愿意在团队中承担带头角色','我常常主动联系朋友','我喜欢把开心的事情分享出来','我在群体中容易找到存在感','我能自然地开启一段对话','长时间独处会让我想找人聊天'],
- agreeableness:['我会认真倾听别人的感受','别人需要帮助时我愿意搭把手','我会尽量避免无意义的争执','我容易理解别人为什么这样做','我愿意给别人留出余地','我在合作中重视彼此的感受','即使不同意我也会保持尊重','我会关注自己的话是否伤人','我愿意先寻找共同点','我通常相信别人是善意的'],
- stability:['遇到突发情况时我能保持冷静','我能较快从不愉快中恢复','压力大时我仍能分清轻重','我不会长时间反复担心同一件事','我能接受计划临时改变','面对批评时我可以客观看待','我的情绪通常比较稳定','我能在忙乱中保持清晰','我会用实际行动处理焦虑','睡前我不太会被琐事困扰']
-}
-const mbtiGroups=[
- {axis:'EI',positive:'E',items:['我通常会主动认识新朋友','我喜欢和别人一起讨论想法','团队活动会让我更有动力','我习惯把想法说出来再整理','我喜欢在热闹环境中工作','遇到问题我会找人商量','我愿意在群体中承担发言角色','社交后我通常感觉更有能量','我会主动分享近况','我喜欢边交流边产生新点子','我能很快融入新团队','我常常先行动再调整','独处太久会让我想联系别人','我喜欢成为活动的参与者','公开表达对我来说不难','我倾向从外界获得刺激','我会主动邀请别人一起做事','我喜欢认识不同圈子的人','讨论能帮助我确认想法','我通常不介意成为关注中心','我喜欢同步进行多人的活动','我容易把陌生人变成朋友','我会用聊天整理情绪','我期待面对面的互动','我的精力常被社交激发']},
- {axis:'SN',positive:'S',items:['我更关注事实和具体细节','我喜欢使用已经验证过的方法','我会先看眼前能做什么','我习惯用实际经验判断','说明清楚步骤会让我安心','我更相信可观察的证据','我会注意环境中的细节变化','我喜欢把目标拆成可执行任务','我通常从现实条件出发','我会先确认数据再下结论','我倾向记住具体发生过的事','我喜欢明确而直接的表达','我会优先处理当前问题','我关注事情如何落地','我更容易理解具体例子','我会比较不同方案的实际成本','经验对我的判断很重要','我习惯按照流程推进','我喜欢看得见的结果','我会留意别人话里的事实','我先解决问题再讨论可能性','我更重视当下的可靠性','细节遗漏会影响我的决定','我喜欢清晰的标准','我会从已知信息开始']},
- {axis:'TF',positive:'T',items:['做决定时我会先比较逻辑','我愿意指出方案中的问题','公平比照顾情绪更重要','我会把利弊列出来再选择','我喜欢用标准而不是感觉判断','批评一个想法不等于否定一个人','我会优先考虑长期效率','我能接受直接的反馈','争论时我会关注论据','我习惯问“这样是否有效”','我会把事情和个人情绪分开','规则一致对我很重要','我喜欢找出问题的根因','我会为了更好的结果调整立场','明确的结论比委婉更有用','我会先判断事实是否成立','我擅长发现前后矛盾','我重视能力和结果','我会用分析减少偏见','我更愿意听有证据的建议','我不会因为关系改变标准','我喜欢把复杂事情拆开','我会追问依据是什么','我倾向做客观选择','解决问题时我会保持理性']},
- {axis:'JP',positive:'J',items:['我喜欢提前安排日程','确定的计划会让我安心','我习惯按时完成任务','我喜欢把事情先做完再休息','临时变化会让我需要重新整理','我会为旅行提前准备清单','我倾向尽快做出决定','桌面和文件有固定位置','我喜欢知道下一步是什么','我会给目标设定截止日期','我更愿意遵循明确的流程','我通常不会把任务拖到最后','我喜欢把大事拆成时间表','完成计划会让我有成就感','我会提前考虑风险','我倾向保持稳定的节奏','我喜欢事情有明确结论','我会主动整理未完成事项','规则清楚时我行动更快','我愿意为计划留出缓冲','我会在开始前准备材料','我喜欢可预测的安排','我通常按优先级推进','我会定期检查进度','我希望决定后能执行到底']}
-]
 const savedBigFive=computed(()=>state.personalityTests&&state.personalityTests.bigfive),savedMbti=computed(()=>state.personalityTests&&state.personalityTests.mbti)
 const type=ref('bigfive'),started=ref(false),finished=ref(false),index=ref(0),answers=ref([]),result=ref(null)
-const questions=computed(()=>type.value==='bigfive'?Object.entries(bigTemplates).flatMap(([dimension,items])=>items.map((text,i)=>({text,dimension,reverse:i%3===0}))):mbtiGroups.flatMap(group=>group.items.map((text,i)=>({text,axis:group.axis,positive:group.positive,index:i}))))
-const resultTitle=computed(()=>result.value?.title||'')
-const resultSummary=computed(()=>result.value?.summary||'')
-const resultDetail=computed(()=>result.value?.detail||'')
-const resultRows=computed(()=>result.value?.rows||[])
-function start(next){type.value=next;started.value=true;finished.value=false;index.value=0;answers.value=[];result.value=null}
-function onPageLoad(options){if(options && (options.type==='bigfive' || options.type==='mbti')) start(options.type)}
-function answer(value){answers.value[index.value]=value;if(index.value<questions.value.length-1){index.value++;return}finish()}
-function finish(){
- let data
- if(type.value==='bigfive'){
-  const names={openness:'开放性',conscientiousness:'尽责性',extraversion:'外向性',agreeableness:'宜人性',stability:'情绪稳定性'}
-  const copies={openness:'你对新观点和新体验的接受度。高分适合持续探索，低分更偏好熟悉和稳定。',conscientiousness:'你把目标变成行动并持续推进的能力。高分适合长期计划，低分需要更轻量的节奏。',extraversion:'你从社交和外部互动中获得能量的程度。高分适合协作，低分更适合独处后深度工作。',agreeableness:'你理解他人、合作与维护关系的倾向。高分温和协作，低分更重视边界和直接表达。',stability:'你在压力和变化中保持稳定的能力。高分恢复更快，低分需要更多休息和情绪整理。'}
-  const rows=Object.keys(names).map(k=>{const qs=questions.value.filter(q=>q.dimension===k);const score=Math.round(qs.reduce((sum,q,i)=>{const raw=answers.value[questions.value.indexOf(q)]||3;return sum+(q.reverse?6-raw:raw)},0)/(qs.length*5)*100);return{name:names[k],score,copy:copies[k]}})
-  data={title:'你的大五人格画像',summary:'这是你的行为倾向参考，不是固定标签。你可以根据高分和低分调整生活方式。',rows}
- }else{
-  const axes=[['EI','E','I'],['SN','S','N'],['TF','T','F'],['JP','J','P']]
-  const rows=axes.map(([axis,pos,neg])=>{const qs=questions.value.filter(q=>q.axis===axis);const score=Math.round(qs.reduce((sum,q)=>sum+((answers.value[questions.value.indexOf(q)]||3)-3),0 )/(qs.length*2)*50+50);return{name:axis,score,copy:'该维度用于显示你的偏好倾向，分数仅作自我理解参考。'}})
-  const letters=rows.map((r,i)=>r.score>=50?axes[i][1]:axes[i][2]).join('')
-  const profiles={
-    INTJ:['建筑师','擅长独立思考、搭建长期方案并持续优化系统。你通常先看结构和逻辑，再决定是否行动。适合把宏大目标拆成阶段计划，同时给自己留出与人沟通和休息的空间。'],
-    INTP:['逻辑学家','喜欢追问原理、分析可能性和寻找更准确的解释。你适合探索复杂问题，但要警惕一直研究而迟迟不开始。用小步行动把想法变成可验证的结果。'],
-    ENTJ:['指挥官','目标感强，善于组织资源和推动事情落地。你的优势是决断与执行，练习多听取他人的节奏和感受，会让合作更稳定。'],
-    ENTP:['辩论家','好奇、灵活，喜欢挑战旧方法并提出新方案。你适合创新和试验，但需要设置明确的收尾节点，避免兴趣转移后留下太多半成品。'],
-    INFJ:['提倡者','重视意义、长期价值和人与人之间的连接。你适合做有方向感的长期项目，也要记得把边界和实际休息安排进计划。'],
-    INFP:['调停者','价值感强、富有想象力，倾向用真实和善意做选择。你可以把理想拆成小而稳定的行动，减少被情绪和完美主义拖住。'],
-    ENFJ:['主人公','善于理解他人、凝聚共识并推动共同目标。你需要在照顾别人之外保留自己的时间，避免承担超过能力范围的责任。'],
-    ENFP:['竞选者','热情、开放、容易从新想法和关系中获得能量。你适合探索与连接，但用简单的优先级清单保持持续，会让灵感真正产生结果。'],
-    ISTJ:['物流师','可靠、务实，擅长按流程把责任完成。你可以在稳定的基础上尝试小范围变化，避免只因为熟悉就拒绝更好的方法。'],
-    ISFJ:['守卫者','细致、负责，愿意用具体行动照顾身边的人。请同时关注自己的需求和边界，稳定帮助别人之前先保证自己的能量。'],
-    ESTJ:['总经理','重视秩序、效率和明确结果，能够快速把计划变成执行。多留一点弹性给临时变化，也能让团队更舒服。'],
-    ESFJ:['执政官','重视关系、合作与现实中的互相支持。你擅长营造稳定环境，做决定时也可以给自己保留不迎合他人的空间。'],
-    ISTP:['鉴赏家','冷静、灵活，喜欢通过实践拆解问题。你适合边做边学，但长期目标需要用可见的里程碑固定下来。'],
-    ISFP:['探险家','敏感、真诚，重视体验和当下的真实感受。你可以用轻量的计划保护自由，同时把重要的事提前留出时间。'],
-    ESTP:['企业家','行动快、反应强，善于在现实环境中抓住机会。给冲动决策加一个短暂复盘步骤，会让你的优势更稳定。'],
-    ESFP:['娱乐家','热情、自然，擅长让生活变得有趣并带动周围的人。用自动化储蓄和简单规则守住长期目标，再尽情享受当下。'],
-  }
-  const profile=profiles[letters] || ['独特的行动者','你的偏好组合呈现出独特的思考与行动方式。建议结合真实经历继续观察自己。']
-  data={title:letters+' · '+profile[0],summary:'MBTI 是偏好模型，不是能力诊断。结果用于自我理解，建议结合真实经历判断。',detail:profile[1],rows}
- }
- testDraft.clear()
- result.value=data;finished.value=true;started.value=false
+const manualOpen=ref(false),manualType=ref(''),manualError=ref(''),savingManual=ref(false),answerLocked=ref(false)
+let answerTimer=null
+const questions=computed(()=>type.value==='bigfive'?BIG_FIVE_QUESTIONS:MBTI_QUESTIONS)
+const resultTitle=computed(()=>result.value?.title||''),resultSummary=computed(()=>result.value?.summary||''),resultDetail=computed(()=>result.value?.detail||''),resultRows=computed(()=>result.value?.rows||[])
+function unlock(){clearTimeout(answerTimer);answerTimer=null;answerLocked.value=false}
+function start(next){
+ if(!['bigfive','mbti'].includes(next))return
+ unlock();manualOpen.value=false;type.value=next;started.value=true;finished.value=false;index.value=0;answers.value=[];result.value=null
+}
+function openManual(){
+ unlock();testDraft.clear();started.value=false;finished.value=false;manualOpen.value=true
+ manualType.value=savedMbti.value?.mbtiType||validMbti(savedMbti.value?.title?.slice(0,4))||'';manualError.value=''
+}
+function commitResult(data){
+ const previousTests=state.personalityTests,previous=state.personality
  state.personalityTests={...(state.personalityTests||{}),[type.value]:data}
  state.personality={completed:true,type:type.value,result:data,completedAt:Date.now()}
- persist()
- savePersonalityResult(type.value,data).catch(error=>console.warn('[personality-cloud]',error))
+ if(!persist()){
+  state.personalityTests=previousTests;state.personality=previous
+  showNotice({title:'本机保存失败，请检查存储后重试',icon:'none'});return false
+ }
+ testDraft.clear();result.value=data;finished.value=true;started.value=false;manualOpen.value=false
+ savePersonalityResult(type.value,data).catch(error=>console.warn('[personality-cloud]',error.code||error.message))
+ return true
 }
-onLoad((options) => onPageLoad(options || {}))
-function back(){if(started.value){started.value=false;return}uni.navigateBack()}
-function close(){uni.switchTab({url:'/pages/index/index'})}
-const testDraft=useSessionDraft(()=>({type:type.value,started:started.value,index:index.value,answers:answers.value}),draft=>{
+function saveManual(){
+ if(savingManual.value)return
+ manualError.value=''
+ const value=validMbti(manualType.value)
+ if(!value){manualError.value='请输入有效的四位 MBTI 类型，例如 INFP';return}
+ savingManual.value=true;type.value='mbti';manualType.value=value
+ try{commitResult(manualMbtiResult(value))}finally{savingManual.value=false}
+}
+function answer(value){
+ if(!started.value||answerLocked.value||!Number.isInteger(value)||value<1||value>5)return
+ answerLocked.value=true;answers.value[index.value]=value
+ if(index.value<questions.value.length-1)index.value++
+ else{
+  try{commitResult(scorePersonality(type.value,answers.value))}
+  catch(error){showNotice({title:error.message,icon:'none'})}
+ }
+ answerTimer=setTimeout(()=>{answerLocked.value=false;answerTimer=null},220)
+}
+function back(){
+ unlock()
+ if(manualOpen.value){manualOpen.value=false;return}
+ if(started.value){if(index.value>0){index.value--;return}started.value=false;testDraft.clear();return}
+ if(finished.value){finished.value=false;return}
+ uni.navigateBack()
+}
+function close(){unlock();uni.switchTab({url:'/pages/index/index'})}
+onLoad(options=>{if(options?.type==='bigfive'||options?.type==='mbti')start(options.type)})
+onBackPress(()=>{if(dismissFeedback(feedbackOwnerId))return true;if(started.value||manualOpen.value||finished.value){back();return true}return false})
+onBeforeUnmount(unlock)
+const testDraft=useSessionDraft(()=>({version:QUESTION_VERSION,type:type.value,started:started.value,index:index.value,answers:answers.value}),draft=>{
  if(!['bigfive','mbti'].includes(draft?.type)||!Array.isArray(draft.answers))return
- type.value=draft.type;answers.value=draft.answers.map(value=>Math.min(5,Math.max(1,Number(value)||3)))
- index.value=Math.min(questions.value.length-1,Math.max(0,Math.floor(Number(draft.index)||0)));started.value=!!draft.started;finished.value=false
+ if(draft.version!==QUESTION_VERSION){showNotice({title:'题库已更新，请重新答题。历史结果仍保留。',icon:'none'});return}
+ type.value=draft.type
+ answers.value=draft.answers.slice(0,questions.value.length).map(value=>Number.isInteger(value)&&value>=1&&value<=5?value:null)
+ const firstMissing=questions.value.findIndex((_,i)=>!Number.isInteger(answers.value[i]))
+ index.value=Math.min(questions.value.length-1,Math.max(0,Math.min(Number(draft.index)||0,firstMissing<0?questions.value.length-1:firstMissing)))
+ started.value=!!draft.started;finished.value=false
 })
 </script>
 <style>
@@ -119,4 +123,10 @@ const testDraft=useSessionDraft(()=>({type:type.value,started:started.value,inde
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-personality-index > .head{height:var(--fire-header-height);padding-top:var(--fire-page-top);box-sizing:border-box}
  .fire-page-personality-index{padding-top:var(--fire-content-top)}
+
+.mbti-actions{display:flex;gap:8px;margin-top:15px;flex-wrap:wrap}.mbti-manual,.mbti-quiz{flex:1;min-width:120px;padding:10px 8px;border:1px solid #d6e2d5;border-radius:10px;font-size:12px;line-height:1.5;background:#eef3eb;color:#244c3d}.mbti-quiz{background:#173d35;color:#fff;border-color:#173d35}
+.manual-panel{padding-top:30px}.mbti-input{height:58px;margin-top:24px;padding:0 16px;box-sizing:border-box;border:1px solid #cedccc;border-radius:12px;background:#fff;font-size:24px;color:#173d35;text-transform:uppercase}
+.manual-save,.manual-cancel{margin-top:16px;width:100%;min-height:46px;border-radius:11px;font-size:14px;border:0;background:#173d35;color:#fff}.manual-cancel{background:#e5eee4;color:#243830}
+.assessment-error,.legacy-result-note{display:block;margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff4e5;color:#8e5e2e;font-size:12px;line-height:1.6}
+.result-source{display:inline-block;margin-top:12px;padding:4px 9px;border-radius:7px;background:#e5eee4;color:#527059;font-size:11px}.answer.selected{background:#ccdcca;box-shadow:inset 0 0 0 1px #6b8c71}.answer[aria-disabled="true"]{pointer-events:none}
 </style>

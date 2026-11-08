@@ -1,3 +1,4 @@
+import {CONSENT_MESSAGE,consentRecord} from '../utils/login-consent.js'
 // Run with Node.js 18+: node scripts/check-account-data.mjs
 // Real client/server modules with in-memory storage and authenticated CloudBase context mocks.
 // No production database or network request is made by this check.
@@ -225,14 +226,14 @@ check('lost save acknowledgement is recognized when cloud and local content matc
 const loginScript=source('pages/login/login.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1]
   .replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'')
   .replace(/import\.meta/g,'({env:{DEV:false}})')
-const loginDependencies={
+const loginDependencies={CONSENT_MESSAGE,consentRecord,
  safeReturnRoute:value=>value||'/pages/index/index',finishSessionRecovery:(uid,target)=>target||'/pages/index/index',
  ref:value=>({value}),watch(){},onMounted(){},onBeforeUnmount(){},AppFeedback:{},useFeedbackPage:()=>1,showNotice(){},
  state:client.store.state,persist:client.store.persist,hydrateFromServer:client.store.hydrateFromServer,endAccountSession:client.store.endAccountSession,
  signInWithCode:async()=>{trustedUid='account-B';return {}},saveAuthToken:async()=>{},sendVerificationCode:async()=>({}),uni,
  setTimeout:()=>1,clearTimeout(){},clearInterval(){},console:silent,
 }
-const loginPage=new Function(...Object.keys(loginDependencies),loginScript+'\nreturn {email,code,login,allowCode(){verificationInfo={};sentEmail=account()}};')(...Object.values(loginDependencies))
+const loginPage=new Function(...Object.keys(loginDependencies),loginScript+'\nreturn {email,code,login,allowCode(){consentAccepted.value=true;verificationInfo={};sentEmail=account()}};')(...Object.values(loginDependencies))
 loginPage.email.value='account-b@example.com';loginPage.code.value='123456';loginPage.allowCode()
 transport='offline'
 await loginPage.login()
@@ -373,7 +374,7 @@ const conflictLoginDeps={...loginDependencies,state:client.store.state,persist:c
  signInWithCode:async()=>{signInCalls++;return {}},
 }
 const resumableLoginScript=loginScript.replace("import('@/utils/community-store.js')","Promise.resolve({CS:{hydrate:async()=>{}}})")
-const conflictLogin=new Function(...Object.keys(conflictLoginDeps),resumableLoginScript+'\nreturn {email,code,login,resumeLogin,canResume,allowCode(){verificationInfo={};sentEmail=account()}};')(...Object.values(conflictLoginDeps))
+const conflictLogin=new Function(...Object.keys(conflictLoginDeps),resumableLoginScript+'\nreturn {email,code,login,resumeLogin,canResume,allowCode(){consentAccepted.value=true;verificationInfo={};sentEmail=account()}};')(...Object.values(conflictLoginDeps))
 conflictLogin.email.value='login-conflict@example.com';conflictLogin.code.value='123456';conflictLogin.allowCode()
 await conflictLogin.login()
 check('actual login handler enters the conflict chooser after verified sign-in',loginRoutes.at(-1).startsWith('/pages/sync-conflict/index?next='))

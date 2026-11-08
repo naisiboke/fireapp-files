@@ -10,6 +10,11 @@
       <view class="field"><input v-model="email" :disabled="loading || sending" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/></view>
       <view class="code-row"><view class="field code-field"><input :value="code" @input="code=String($event.detail?.value ?? $event.target?.value ?? '').slice(0,6)" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" :disabled="sending || countdown > 0" @tap="sendCode">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
       <view class="form-meta"><text class="forgot" @tap="toast('验证码登录不需要密码')">登录帮助</text></view>
+      <view class="consent-row" :class="{'consent-error':consentError}">
+        <view class="consent-check" role="checkbox" :aria-checked="consentAccepted" aria-label="同意用户协议和隐私政策" tabindex="0" @tap.stop="toggleConsent" @keydown.space.prevent="toggleConsent" @keydown.enter.prevent="toggleConsent"><text aria-hidden="true">{{consentAccepted?'✓':''}}</text></view>
+        <view class="consent-copy"><text @tap="toggleConsent">我已阅读并同意</text><text class="consent-link" role="link" @tap.stop="openLegal('terms')">《用户协议》</text><text>和</text><text class="consent-link" role="link" @tap.stop="openLegal('privacy')">《隐私政策》</text></view>
+      </view>
+      <text v-if="consentError" class="consent-message" role="alert">{{CONSENT_MESSAGE}}</text>
       <button class="login-button fire-button-primary fire-button-lg" :disabled="loading" :aria-busy="loading && loginAction==='login'" @tap="login"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='login'" :size="18" light label="正在登录"/><text>{{loading && loginAction==='login'?'登录中':'登录'}}</text></view></button>
     </view>
     <view class="register-entry"><text>首次使用？输入邮箱获取验证码即可注册</text></view>
@@ -17,6 +22,7 @@
   </view></view>
 </template>
 <script setup>
+import { CONSENT_MESSAGE, consentRecord } from '@/utils/login-consent.js'
 import { pageLayoutStyle } from '@/utils/page-layout.js'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AppFeedback from '@/components/AppFeedback.vue'
@@ -27,6 +33,10 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { state, persist, hydrateFromServer, endAccountSession } from '@/store/index.js'
 import { sendVerificationCode, signInWithCode, saveAuthToken } from '@/utils/cloudbase-auth.js'
 const loginAction=ref('')
+const consentAccepted=ref(false),consentError=ref(false)
+function toggleConsent(){if(loading.value||sending.value)return;consentAccepted.value=!consentAccepted.value;if(consentAccepted.value)consentError.value=false}
+function requireConsent(){if(consentAccepted.value)return true;consentError.value=true;return false}
+function openLegal(kind){uni.navigateTo({url:kind==='terms'?'/pages/terms/index':'/pages/privacy/index'})}
 const email=ref(''), code=ref(''), loading=ref(false), sending=ref(false), countdown=ref(0), notice=ref(''), redirect=ref('')
 import { safeReturnRoute, finishSessionRecovery } from '@/utils/session-recovery.js'
 const sessionExpired=ref(false),canResume=ref(false)
@@ -36,7 +46,7 @@ let noticeTimer=null, countdownTimer=null, verificationInfo=null, sentEmail=''
 onMounted(()=>{
  const pages=getCurrentPages(); const current=pages[pages.length-1]; const options=(current&&current.options)||{}; redirect.value=safeReturnRoute(options.redirect);sessionExpired.value=options.expired==='1';if(sessionExpired.value)email.value=String(uni.getStorageSync('fire_account_email')||'');
  canResume.value=uni.getStorageSync('fire_login_status')===true
- if(canResume.value&&['synced','conflict'].includes(state.cloudSync?.status))resumeLogin()
+
 })
 onBeforeUnmount(()=>{clearTimeout(noticeTimer);clearInterval(countdownTimer)})
 watch(email,()=>{code.value='';verificationInfo=null;sentEmail=''})
@@ -45,6 +55,7 @@ function fillAdmin(){email.value=ADMIN_TEST_EMAIL;toast('已填入测试邮箱�
 function account(){return email.value.trim().toLowerCase()}
 async function sendCode(){
  if(sending.value||countdown.value>0)return
+ if(!requireConsent())return
  const value=account()
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))return toast('请输入正确的邮箱地址')
  sending.value=true
@@ -58,7 +69,7 @@ async function enterAccount(value){
  value=String(restored.email||value||state.profile?.email||'')
  if(value)uni.setStorageSync('fire_account_email',value)
  uni.removeStorageSync('fire_guest_mode')
- state.profile={...(state.profile||{}),email:value};state.started=true;persist()
+ state.profile={...(state.profile||{}),email:value};state.legalConsent=consentRecord();state.started=true;persist()
  await import('@/utils/community-store.js').then(({CS})=>CS.hydrate()).catch(()=>{})
  const target=finishSessionRecovery(restored.uid,redirect.value)
  const destination=restored.conflict?'/pages/sync-conflict/index?next='+encodeURIComponent(target):target
@@ -66,6 +77,7 @@ async function enterAccount(value){
 }
 async function resumeLogin(){
  if(loading.value)return
+ if(!requireConsent())return
  loginAction.value='resume';loading.value=true
  try{await enterAccount(String(uni.getStorageSync('fire_account_email')||email.value||''))}
  catch(error){toast(error.message||'恢复失败，本机记录已保留，请重试')}
@@ -73,6 +85,7 @@ async function resumeLogin(){
 }
 async function login(){
  if(loading.value)return
+ if(!requireConsent())return
  const value=account()
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))return toast('请输入正确的邮箱地址')
  if(!String(code.value??'').trim())return toast('请输入验证码')
@@ -98,4 +111,13 @@ async function login(){
  .fire-page-login-login{padding-top:var(--fire-page-top)}
 .expired-note{width:100%;box-sizing:border-box;margin-top:20px;padding:12px 14px;border-radius:12px;background:#e5eee2;color:#3c604d;font-size:13px;line-height:1.6}
 .resume-button{width:100%;min-height:44px;margin-top:18px;padding:10px 14px;border-radius:12px;background:#e5eee2;color:#315f4a;font-size:14px}
+
+.consent-row{display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;padding:8px 6px;border:1px solid transparent;border-radius:10px;box-sizing:border-box}
+.consent-check{flex-shrink:0;width:24px;height:24px;margin-top:0;border:1.5px solid #8c9d90;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;background:#fff;box-sizing:border-box;position:relative}
+.consent-check:before{content:'';position:absolute;inset:-10px}.consent-check[aria-checked="true"]{background:#173d35;border-color:#173d35}
+.consent-check text{font-size:17px;font-weight:700;line-height:1}
+.consent-copy{font-size:12px;color:#68786d;line-height:24px;flex:1;min-width:0}
+.consent-link{color:#1768c4;text-decoration:underline;text-underline-offset:2px}
+.consent-error{border-color:#c64c45;background:#fff7f5}.consent-error .consent-check{border-color:#c64c45}
+.consent-message{display:block;margin:-3px 0 12px;color:#b8332d;font-size:12px;line-height:1.6}
 </style>

@@ -283,6 +283,11 @@ export async function redeemMembershipForAccount(code) {
   return result
 }
 
+function applyReviewedProfile(remote){
+ const profile=remote?.profile
+ if(profile?.nicknameReviewStatus==='approved'&&profile.name)state.profile={...(state.profile||{}),...profile}
+}
+
 export async function hydrateFromServer() {
   const epoch=sessionEpoch
   if(restoreTask && restoreTask.epoch===epoch)return restoreTask.promise
@@ -313,7 +318,7 @@ export async function hydrateFromServer() {
         if(equivalentState(local,remote.state))dirty=false
         else{
           revision=Number(localMeta.revision)||0
-          applySaved(local);state.ready=true;writeWishlist(state.items)
+          applySaved(local);applyReviewedProfile(remote);state.ready=true;writeWishlist(state.items)
           if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
           captureAccountConflict(remote,localMeta,epoch)
           state.cloudSync={status:'conflict',message:'本机与云端版本不同，暂用本机记录。点此选择同步版本'}
@@ -324,6 +329,7 @@ export async function hydrateFromServer() {
       activeConflict=null
       revision=remoteRevision
       applySaved(dirty&&local ? local : remote.exists ? remote.state : local)
+      applyReviewedProfile(remote)
       if(remote.membership && typeof remote.membership.active==='boolean')state.membership={...remote.membership}
       state.ready=true
       HeroDay(state)
