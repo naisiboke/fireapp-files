@@ -9,6 +9,8 @@ function check(name,value){assert.ok(value,name);checks.push(name)}
 const server=http.createServer((req,res)=>{
  if(req.url.startsWith('/app-update.json')){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify(pending))}
  if(req.url==='/fireday.apk'){res.setHeader('Content-Type','application/vnd.android.package-archive');res.setHeader('Content-Disposition','attachment; filename="fireday.apk"');return res.end('test download response')}
+ if(req.url.split('?')[0]==='/assets/fireday-leaf.png'){res.setHeader('Content-Type','image/png');return res.end(fs.readFileSync('assets/fireday-leaf.png'))}
+ if(req.url.split('?')[0]==='/privacy.html'){res.setHeader('Content-Type','text/html; charset=utf-8');return res.end(fs.readFileSync('privacy.html','utf8'))}
  if(req.url==='/favicon.ico'){res.writeHead(204);return res.end()}
  res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html)
 });
