@@ -1,0 +1,19 @@
+name: AccountData deployment diagnostics
+on:
+  push:
+    branches: [support-accountData-diagnostics]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run existing account and new diagnostic regressions
+        working-directory: 绿岛
+        run: |
+          for script in scripts/check-*.mjs; do node "$script"; done
