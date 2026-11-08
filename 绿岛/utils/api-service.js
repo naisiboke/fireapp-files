@@ -100,7 +100,7 @@ export async function askBehaviorAI(payload) {
   if(!uid)throw new Error('请先登录后使用 AI')
   const result=await callAccountData({...payload,action:'ai.chat',expectedUid:uid})
   assertOwner(uid)
-  if(typeof result.reply!=='string'||result.reviewed!==true)throw new Error('AI 回答尚未通过审核，请重试')
+  if(typeof result.reply!=='string'||result.maxTokens!==500)throw new Error('AI 服务版本不一致，请先部署新版云函数')
   return result
 }
 export async function fetchMembership() {

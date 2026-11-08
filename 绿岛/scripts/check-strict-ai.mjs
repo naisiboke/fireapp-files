@@ -38,10 +38,9 @@ function memoryDatabase(){
 
 
 const db=memoryDatabase(),id=uid=>crypto.createHash('sha256').update('state:'+uid).digest('hex')
-let uid='A',at=Date.parse('2026-11-08T15:59:50Z'),generated='保持合理预算，先记录一周的支出。',decision={approved:true},calls=0,reviewCalls=0,hold=null
+let uid='A',at=Date.parse('2026-11-08T15:59:50Z'),generated='保持合理预算，先记录一周的支出。',generationError=false,calls=0,hold=null
 const handler=createHandler({db,identity:async()=>uid?{uid}:null,now:()=>at,
- generateAIReply:async()=>{calls++;return hold?await hold:generated},
- moderateAIReply:async({answer})=>{reviewCalls++;check(Array.from(answer).length<=500,'server reviews only bounded output');return decision},
+ generateAIReply:async()=>{calls++;if(generationError)throw Object.assign(Error('模拟生成失败'),{code:'AI_UNAVAILABLE'});return hold?await hold:generated},
  moderateNickname:async()=>({approved:true})})
 for(const value of ['一二三四五六七八九','S B','傻B','草泥马','NMSL','S13','a\u200bb','旅人🌱','<script>','私信@我']){
  check(!validateNickname(value).ok,'client rejects prohibited nickname '+value)
@@ -63,20 +62,20 @@ check((await handler({action:'bootstrap'})).revision===7,'migration leaves finan
 uid='A'
 for(const text of ['建'.repeat(900),'🌱'.repeat(700),'第一条。'.repeat(150),'x'.repeat(499)+'𠀀'+'x','line\n'.repeat(150)]){
  generated=text;result=await handler({action:'ai.chat',question:'请给我一个建议'})
- check(result.ok&&result.reviewed===true&&Array.from(result.reply).length<=500,'reviewed server reply at most five hundred Unicode characters')
+ check(result.ok&&result.reviewed===false&&result.maxTokens===500&&Array.from(result.reply).length<=500,'single-call generation keeps token budget plus display fallback')
  check(result.reply===limitAIAnswer(text),'server and client use consistent truncation')
  // Use a new private account to isolate the existing three-free-reply limit.
  uid+='x'
 }
-uid='blocked';decision={approved:false};generated='不应展示的原始回答'
-result=await handler({action:'ai.chat',question:'测试拒绝'})
-check(result.code==='AI_REVIEW_REJECTED'&&!JSON.stringify(result).includes(generated),'unapproved reply never returned')
-check((await db.collection('user_states').doc(id(uid)).get()).data[0].aiQuota.count===0,'rejection does not consume free reply')
-decision={approved:'true'}
-result=await handler({action:'ai.chat',question:'测试非布尔结果'})
-check(!result.ok,'malformed moderation does not approve')
-uid='free';decision={approved:true};generated='先记账，再复盘。'
-for(let i=1;i<=3;i++){result=await handler({action:'ai.chat',question:'给我建议'});check(result.ok&&result.used===i,'server counts approved free replies')}
+uid='failed';generationError=true
+result=await handler({action:'ai.chat',question:'测试生成失败'})
+check(result.code==='AI_UNAVAILABLE','generation failure is reported')
+check((await db.collection('user_states').doc(id(uid)).get()).data[0].aiQuota.count===0,'generation failure does not consume free reply')
+generationError=false;generated={reply:'错误的适配器返回格式'}
+result=await handler({action:'ai.chat',question:'测试非字符串结果'})
+check(!result.ok,'malformed generation is rejected without a repair request')
+uid='free';generated='先记账，再复盘。'
+for(let i=1;i<=3;i++){result=await handler({action:'ai.chat',question:'给我建议'});check(result.ok&&result.used===i,'server counts successful free replies')}
 const before=calls
 result=await handler({action:'ai.chat',question:'第四次'})
 check(result.code==='AI_DAILY_LIMIT'&&calls===before,'free limit cannot be bypassed by client membership claim')
@@ -99,26 +98,51 @@ result=await handler({action:'ai.chat',question:'字'.repeat(2001)});check(resul
 const oldFetch=globalThis.fetch,oldKey=process.env.DEEPSEEK_API_KEY
 try{
  process.env.DEEPSEEK_API_KEY='isolated-provider-test'
- let requests=[]
+ let requests=[],providerText='建议'.repeat(360),finishReason='stop'
  globalThis.fetch=async(url,options)=>{
-  const body=JSON.parse(options.body);requests.push(body)
-  return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(requests.length%2?{reply:'建议'.repeat(360)}:{approved:true})}}]})}
+  requests.push(JSON.parse(options.body))
+  return {ok:true,json:async()=>({choices:[{finish_reason:finishReason,message:{content:providerText}}]})}
  }
  const real=createHandler({db,identity:async()=>({uid:'adapter'}),now:()=>at})
- result=await real({action:'ai.chat',question:'写超过两千字',finance:{assets:1234}})
- check(result.ok&&Array.from(result.reply).length<=500&&requests.length===2,'actual generation and separate moderation adapters applied')
- check(requests[0].messages[0].content.includes('500')&&requests[0].messages[0].content.includes('中国大陆'),'server imposes concise mainland-platform instruction')
- check(!JSON.stringify(requests[1]).includes('1234'),'output moderation excludes financial context')
+ result=await real({action:'ai.chat',question:'写超过两千字',finance:{assets:1234},max_tokens:99999})
+ check(result.ok&&result.maxTokens===500&&result.reviewed===false&&requests.length===1,'one chat message uses exactly one provider request')
+ check(requests[0].max_tokens===500&&requests[0].stream===false,'hard provider generation budget cannot be overridden by client')
+ check(!('response_format'in requests[0]),'plain text avoids JSON envelope overhead and token-limit parse repair')
+ check(requests[0].messages[0].content.includes('500 tokens')&&requests[0].messages[0].content.includes('简洁'),'short generation instruction')
+ check(Array.from(result.reply).length<=500,'display fallback remains secondary protection')
+ requests=[];providerText='先记录支出，再安排储蓄。然后';finishReason='length'
+ result=await real({action:'ai.chat',question:'请继续生成很多内容'})
+ check(result.ok&&result.reply===providerText&&requests.length===1,'token-limited partial answer is not automatically continued or regenerated')
+ requests=[];providerText='{"reply":"这是在预算处被截断的普通文本'
+ result=await real({action:'ai.chat',question:'给我建议'})
+ check(result.ok&&result.reply===providerText&&requests.length===1,'plain text never causes JSON repair request')
  requests=[]
  globalThis.fetch=async(url,options)=>{requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({choices:[{message:{content:'{"approved":false,"reason":"拒绝"}'}}]})}}
  const nick=createHandler({db,identity:async()=>({uid:'semantic'}),now:()=>at})
  result=await nick({action:'profile.nickname',name:'伞兵旅人'})
- check(result.code==='NICKNAME_REJECTED','AI semantic refusal is binding')
- check(['潜台词','谐音','缩写','繁简变体','中国大陆','2至8'].every(word=>requests[0].messages[0].content.includes(word)),'strict nickname review covers coded and implied abuse')
- globalThis.fetch=async()=>{throw Error('provider unavailable')}
+ check(result.code==='NICKNAME_REJECTED'&&requests.length===1,'nickname still requires its own strict AI review')
+ check(['潜台词','谐音','缩写','繁简变体','中国大陆','2至8'].every(word=>requests[0].messages[0].content.includes(word)),'strict nickname rules unchanged')
+ check(requests[0].max_tokens===220&&requests[0].response_format.type==='json_object','nickname review settings unchanged')
+ requests=[]
+ const community=createHandler({db,identity:async()=>({uid:'community-review'}),now:()=>at})
+ result=await community({action:'posts.submit',post:{id:'budget-review',title:'生活的点滴记录',content:'我开始记录生活中的消费和储蓄目标。',timeline:[]}})
+ check(result.ok&&result.post.status==='rejected'&&requests.length===1,'community post still waits for AI review and honors rejection')
+ check(requests[0].max_tokens===350&&requests[0].response_format.type==='json_object','community review settings unchanged')
+ requests=[]
+ globalThis.fetch=async()=>{requests.push({});throw Error('provider unavailable')}
  const offline=createHandler({db,identity:async()=>({uid:'offline'}),now:()=>at})
  result=await offline({action:'ai.chat',question:'给我建议'})
- check(result.code==='AI_UNAVAILABLE'&&(await db.collection('user_states').doc(id('offline')).get()).data[0].aiQuota.count===0,'provider failure releases reservation without charging')
+ check(result.code==='AI_UNAVAILABLE'&&requests.length===1&&(await db.collection('user_states').doc(id('offline')).get()).data[0].aiQuota.count===0,'network failure never retries or charges')
+ requests=[]
+ globalThis.fetch=async()=>{requests.push({});return {ok:false,status:429}}
+ const limited=createHandler({db,identity:async()=>({uid:'provider-rate-limit'}),now:()=>at})
+ result=await limited({action:'ai.chat',question:'给我建议'})
+ check(result.code==='AI_UNAVAILABLE'&&requests.length===1,'provider rejection does not trigger paid automatic retry')
+ requests=[]
+ globalThis.fetch=async()=>{requests.push({});return {ok:true,json:async()=>({choices:[{message:{content:''}}]})}}
+ const empty=createHandler({db,identity:async()=>({uid:'empty'}),now:()=>at})
+ result=await empty({action:'ai.chat',question:'给我建议'})
+ check(result.code==='AI_UNAVAILABLE'&&requests.length===1&&(await db.collection('user_states').doc(id('empty')).get()).data[0].aiQuota.count===0,'empty answer never triggers repair or consumes allowance')
 }finally{globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.DEEPSEEK_API_KEY;else process.env.DEEPSEEK_API_KEY=oldKey}
 const axes=['EI','SN','TF','JP']
 check(MBTI_QUESTIONS.length===100,'reviewed MBTI question count')
@@ -139,4 +163,4 @@ for(const e of 'EI')for(const s of 'SN')for(const t of 'TF')for(const j of 'JP')
  check(manualMbtiResult(expected.toLowerCase()).rows.length===0,'manual type remains separate')
 }
 check(scorePersonality('mbti',Array(100).fill(3)).mbtiType===null,'neutral answers never force a label')
-console.log('Strict nickname, reviewed AI limits and all MBTI axes: '+checks+' checks passed')
+console.log('Single-call AI token budget, unchanged moderation and all MBTI axes: '+checks+' checks passed')

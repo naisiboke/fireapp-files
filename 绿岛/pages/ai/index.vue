@@ -23,7 +23,7 @@
     <view v-else class="chat-shell">
       <view class="chat-meta">
         <button class="meta-link" @tap="goPersonality('')">我的性格 ›</button>
-        <text class="meta-note">单次回复 ≤500 字</text>
+        <text class="meta-note">简短回答</text>
         <button class="meta-link quota-link" @tap="goMembership">{{ quotaText() }} ›</button>
         <button class="meta-link" @tap="drawerOpen=true">历史</button>
       </view>
