@@ -23,7 +23,7 @@ const Home = loadPage('pages/index/index.vue', {
   ...common, CS:{ugc:()=>[]},refreshActions:async()=>null, pageEntryMixin: {}, BottomTabs:{},SpotlightGuide:{},spotlightHomeMixin:{}, AnimatedNumber: {}, refreshFinance() {},
   uni: { hideTabBar() {}, getStorageSync() { return null } },
 })
-const Ledger = loadPage('pages/ledger/index.vue', { ...common })
+const Ledger = loadPage('pages/ledger/index.vue', { ...common, QuietEmptyState:{},QuietEntrySheet:{},quietEntryPageMixin:{},shareOf:()=>'' })
 function viewModel(page, data) {
   const vm = { ...data }
   for (const [name, getter] of Object.entries(page.computed)) {
