@@ -1,4 +1,5 @@
 <script>
+import { migrateLegacyGuide } from './utils/spotlight-guide.js'
 import { bootstrap, hydrateFromServer, persist, persistNow, suspendAccountSync, state } from './store/index.js'
 
 import { configureSessionRecovery, safeReturnRoute } from './utils/session-recovery.js'
@@ -17,6 +18,8 @@ export default {
       failed() { showNotice({title:'登录已过期，但本机保存失败。请先检查设备存储，当前输入已保留在页面。',icon:'none'}) },
     })
     try { bootstrap() } catch (error) { console.error('[app-bootstrap]', error) }
+    // Migrate the old device-wide guide only to the last known account, before any new sign-in.
+    try { migrateLegacyGuide(uni, String(uni.getStorageSync('fire_account_uid') || '')) } catch (ignore) {}
     // 配置云端 API 后以服务端数据为正式来源；未配置时保持本地过渡缓存。
     if (uni.getStorageSync('fire_login_status') === true) {
       hydrateFromServer().then(result => {

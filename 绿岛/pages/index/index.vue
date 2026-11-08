@@ -14,7 +14,7 @@
       <view v-if="state.goalPlan && state.goalPlan.name" class="countdown-tabs"><button :class="{active:!activeGoal}" @tap.stop="selectCountdown('fire')">自由日</button><button :class="{active:activeGoal}" @tap.stop="selectCountdown('goal')">我的目标</button></view>
       <view v-if="!displayConfigured" class="home-unconfigured">
         <text class="unconfigured-sub">填写资料，看看离自由还有多远。</text>
-        <view class="btn-primary" @tap="goCalculator">
+        <view id="fire-guide-finance" class="btn-primary" @tap="goCalculator">
           <text class="btn-primary-text">填写资料</text>
         </view>
       </view>
@@ -22,7 +22,7 @@
       <view v-else class="freedom-summary" @tap="goResult">
         <view class="freedom-head">
           <text class="freedom-label">{{activeGoal ? state.goalPlan.name+'目标倒计时' : '预计自由日'}}</text>
-          <text class="plan-link">查看计划 ›</text>
+          <text id="fire-guide-finance" class="plan-link">查看计划 ›</text>
         </view>
 
         <view v-if="displayResult.date" class="day-countdown">
@@ -117,11 +117,14 @@
 
       <text class="safe-note">F.I.R.E · 让选择回到自己手中</text>
     </view>
-    <BottomTabs current="home" />
+    <BottomTabs ref="guideTabs" current="home" :guide-active="spotlightActive" :guide-menu-open="spotlightMenuOpen" />
+    <SpotlightGuide :visible="spotlightVisible" :rect="spotlightRect" :viewport="spotlightViewport" :step="spotlightStep" :busy="spotlightBusy" :title="spotlightTitle" :description="spotlightDescription" @next="advanceSpotlight" @skip="finishSpotlight('skipped')" @closed="spotlightClosed" />
   </view>
 </template>
 
 <script>
+import SpotlightGuide from '@/components/SpotlightGuide.vue'
+import { spotlightHomeMixin } from '@/utils/spotlight-home.js'
 import { pageEntryMixin } from '@/utils/page-entry.js'
 import AppFeedback from '@/components/AppFeedback.vue'
 import { feedbackPageMixin } from '@/utils/feedback-page.js'
@@ -150,9 +153,9 @@ function svgUri(svg) {
 }
 
 export default {
-  mixins: [feedbackPageMixin, pageEntryMixin],
+  mixins: [feedbackPageMixin, pageEntryMixin, spotlightHomeMixin],
   onBackPress() { return dismissFeedback(this.feedbackOwnerId) },
-  components: { AppFeedback,  BottomTabs, AnimatedNumber },
+  components: { AppFeedback, BottomTabs, AnimatedNumber, SpotlightGuide },
   data() {
     return {
       state,

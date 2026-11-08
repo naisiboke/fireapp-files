@@ -1,12 +1,12 @@
 <template>
   <view class="bottom-tabs">
-    <view v-if="expanded" class="menu-mask" @tap="toggleMenu"></view>
+    <view v-if="expanded && !guideActive" class="menu-mask" @tap="toggleMenu"></view>
     <view class="quick-menu" :class="{ open: expanded }">
-      <view class="quick-item quick-ledger" aria-label="记账" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">¥</view></view>
+      <view id="fire-guide-ledger" class="quick-item quick-ledger" aria-label="记账" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">¥</view></view>
       <view class="quick-item quick-ai" aria-label="问 AI" @tap.stop="openQuick('/pages/ai/index')"><view class="quick-icon">AI</view></view>
       <view class="quick-item quick-music" aria-label="音乐" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view></view>
     </view>
-    <view v-for="t in tabs.slice(0, 2)" :key="t.path" class="tab-item" :class="{ active: t.key === current }" :aria-label="t.label" @tap="switchTab(t.path)">
+    <view v-for="t in tabs.slice(0, 2)" :key="t.path" :id="t.key==='tools'?'fire-guide-tools':undefined" class="tab-item" :class="{ active: t.key === current }" :aria-label="t.label" @tap="switchTab(t.path)">
       <image class="tab-icon" :src="iconUri(t.key, t.key === current)" mode="aspectFit" />
     </view>
     <view class="center-action" :class="{ expanded }" @tap="toggleMenu"><text>{{ expanded ? '×' : '+' }}</text></view>
@@ -28,7 +28,11 @@ const TAB_ICONS = {
 }
 export default {
   name: 'BottomTabs',
-  props: { current: { type: String, default: '' } },
+  props: { current: { type: String, default: '' }, guideActive:Boolean, guideMenuOpen:Boolean },
+  watch:{
+    guideActive(active){this.expanded=active?this.guideMenuOpen:false},
+    guideMenuOpen(open){if(this.guideActive)this.expanded=open},
+  },
   data() {
     return {
       _navigating: false,
@@ -43,8 +47,10 @@ export default {
   },
   mounted() { uni.hideTabBar({ animation: false }) },
   methods: {
-    toggleMenu() { this.expanded = !this.expanded },
+    toggleMenu() { if(this.guideActive)return; this.expanded = !this.expanded },
+    measureGuideTarget(key){return new Promise(resolve=>{try{uni.createSelectorQuery().in(this).select(key==='ledger'?'#fire-guide-ledger':'#fire-guide-tools').boundingClientRect(rect=>resolve(rect||null)).exec()}catch(error){resolve(null)}})},
     openQuick(url) {
+      if(this.guideActive)return
       this.expanded = false
       let target = url
       if (url === '/pages/ledger/index') {
@@ -55,7 +61,7 @@ export default {
       uni.navigateTo({ url: target })
     },
     switchTab(path) {
-      if (this._navigating) return
+      if (this.guideActive || this._navigating) return
       this.expanded = false
       this._navigating = true
       const current = getCurrentPages()

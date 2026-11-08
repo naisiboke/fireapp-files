@@ -59,8 +59,7 @@ async function enterAccount(value){
  state.profile={...(state.profile||{}),email:value};state.started=true;persist()
  await import('@/utils/community-store.js').then(({CS})=>CS.hydrate()).catch(()=>{})
  const target=finishSessionRecovery(restored.uid,redirect.value)
- const guideDone=uni.getStorageSync('fire_app_guide_done')===true
- const destination=restored.conflict?'/pages/sync-conflict/index?next='+encodeURIComponent(target):guideDone?target:'/pages/guide/index?next='+encodeURIComponent(target)
+ const destination=restored.conflict?'/pages/sync-conflict/index?next='+encodeURIComponent(target):target
  uni.reLaunch({url:destination})
 }
 async function resumeLogin(){
