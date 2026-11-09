@@ -6,7 +6,7 @@ const files=['绿岛/pages/index/index.vue','绿岛/components/CountdownSwitch.v
 const bundles=files.map((p,i)=>{
  const d=parse(read(p)).descriptor
  let script=d.script.content.replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]+['"]\s*;?/gm,'').replace('export default','return')
- const compiled=compileTemplate({source:d.template.content,id:'test'+i,compilerOptions:{isCustomElement:t=>['view','text','image'].includes(t)}})
+ const compiled=compileTemplate({source:d.template.content.replace(/<image\b/g,'<img').replace(/<\/image>/g,'</img>'),id:'test'+i,compilerOptions:{isCustomElement:t=>['view','text','image'].includes(t)}})
  assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors))
  return {script,render:compiled.code.replace(/from "vue"/g,'from "/vue.js"').replace('export function render','function render')+';export default render',css:d.styles.map(x=>x.content.replace(/@import[^;]+;/g,'')).join('\n')}
 })
@@ -23,6 +23,7 @@ bundles.forEach((x,i)=>routes['/render'+i+'.js']=x.render)
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.ready)
   await page.evaluate(()=>window.prepare())
+  await page.waitForTimeout(650)
   assert.equal(await page.locator('.message-dot').count(),1)
   assert.equal(await page.locator('.account-sync-banner').count(),0)
   const metrics=await page.locator('.message-entry').evaluate(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {border:s.borderWidth,bg:s.backgroundColor,width:r.width,height:r.height,hit:el===hit||el.contains(hit)}})
