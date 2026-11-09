@@ -10,7 +10,7 @@
       <view class="masthead-title">
         <text class="masthead-h1">我的自由计划</text>
         <text class="masthead-date">fireday.cn</text>
-        <button class="message-entry" aria-label="消息提醒" @tap.stop="openMessages"><view class="bell-shape"></view><view v-if="unreadMessages" class="message-dot"></view></button>
+        <button class="message-entry" aria-label="消息提醒" @tap.stop="openMessages"><image class="message-bell" :src="messageBell" mode="aspectFit" aria-hidden="true" /><view v-if="unreadMessages" class="message-dot"></view></button>
       </view>
 
       <CountdownSwitch v-if="state.goalPlan && state.goalPlan.name" :active-goal="activeGoal" @change="selectCountdown" />
@@ -62,7 +62,7 @@
 
 
     <view class="home-content">
-      <view v-if="state.cloudSync && ['error','pending','restoring','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" @tap="retryAccountSync">
+      <view v-if="state.cloudSync && ['error','restoring','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" @tap="retryAccountSync">
         <text>{{ state.cloudSync.message || '本机记录已保留，等待同步' }}</text><text v-if="state.cloudSync.status !== 'synced'">{{ state.cloudSync.status === 'conflict' ? '选择版本 ›' : state.cloudSync.status === 'restoring' ? '恢复中…' : '重试 ›' }}</text>
       </view>
 
@@ -127,6 +127,7 @@
 
 <script>
 import CountdownSwitch from '@/components/CountdownSwitch.vue'
+import {openMessagePage} from '@/utils/message-navigation.js'
 import SpotlightGuide from '@/components/SpotlightGuide.vue'
 import { spotlightHomeMixin } from '@/utils/spotlight-home.js'
 import { pageEntryMixin } from '@/utils/page-entry.js'
@@ -166,6 +167,8 @@ export default {
   data() {
     return {
       state,
+      openingMessages:false,
+      messageBell:svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f5f8ef" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 6 2 6.5 2 8H4.5c0-1.5 2-2 2-8zM10 20h4"/></svg>'),
       actionPosts: [], actionNow: Date.now(), messageMinute:-1, dailyRefresh: createDailyRefresh({refresh:()=>refreshActions(),day:actionDay}),
       ledgerMonth: LocalDay().slice(0, 7),
       years: 0, months: 0, days: 0,
@@ -387,7 +390,13 @@ export default {
     },
     collectMessages(force=true){const minute=Math.floor(Date.now()/60000);if(!force&&minute===this.messageMinute)return;this.messageMinute=minute;collectNotifications({items:state.items,posts:CS.ugc(),rewards:state.actionRewards})},
     refreshDailyActions(force){this.dailyRefresh(accountId(),Date.now(),force).then(result=>{if(result)this.collectMessages()}).catch(()=>{})},
-    openMessages(){this.collectMessages();uni.navigateTo({url:'/pages/messages/index'})},
+    openMessages(){
+      if(this.openingMessages)return
+      this.openingMessages=true
+      openMessagePage({navigate:options=>uni.navigateTo(options),collect:()=>this.collectMessages(),
+        notify:title=>showNotice({title,icon:'none'}),complete:()=>{this.openingMessages=false},
+        log:code=>console.warn('[message-entry]',code)})
+    },
     taskDone(id){return !!this.todayTasks.find(t=>t.id===id)?.done},
     taskIcon(id) {
       const p = TASK_ICONS[id] || TASK_ICONS.assets
@@ -535,8 +544,7 @@ export default {
 .home-view{overflow-anchor:none}.home-plan-context{height:15px;margin-top:-14px;margin-bottom:16px}.home-plan-context .inflation-note{margin:0;line-height:15px}
 
 .masthead-title{position:relative;padding-right:52px}
-.message-entry{position:absolute;right:0;top:0;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid rgba(255,255,255,.26);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center}
-.bell-shape{position:relative;width:15px;height:17px;border:1.7px solid currentColor;border-radius:9px 9px 3px 3px;box-sizing:border-box}
-.bell-shape:after{content:'';position:absolute;width:5px;height:2px;border-radius:2px;background:currentColor;left:3.3px;bottom:-5px}
-.message-dot{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:#d67260;border:2px solid #315b48}
+.message-entry{position:absolute;z-index:6;right:0;top:-3px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#fff;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+.message-bell{width:20px;height:20px;pointer-events:none}.message-entry::after{border:0;box-shadow:none}
+.message-dot{position:absolute;right:9px;top:9px;width:5px;height:5px;border-radius:50%;background:#d67260;border:0;pointer-events:none}
 </style>

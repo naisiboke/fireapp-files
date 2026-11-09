@@ -29,8 +29,8 @@ export default{
  onHide(){this.messages=[];this.uid=''},
  onBackPress(){return dismissFeedback(this.feedbackOwnerId)},
  methods:{
-  reload(){if(!this.uid||this.uid!==accountId())return;collectNotifications({items:state.items,posts:CS.ugc(),rewards:state.actionRewards},this.uid);this.messages=inbox(this.uid)},
-  async sync(){const uid=this.uid;this.loading=true;this.error=false;try{const values=await Promise.allSettled([refreshActions(),CS.hydrate()]);if(this.uid!==uid||uid!==accountId())return;this.error=values.some(x=>x.status==='rejected'||x.value?.ok===false);this.reload()}finally{if(this.uid===uid)this.loading=false}},
+  reload(){if(!this.uid||this.uid!==accountId())return;try{collectNotifications({items:state.items,posts:CS.ugc(),rewards:state.actionRewards},this.uid)}catch(error){this.error=true;console.warn('[message-inbox]','cache-unavailable')}this.messages=inbox(this.uid)},
+  async sync(){const uid=this.uid;this.loading=true;this.error=false;try{const values=await Promise.allSettled([refreshActions(),CS.hydrate()]);if(this.uid!==uid||uid!==accountId())return;this.error=values.some(x=>x.status==='rejected'||x.value?.ok===false);this.reload()}catch(error){if(this.uid===uid)this.error=true}finally{if(this.uid===uid)this.loading=false}},
   markAll(){if(!readNotifications(null,this.uid))return showNotice({title:'已读状态保存失败，请重试',icon:'none'});this.reload()},
   open(item){if(this.uid!==accountId())return;if(!readNotifications([item.id],this.uid))return showNotice({title:'已读状态保存失败，请重试',icon:'none'});this.reload();openActionRoute(item.route,uni,()=>showNotice({title:'暂时无法打开，请稍后重试',icon:'none'}))},
   back(){uni.navigateBack({fail:()=>uni.switchTab({url:'/pages/index/index'})})},

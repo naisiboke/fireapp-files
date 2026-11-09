@@ -29,9 +29,15 @@ export function isMembershipActive(source) {
   return membershipState(source).active === true
 }
 
+export function formatMembershipDate(value){
+  const date=new Date(value)
+  if(!Number.isFinite(date.getTime()))return ''
+  return date.getFullYear()+'年'+(date.getMonth()+1)+'月'+date.getDate()+'日'
+}
 export function membershipText(source) {
   const info = membershipState(source)
   if (!info.active) return '未开通'
   if (!info.expiresAt) return '已开通'
-  return '有效期至 ' + new Date(info.expiresAt).toLocaleDateString('zh-CN')
+  const date=formatMembershipDate(info.expiresAt)
+  return date?'有效期至 '+date:'有效期暂无法显示'
 }
