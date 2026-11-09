@@ -1,0 +1,55 @@
+name: Assemble screenshot manual
+on:
+  push:
+    branches: [docs-manual-screenshots-20261109]
+    paths: ['.github/workflows/manual-screenshots.yml', 'tools/build_manual.py']
+permissions:
+  contents: write
+jobs:
+  manual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install document tools
+        run: python -m pip install python-docx==1.2.0 pillow==11.3.0 pymupdf==1.26.6
+      - name: Inspect actual template and screenshot contact sheet
+        run: |
+          python - <<'PY'
+          import pathlib, io, base64
+          from docx import Document
+          from PIL import Image, ImageOps, ImageDraw
+          d=Document('说明书模板_已套版待补截图.docx')
+          for i,p in enumerate(d.paragraphs):
+              print('PARAGRAPH',i,repr(p.text),p.style.name)
+          for sec in d.sections:
+              print('SECTION',sec.page_width/914400,sec.page_height/914400,sec.top_margin/914400,sec.bottom_margin/914400,sec.left_margin/914400,sec.right_margin/914400)
+          print('PAGE_BREAKS',d._element.xml.count('w:type="page"'),d._element.xml.count('w:pageBreakBefore'))
+          for i,t in enumerate(d.tables): print('TABLE',i,len(t.rows),len(t.columns))
+          files=sorted(pathlib.Path('软著图片').glob('*.png'),key=lambda p:int(p.stem))
+          sheet=Image.new('RGB',(7*200,2*390),'#ddd')
+          draw=ImageDraw.Draw(sheet)
+          for i,p in enumerate(files):
+              im=Image.open(p).convert('RGB'); print('IMAGE',p.name,im.size)
+              thumb=ImageOps.contain(im,(190,350))
+              x=(i%7)*200+(200-thumb.width)//2;y=(i//7)*390+30
+              sheet.paste(thumb,(x,y));draw.text(((i%7)*200+10,(i//7)*390+8),p.name,fill='black')
+          buf=io.BytesIO();sheet.save(buf,format='JPEG',quality=85)
+          print('CONTACT_SHEET_BASE64='+base64.b64encode(buf.getvalue()).decode())
+          PY
+      - name: Render assembled manual
+        if: ${{ hashFiles('tools/build_manual.py') != '' }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libreoffice-writer fonts-noto-cjk poppler-utils
+          python tools/build_manual.py
+      - name: Save assembled documents on working branch
+        if: ${{ hashFiles('tools/build_manual.py') != '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- '说明书模板_已补截图.docx' '说明书模板_已补截图.pdf'
+          if ! git diff --cached --quiet; then
+            git commit -m "Insert real App screenshots and render manual"
+            git push origin HEAD:docs-manual-screenshots-20261109
+          fi
