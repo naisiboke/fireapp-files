@@ -10,6 +10,7 @@
       <view class="masthead-title">
         <text class="masthead-h1">我的自由计划</text>
         <text class="masthead-date">fireday.cn</text>
+        <button class="message-entry" aria-label="消息提醒" @tap.stop="openMessages"><view class="bell-shape"></view><view v-if="unreadMessages" class="message-dot"></view></button>
       </view>
 
       <CountdownSwitch v-if="state.goalPlan && state.goalPlan.name" :active-goal="activeGoal" @change="selectCountdown" />
@@ -136,8 +137,11 @@ import BottomTabs from '@/components/BottomTabs.vue'
 import AnimatedNumber from '@/components/AnimatedNumber.vue'
 import { state, refreshFinance, hydrateFromServer, syncStateToServer, persistNow, refreshActions } from '@/store/index.js'
 import { freedomResult, hasValidFinance } from '@/utils/finance-plan.js'
-import { todayActions } from '@/utils/action-tasks.js'
+import { todayActions, actionDay } from '@/utils/action-tasks.js'
 import { CS } from '@/utils/community-store.js'
+import {accountId} from '@/utils/account-cache.js'
+import {openActionRoute,createDailyRefresh} from '@/utils/action-navigation.js'
+import {collectNotifications,inbox,notificationState} from '@/utils/notifications.js'
 import { isMembershipActive } from '@/utils/membership.js'
 import { wishlistBucket, wishlistDue, wishlistReason, coolingEnd } from '@/utils/wishlist.js'
 import { GoalEngine, MonthlyStatus, LocalDay, ReelCalendarParts } from '@/utils/engine.js'
@@ -162,7 +166,7 @@ export default {
   data() {
     return {
       state,
-      actionPosts: [], actionNow: Date.now(),
+      actionPosts: [], actionNow: Date.now(), messageMinute:-1, dailyRefresh: createDailyRefresh({refresh:()=>refreshActions(),day:actionDay}),
       ledgerMonth: LocalDay().slice(0, 7),
       years: 0, months: 0, days: 0,
       hours: 0, minutes: 0, seconds: 0,
@@ -180,6 +184,7 @@ export default {
   },
 
   computed: {
+    unreadMessages(){void this.actionNow;void notificationState.revision;return inbox().some(x=>!x.read)},
     guardianWord() { return this.guardianWords[this.guardianWordIndex] || this.guardianWords[0] },
         todayText() {
       return new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -264,7 +269,7 @@ export default {
     this.pageVisible = true
     this.ledgerMonth = LocalDay().slice(0, 7)
     refreshFinance()
-    this.actionPosts=CS.ugc();this.actionNow=Date.now();refreshActions().catch(()=>{})
+    this.actionPosts=CS.ugc();this.actionNow=Date.now();this.refreshDailyActions(true);this.collectMessages()
     this.startCountdown()
     this.startGuardian()
   },
@@ -363,6 +368,8 @@ export default {
     },
     tick() {
       this.actionNow=Date.now()
+      this.refreshDailyActions(false)
+      this.collectMessages(false)
       this.ledgerMonth = LocalDay().slice(0, 7)
       const r = this.displayResult
       if (!r.date) { this.years = this.months = this.days = 0; this.hours = this.minutes = this.seconds = 0; return }
@@ -378,6 +385,9 @@ export default {
       if (!Number.isFinite(v)) return '0.00'
       return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
+    collectMessages(force=true){const minute=Math.floor(Date.now()/60000);if(!force&&minute===this.messageMinute)return;this.messageMinute=minute;collectNotifications({items:state.items,posts:CS.ugc(),rewards:state.actionRewards})},
+    refreshDailyActions(force){this.dailyRefresh(accountId(),Date.now(),force).then(result=>{if(result)this.collectMessages()}).catch(()=>{})},
+    openMessages(){this.collectMessages();uni.navigateTo({url:'/pages/messages/index'})},
     taskDone(id){return !!this.todayTasks.find(t=>t.id===id)?.done},
     taskIcon(id) {
       const p = TASK_ICONS[id] || TASK_ICONS.assets
@@ -404,7 +414,7 @@ export default {
     goWishlist() { uni.navigateTo({ url: '/pages/wishlist/index' }) },
     wishlistStatus(item){const bucket=wishlistBucket(item);if(bucket==='success')return wishlistReason(item);if(bucket==='bought')return '已购买';if(wishlistDue(item,this.actionNow))return '待确认是否购买';return '冷静期剩余 '+Math.ceil((coolingEnd(item)-this.actionNow)/86400000)+' 天'},
     retryActions(){if(state.actionSync?.status!=='syncing')refreshActions().catch(()=>{})},
-    goTask(t){if(t.id==='ledger'){const budget=state.monthlyTargets?.[LocalDay().slice(0,7)]||{};const ready=Number.isSafeInteger(budget.expense)&&budget.expense>0&&Number.isSafeInteger(budget.income)&&budget.income>0;uni.navigateTo({url:ready?'/pages/ledger/edit':'/pages/ledger/index?add=1'});return}if(t.url)uni.navigateTo({url:t.url})},
+    goTask(t){if(t.id==='ledger'){const budget=state.monthlyTargets?.[LocalDay().slice(0,7)]||{};const ready=Number.isSafeInteger(budget.expense)&&budget.expense>0&&Number.isSafeInteger(budget.income)&&budget.income>0;uni.navigateTo({url:ready?'/pages/ledger/edit':'/pages/ledger/index?add=1'});return}if(t.url)openActionRoute(t.url,uni,()=>showNotice({title:'暂时无法打开任务页面，请稍后重试',icon:'none'}))},
 
   },
 }
@@ -524,4 +534,9 @@ export default {
 .action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:8px 0;color:#6b7e70;background:#edf3e8;border-radius:10px;font-size:12px;line-height:1.6}.action-sync.failed{background:#fbf2e9;color:#93643b}.action-sync text:last-child{flex-shrink:0}
 .home-view{overflow-anchor:none}.home-plan-context{height:15px;margin-top:-14px;margin-bottom:16px}.home-plan-context .inflation-note{margin:0;line-height:15px}
 
+.masthead-title{position:relative;padding-right:52px}
+.message-entry{position:absolute;right:0;top:0;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid rgba(255,255,255,.26);border-radius:50%;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center}
+.bell-shape{position:relative;width:15px;height:17px;border:1.7px solid currentColor;border-radius:9px 9px 3px 3px;box-sizing:border-box}
+.bell-shape:after{content:'';position:absolute;width:5px;height:2px;border-radius:2px;background:currentColor;left:3.3px;bottom:-5px}
+.message-dot{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:#d67260;border:2px solid #315b48}
 </style>

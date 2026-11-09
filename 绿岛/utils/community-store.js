@@ -1,3 +1,5 @@
+import {communityFeed} from './community-feed.js'
+import {collectNotifications} from './notifications.js'
 import { reactive } from 'vue'
 import { fetchUserCollection, saveUserCollection, submitCommunityPost, deleteCommunityPost, fetchCommunityPosts } from './api-service.js'
 import { accountId, readAccountCache, writeAccountCache } from './account-cache.js'
@@ -82,6 +84,8 @@ export const CS={
    const saved=await submitCommunityPost(local)
    if(accountId()!==uid)throw new Error('账号已切换，已取消旧账号的界面更新')
    if(!saved||saved.ownerId!==uid||!saved.id)throw new Error('未确认云端保存，本机内容已保留')
+   communityFeed.apply(saved)
+   collectNotifications({posts:[saved]},uid)
    return cachePost(saved,post.id)
   }catch(error){
    if(accountId()===uid)cachePost({...local,status:'review_failed',reviewStatus:'review_failed',reviewReason:error.message||'尚未确认云端保存，请联网后重试'},post.id)
@@ -89,7 +93,10 @@ export const CS={
   }
  },
  async deletePost(post){
+  const uid=accountId()
   await deleteCommunityPost(post.id)
+  if(accountId()!==uid)return
+  communityFeed.apply(post,true)
   CS.saveUGC(CS.ugc().filter(item=>item.id!==post.id))
  },
  async publicPage(journey,cursor=0){return fetchCommunityPosts(journey,cursor)},
@@ -105,6 +112,7 @@ export const CS={
     // Keep only unconfirmed local drafts beside authoritative server posts.
     const unsent=local.filter(item=>!remoteIds.has(item.id)&&(!item.ownerId||item.ownerId===uid)&&!item.reviewedAt)
     writeAccountCache(keys.ugc,[...(remote||[]),...unsent],uid)
+    collectNotifications({posts:remote||[]},uid)
    }else{
     const pending=readAccountCache(keys[name]+':pending',null,uid)
     if(pending?.dirty)await flush(name)

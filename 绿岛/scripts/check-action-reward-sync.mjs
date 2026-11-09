@@ -9,7 +9,7 @@ const serverSource=path=>readFileSync(new URL('../../cloudfunctions/accountData/
 const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value)),checks=[]
 function check(name,value){assert.ok(value,name);checks.push(name)}
 const clean=code=>code.replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'').replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g,'')
-function mod(path,names,deps={}){return new Function(...Object.keys(deps),clean(source(path))+';return {'+names.join(',')+'}')(...Object.values(deps))}
+function mod(path,names,deps={}){deps={collectNotifications(){},...deps};return new Function(...Object.keys(deps),clean(source(path))+';return {'+names.join(',')+'}')(...Object.values(deps))}
 function memoryDatabase(){
  const tables=new Map()
  let tail=Promise.resolve()

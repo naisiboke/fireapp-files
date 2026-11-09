@@ -68,6 +68,8 @@ check('deleting all spending restores unfilled state', !home.hasExpenseRecords &
 add('expense', '100')
 home.startCountdown = () => {}
 home.startGuardian = () => {}
+home.refreshDailyActions=()=>{}
+home.collectMessages=()=>{}
 currentDay = '2026-12-01'
 Home.onShow.call(home)
 check('returning to home refreshes the month', home.ledgerMonth === '2026-12')

@@ -1,3 +1,4 @@
+import {collectNotifications} from './notifications.js'
 import { feedbackState, hasOpenFeedback, showDialog, showNotice } from './feedback.js'
 import { currentPageRoute } from './session-drafts.js'
 
@@ -35,6 +36,7 @@ export function createUpdateChecker(env) {
       const item=validateUpdate(document,installed.code,installed.platform)
       if(!env.eligible()||env.owner()!==owner)return {status:'skipped'}
       if(!item){if(manual)env.notice('当前版本 '+installed.name+'，暂无已发布更新');return {status:'current'}}
+      try{env.notify?.(item,installed)}catch(error){ /* Reminder storage must not block update navigation. */ }
       if(!manual&&env.blocked?.())return {status:'skipped'}
       const key='fire_update_prompt_'+installed.platform+'_'+item.versionCode
       if(!manual&&env.now()-Number(env.read(key)||0)<DAY)return {status:'skipped'}
@@ -78,6 +80,7 @@ const check=createUpdateChecker({
     success(response){if(response.statusCode!==200)return reject(new Error('暂时无法检查更新，请稍后重试'));let body=response.data;if(typeof body==='string'){try{body=JSON.parse(body)}catch(ignore){return reject(new Error('更新信息暂不可用'))}}resolve(body)},
     fail:()=>reject(new Error('网络连接失败，请稍后检查更新')),
   })),
+  notify:(release,installed)=>collectNotifications({release,installed:installed.code}),
   dialog:showDialog,notice:title=>showNotice({title,icon:'none'}),
   open:url=>{
     // #ifdef APP-PLUS

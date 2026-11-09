@@ -1,3 +1,4 @@
+import {collectNotifications} from '../utils/notifications.js'
 import { accountId, activateAccount, readAccountCache, writeAccountCache, preserveLegacyCache, adoptVerifiedLegacyCache } from '../utils/account-cache.js'
 import { reactive, toRaw } from 'vue'
 import { storage } from '../utils/storage.js'
@@ -483,6 +484,7 @@ function acceptRewards(rewards,uid){
  if(accountId()!==uid||!rewards||!Number.isSafeInteger(rewards.exp)||rewards.exp<0||!Array.isArray(rewards.events))return
  if(state.actionRewards?.loaded&&rewards.exp<state.actionRewards.exp)return
  state.actionRewards={...rewards,loaded:true};state.exp=rewards.exp
+ collectNotifications({rewards},uid)
  writeLocal(serializableState());writeAccountCache('fire_action_rewards_v1',state.actionRewards)
 }
 onActionRewards(acceptRewards)
