@@ -10,6 +10,7 @@ const checks=[]
 function check(name,value){assert.ok(value,name);checks.push(name)}
 const clean=code=>code.replace(/^import .*$/gm,'').replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let))/g,'')
 function moduleWith(deps={}){
+ deps={collectNotifications(){},...deps}
  return new Function(...Object.keys(deps),clean(source('utils/app-update.js'))+'\nreturn {validateUpdate,createUpdateChecker,OFFICIAL_DOWNLOAD_URL,checkAppUpdate};')(...Object.values(deps))
 }
 const moduleDeps={feedbackState:{owner:1},showDialog:async()=>({confirm:true}),showNotice(){},currentPageRoute:()=>'/pages/index/index'}

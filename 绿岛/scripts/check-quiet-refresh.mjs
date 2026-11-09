@@ -29,7 +29,7 @@ const failing=createDailyRefresh({day:actionDay,now:()=>now,refresh:async()=>{fa
 await failing('a').catch(()=>{});await failing('a');check(failedHits===1,'offline day refresh is rate limited')
 now+=31000;await failing('a').catch(()=>{});check(failedHits===2,'failed refresh can retry without a relaunch')
 
-let uid='a',clock=1000000,requests=0,remoteResolve
+let uid='a',clock=Date.UTC(2026,10,8,4),requests=0,remoteResolve
 const rows=new Map(),clone=x=>JSON.parse(JSON.stringify(x))
 const {createFeedCache}=isolated('绿岛/utils/community-feed.js',['createFeedCache'],{accountId:()=>uid,readAccountCache:()=>null,writeAccountCache:()=>true,fetchCommunityPosts:()=>{}})
 const cache=createFeedCache({owner:()=>uid,read:(tab,id)=>rows.get(id+':'+tab),write:(tab,value,id)=>rows.set(id+':'+tab,value),now:()=>clock,fetchPage:async tab=>{requests++;return {items:[{id:tab,journey:tab,status:'approved'}],nextCursor:null,stats:{doing:1,settled:1}}}})

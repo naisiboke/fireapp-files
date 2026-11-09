@@ -36,7 +36,7 @@ export function createUpdateChecker(env) {
       const item=validateUpdate(document,installed.code,installed.platform)
       if(!env.eligible()||env.owner()!==owner)return {status:'skipped'}
       if(!item){if(manual)env.notice('当前版本 '+installed.name+'，暂无已发布更新');return {status:'current'}}
-      env.notify?.(item,installed)
+      try{env.notify?.(item,installed)}catch(error){ /* Reminder storage must not block update navigation. */ }
       if(!manual&&env.blocked?.())return {status:'skipped'}
       const key='fire_update_prompt_'+installed.platform+'_'+item.versionCode
       if(!manual&&env.now()-Number(env.read(key)||0)<DAY)return {status:'skipped'}
