@@ -14,7 +14,9 @@ jobs:
       - name: Run account and UI regressions
         working-directory: 绿岛
         run: |
-          for script in scripts/check-*.mjs; do node "$script"; done
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
       - name: Install App dependencies
         working-directory: 绿岛
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
