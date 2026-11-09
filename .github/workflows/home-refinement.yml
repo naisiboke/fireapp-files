@@ -1,0 +1,55 @@
+name: Home and message refinement
+on:
+  push:
+    branches: [fix-home-reminders-20261109]
+    paths-ignore: ['updates/**']
+permissions:
+  contents: write
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify task, account and message regressions
+        working-directory: 绿岛
+        run: |
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
+      - name: Install App compiler
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Compile App H5
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Prepare interaction browser
+        run: |
+          npm install --prefix /tmp/fire-browser playwright@1.56.1 --no-audit --no-fund
+          /tmp/fire-browser/node_modules/.bin/playwright install chromium
+      - name: Verify actual home and inbox components
+        env:
+          NODE_PATH: /tmp/fire-browser/node_modules
+        run: node tools/check-message-ui.cjs
+      - name: Package complete replacement files
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,zipfile
+          paths=json.loads(pathlib.Path('tools/home-refinement-files.json').read_text())
+          name='updates/fire-home-refinement-20261109.zip'
+          with zipfile.ZipFile(name,'w',zipfile.ZIP_DEFLATED) as z:
+              for p in paths:z.write(p,p)
+          with zipfile.ZipFile(name) as z:
+              assert z.testzip() is None
+              for p in paths:assert z.read(p)==pathlib.Path(p).read_bytes()
+          print('HOME_PACKAGE_VERIFIED',name,pathlib.Path(name).stat().st_size)
+          PY
+      - name: Save verified source package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/fire-home-refinement-20261109.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Package verified home and message fixes"
+            git push origin HEAD:fix-home-reminders-20261109
+          fi
