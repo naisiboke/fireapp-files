@@ -1,0 +1,55 @@
+name: Quiet App and website update
+on:
+  push:
+    branches: [update-quiet-ui-20261109]
+    paths-ignore: ['updates/**']
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run account and UI regressions
+        working-directory: 绿岛
+        run: |
+          for script in scripts/check-*.mjs; do node "$script"; done
+      - name: Install App dependencies
+        working-directory: 绿岛
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Compile updated App H5
+        working-directory: 绿岛
+        run: UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Install browser verifier
+        run: |
+          npm install --prefix /tmp/fire-browser playwright@1.56.1 --no-audit --no-fund
+          /tmp/fire-browser/node_modules/.bin/playwright install chromium
+      - name: Verify single-file About page
+        env:
+          NODE_PATH: /tmp/fire-browser/node_modules
+        run: node tools/check-website-about.cjs
+      - name: Make replacement packages
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,zipfile
+          targets=json.loads(pathlib.Path('tools/quiet-update-files.json').read_text())
+          pathlib.Path('updates').mkdir(exist_ok=True)
+          packages=[('updates/fire-quiet-ui-20261109.zip',targets),('updates/fireday-about-20261109.zip',['index.html','privacy.html','app-update.json','assets/fireday-leaf.png','docs/quiet-ui-update-20261109.md'])]
+          for name,files in packages:
+              with zipfile.ZipFile(name,'w',zipfile.ZIP_DEFLATED) as z:
+                  for p in files:z.write(p,p)
+              with zipfile.ZipFile(name) as z:
+                  assert z.testzip() is None
+                  for p in files:assert z.read(p)==pathlib.Path(p).read_bytes()
+              print('PACKAGE_VERIFIED',name,pathlib.Path(name).stat().st_size)
+          PY
+      - name: Save verified replacement packages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/fire-quiet-ui-20261109.zip updates/fireday-about-20261109.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Package verified quiet App UI and website About update"
+            git push origin HEAD:update-quiet-ui-20261109
+          fi

@@ -11,7 +11,7 @@
 
     <!-- 用户卡片 -->
     <view class="user-card" @tap="goOnboarding">
-      <view class="avatar"><text class="avatar-text">{{ avatarLetter }}</text></view>
+      
       <view class="user-copy">
         <text class="user-name">{{ profileName }}</text>
         <text class="user-goal">{{ profileGoal }} · 持续成长</text>
@@ -36,9 +36,7 @@
       <text class="group-title">成长养成</text>
       <view class="group-menu">
         <view class="menu-item" @tap="comingSoon('我的成长')">
-          <view class="menu-icon">
-            <image class="menu-icon-img" :src="iconUri('hero')" mode="aspectFit" />
-          </view>
+          
           <view class="menu-copy">
             <text class="menu-name">我的成长</text>
             <text class="menu-sub">{{ expText }} · {{ completedCount }} 项任务行动</text>
@@ -46,7 +44,7 @@
           <text class="chevron">›</text>
         </view>
         <view class="menu-item" @tap="goPersonality">
-          <view class="menu-icon"><text class="contact-icon">◎</text></view>
+          
           <view class="menu-copy"><text class="menu-name">人格测试</text><text class="menu-sub">完成大五人格或 MBTI，解锁 AI 个性化建议</text></view>
           <text class="chevron">›</text>
         </view>
@@ -58,7 +56,7 @@
       <text class="group-title">社区</text>
       <view class="group-menu">
         <view class="menu-item" @tap="goPage('/pages/community/manage')">
-          <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('shield')" mode="aspectFit" /></view>
+          
           <view class="menu-copy"><text class="menu-name">我的社区设置</text><text class="menu-sub">管理我发布的经历、编辑或删除内容</text></view>
           <text class="chevron">›</text>
         </view>
@@ -70,7 +68,7 @@
       <text class="group-title">反馈问题</text>
       <view class="group-menu">
         <view class="menu-item" @tap="copyContact">
-          <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('wechat')" mode="aspectFit" /></view>
+          
           <view class="menu-copy"><text class="menu-name">问题反馈与奖励</text><text class="menu-sub">微信：naisiboke520 · 发现并核实真实问题后发放 VIP 兑换码</text></view>
           <text class="chevron">›</text>
         </view>
@@ -82,14 +80,14 @@
       <text class="group-title">系统设置</text>
       <view class="group-menu">
         <view class="menu-item" @tap="goPage('/pages/settings/index')">
-          <view class="menu-icon"><image class="menu-icon-img" :src="iconUri('settings')" mode="aspectFit" /></view>
+          
           <view class="menu-copy"><text class="menu-name">设置</text><text class="menu-sub">数据、提示音与关于本应用</text></view>
           <text class="chevron">›</text>
         </view>
       </view>
     </view>
 
-    <text class="version">FIRE Forge · v1.0.0</text>
+    <text class="version">Fire生活 · {{versionLabel}}</text>
     </view>
     <BottomTabs ref="bottomNav" current="profile" />
   </view>
@@ -102,28 +100,8 @@ import { feedbackPageMixin } from '@/utils/feedback-page.js'
 import { showDialog, showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { state } from '@/store/index.js'
+import {installedVersion} from '@/utils/app-update.js'
 import { isMembershipActive, membershipText } from '@/utils/membership.js'
-
-const ICONS = {
-  assets:
-    'M4 19V9M10 19V5M16 19v-7M22 19V3',
-  calculator:
-    'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 7h8M8 11h.5M12 11h.5M16 11h.5M8 15h.5M12 15h.5M16 15h.5M8 19h8',
-  wishlist:
-    'M7 7V5a5 5 0 0 1 10 0v2M3 7h18v14H3zM8 14l3 3 5-5',
-  hero:
-    'M12 3l2.4 5 5.6.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.6-.8L12 3z',
-  settings:
-    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
-  shield:
-    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-  wechat:
-    'M12 4C6.5 4 2 7.5 2 12c0 2.2 1.1 4.2 3 5.6L4 21l3.8-1.9c1.3.5 2.7.8 4.2.8 5.5 0 10-3.5 10-7.9S17.5 4 12 4zM8 11h2M14 11h2M8 14h8',
-}
-
-function svgUri(svg) {
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-}
 
 export default {
   mixins: [feedbackPageMixin, pageEntryMixin],
@@ -135,6 +113,7 @@ export default {
   },
 
   computed: {
+    versionLabel(){return installedVersion().name},
     profileName() {
       return (state.profile && state.profile.name) || '自由的旅人'
     },
@@ -156,12 +135,6 @@ export default {
 
   onShow() { uni.hideTabBar({ animation: false }) },
   methods: {
-    iconUri(key) {
-      const p = ICONS[key] || ICONS.settings
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#426052" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${p}"/></svg>`
-      return svgUri(svg)
-    },
-
     goPage(url) {
       uni.navigateTo({ url: url })
     },
@@ -407,4 +380,5 @@ export default {
 
 /* Shared status-bar inset and 12px content gap; keep bottom navigation fixed. */
  .fire-page-profile-index{padding-top:var(--fire-page-top)}
+.user-card,.group-menu{box-shadow:none}.menu-item{padding:16px}.menu-sub{white-space:normal}.pro-card{background:#fff;border-color:#e1e7de}.pro-kicker{letter-spacing:0}
 </style>

@@ -24,9 +24,9 @@
       </view>
     </view>
 
-    <view class="community-loading-state" :class="{'community-loading-initial':publicLoading && !loadingMore && !visiblePosts.length,'community-loading-refresh':publicLoading && !loadingMore && visiblePosts.length}" :aria-busy="publicLoading"><view v-if="publicLoading && !loadingMore" class="community-loader" :class="{'community-loader-refresh':visiblePosts.length}"><LoadingSpinner :size="20" label="社区内容加载中" /></view></view>
+    <view v-if="publicLoading && !loadingMore && !feedLoaded && !visiblePosts.length" class="community-loading-state community-loading-initial" aria-busy="true"><LoadingSpinner :size="20" label="社区内容加载中" /></view>
     <!-- 列表 -->
-    <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
+    <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity(true)"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
     <view class="list">
       <view v-if="visiblePosts.length === 0 && !publicLoading && !syncNotice" class="empty">
         <text class="empty-h2">还没有人在路上分享</text>
@@ -154,7 +154,7 @@
     </view>
     <!-- FAB -->
     <view class="fab" @tap="openPost">
-      <text class="fab-icon">＋</text>
+      <view class="fab-cross" aria-hidden="true"></view>
     </view>
 
     <!-- 弹窗：升级会员 -->
@@ -374,6 +374,8 @@ import { showNotice, dismissFeedback } from '@/utils/feedback.js'
 import BottomTabs from '@/components/BottomTabs.vue'
 import { COMMUNITY_OFFICIAL, COMMUNITY_POST_TAGS } from '@/utils/community-data.js'
 import { CS } from '@/utils/community-store.js'
+import {communityFeed} from '@/utils/community-feed.js'
+import {accountId} from '@/utils/account-cache.js'
 import { state } from '@/store/index.js'
 import { isMembershipActive } from '@/utils/membership.js'
 
@@ -397,7 +399,7 @@ export default {
       favorites: [],
       allUGC: [],
       publicCursor: null,
-      feedVersion: 0,
+      feedVersion: 0, feedLoaded:false, feedOwner:"", tabViews:{}, pageScroll:0, personalAt:0,
       publicCounts: {doing:0,settled:0},
       publicLoading: false,
       loadingMore: false,
@@ -442,12 +444,18 @@ export default {
       else uni.hideTabBar({ animation: false })
     },
   },
-  async onShow() {
+  onShow() {
     uni.hideTabBar({animation:false})
-    await this.refreshCommunity()
+    this.ensureFeedOwner()
+    this.favorites=CS.favorites();this.netWorth=CS.netWorth()
+    this.restoreFeedView()
+    this.refreshCommunity()
+    this.refreshPersonal()
   },
-  onHide() { uni.hideTabBar({ animation: false }) },
-
+  onHide() {this.saveFeedView();uni.hideTabBar({animation:false})},
+  onPageScroll(event){this.pageScroll=event.scrollTop||0},
+  async onPullDownRefresh(){try{await Promise.all([this.refreshCommunity(true),this.refreshPersonal(true)])}finally{uni.stopPullDownRefresh()}},
+  onUnload(){this.feedVersion++},
   onLoad(options) {
     if(options && options.tab==='doing')this.tab='doing'
     this.favorites=CS.favorites()
@@ -457,23 +465,39 @@ export default {
   },
 
   methods: {
-    async refreshCommunity() {
-      const version=++this.feedVersion
-      const journey=this.tab==='settled'?'settled':'doing'
+    ensureFeedOwner(){
+      const uid=accountId()
+      if(uid===this.feedOwner)return
+      this.feedVersion++;this.feedOwner=uid;this.tabViews={};this.allUGC=[];this.feedLoaded=false;this.publicCursor=null;this.publicCounts={doing:0,settled:0};this.expanded={};this.favExpanded={};this.favorites=[];this.modal=null;this.postDraft=EMPTY_DRAFT();this.pageScroll=0;this.personalAt=0;this.communitySyncMessage=''
+    },
+    saveFeedView(){if(this.feedOwner!==accountId())return;this.tabViews[this.tab]={items:this.allUGC,cursor:this.publicCursor,count:this.communityLoaded,scroll:this.pageScroll,loaded:this.feedLoaded}},
+    restoreFeedView(){
+      const saved=this.tabViews[this.tab],cached=communityFeed.peek(this.tab)
+      if(saved){this.allUGC=saved.items;this.publicCursor=saved.cursor;this.communityLoaded=saved.count;this.pageScroll=saved.scroll;this.feedLoaded=saved.loaded}
+      else{this.allUGC=cached?.items||[];this.publicCursor=cached?.nextCursor??null;this.communityLoaded=10;this.pageScroll=0;this.feedLoaded=!!cached}
+      if(cached){this.publicCounts=cached.stats;if(cached.at===0){this.allUGC=cached.items;this.publicCursor=cached.nextCursor}}
+    },
+    async refreshPersonal(force=false){
+      const uid=this.feedOwner
+      if(!uid||(!force&&Date.now()-this.personalAt<60000))return
+      this.personalAt=Date.now()
+      try{await CS.hydrate();if(this.feedOwner===uid&&accountId()===uid){this.favorites=CS.favorites();this.netWorth=CS.netWorth()}}
+      catch(error){if(this.feedOwner===uid)this.personalAt=0}
+    },
+    async refreshCommunity(force=false) {
+      if(typeof force!=='boolean')force=false
+      this.ensureFeedOwner()
+      const version=++this.feedVersion,uid=this.feedOwner,journey=this.tab
       this.publicLoading=true;this.loadingMore=false
-      try {
-        const personal=await CS.hydrate()
-        if(version!==this.feedVersion)return
-        this.favorites=CS.favorites();this.netWorth=CS.netWorth()
-        const result=await CS.publicPage(journey,0)
-        if(version!==this.feedVersion)return
-        this.allUGC=result.items||[]
-        this.publicCounts=result.stats||{doing:0,settled:0}
-        this.publicCursor=result.nextCursor
-        this.communitySyncMessage=personal.ok?'':'部分本机内容尚未同步，已保留，请重试'
-      }catch(error){
-        if(version===this.feedVersion)this.communitySyncMessage='社区内容暂未恢复，请联网后重试'
-      }finally{if(version===this.feedVersion){this.publicLoading=false;this.loadingMore=false}}
+      try{
+        const cached=communityFeed.peek(journey)
+        if(!force&&cached&&Date.now()-cached.at<60000&&this.feedLoaded)return
+        const result=await communityFeed.get(journey,{force})
+        if(!result||version!==this.feedVersion||uid!==accountId()||this.tab!==journey)return
+        this.allUGC=result.items;this.publicCounts=result.stats;this.publicCursor=result.nextCursor;this.feedLoaded=true;this.communitySyncMessage=''
+        this.saveFeedView()
+      }catch(error){if(version===this.feedVersion&&uid===accountId())this.communitySyncMessage='社区内容暂未更新，已有内容已保留'}
+      finally{if(version===this.feedVersion){this.publicLoading=false;this.loadingMore=false}}
     },
     buildUGCList(){return this.allUGC},
     isOfficial(post) {
@@ -481,12 +505,11 @@ export default {
     },
 
     setTab(t) {
-      this.tab = t
-      this.allUGC=[]
-      this.publicCursor=null
-      this.communityLoaded = 10
+      if(t===this.tab||!['doing','settled'].includes(t))return
+      this.saveFeedView();this.feedVersion++;this.publicLoading=false;this.loadingMore=false
+      this.tab=t;this.restoreFeedView()
+      this.$nextTick(()=>uni.pageScrollTo({scrollTop:this.pageScroll,duration:0}))
       this.refreshCommunity()
-      uni.pageScrollTo({ scrollTop: 0, duration: 0 })
     },
 
     toggleExpand(id) {
@@ -497,9 +520,9 @@ export default {
       if(this.publicLoading)return
       this.communityLoaded += 10
       if(this.publicCursor===null)return
-      const version=this.feedVersion
+      const version=this.feedVersion,uid=this.feedOwner
       this.publicLoading=true;this.loadingMore=true
-      try{const result=await CS.publicPage(this.tab==='settled'?'settled':'doing',this.publicCursor);if(version!==this.feedVersion)return;this.allUGC=[...this.allUGC,...result.items];this.publicCursor=result.nextCursor}
+      try{const result=await CS.publicPage(this.tab==='settled'?'settled':'doing',this.publicCursor);if(version!==this.feedVersion||uid!==accountId())return;this.allUGC=[...this.allUGC,...result.items.filter(x=>!this.allUGC.some(y=>y.id===x.id))];this.publicCursor=result.nextCursor;this.saveFeedView()}
       catch(error){if(version===this.feedVersion)this.communitySyncMessage='更多内容暂未加载，请重试'}
       finally{if(version===this.feedVersion){this.publicLoading=false;this.loadingMore=false}}
     },
@@ -667,7 +690,7 @@ export default {
           tags:[...this.postDraft.tags],category:this.postDraft.tags.join(' · '),journey:'doing',
           timeline:this.validTimeline.map(row=>({year:row.year,desc:row.title})),displayName:state.profile?.name||'社区用户',
         })
-        if(saved.status==='approved'){CS.clearDraft();this.postDraft=EMPTY_DRAFT();this.modal=null;this.tab='doing';await this.refreshCommunity()}
+        if(saved.status==='approved'){CS.clearDraft();this.postDraft=EMPTY_DRAFT();this.modal=null;this.tab='doing';await this.refreshCommunity(true)}
         showNotice({title:saved.status==='approved'?'云端审核通过，经历已发布':saved.reviewReason||'内容已保存，请查看状态',icon:'none'})
       }catch(error){showNotice({title:error.message||'云端尚未确认，本机内容已保留',icon:'none'})}
       finally{this.publishing=false}
@@ -1075,4 +1098,14 @@ export default {
  .fire-page-community-index{padding-top:var(--fire-page-top)}
  .fire-page-community-index .community-head{padding-top:0}
 .community-loading-state{position:relative;height:32px;display:flex;align-items:center;justify-content:center}.community-loading-initial{height:96px;display:flex;align-items:center;justify-content:center}.community-loader{display:flex;align-items:center;justify-content:center;pointer-events:none}.community-loader-refresh{position:static;width:28px;height:28px;border-radius:50%;background:#fdfdfb}.community-loading-refresh{height:32px;display:flex;align-items:center;justify-content:center}.load-more{min-height:40px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+/* The loader has no node or reserved height after initial loading. */
+.community-loading-state{height:auto;margin:0}
+.community-loading-initial{min-height:72px}
+.fire-page-community-index .tabs{margin-bottom:14px}
+.fire-page-community-index .list{margin-top:0;padding-top:0}
+.fire-page-community-index .fab{width:48px;height:48px;right:18px;bottom:calc(86px + env(safe-area-inset-bottom));border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 12px rgba(23,61,53,.1)}
+.fab-cross{position:relative;width:20px;height:20px;flex-shrink:0}
+.fab-cross:before,.fab-cross:after{content:'';position:absolute;background:#fff;border-radius:2px}
+.fab-cross:before{width:20px;height:2px;top:9px;left:0}
+.fab-cross:after{width:2px;height:20px;top:0;left:9px}
 </style>

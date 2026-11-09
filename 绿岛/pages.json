@@ -81,7 +81,9 @@
       "path": "pages/community/index",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "社区"
+        "navigationBarTitleText": "社区",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
@@ -208,6 +210,13 @@
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "用户协议"
+      }
+    },
+    {
+      "path": "pages/messages/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "消息提醒"
       }
     }
   ],
