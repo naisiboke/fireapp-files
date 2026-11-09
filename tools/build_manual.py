@@ -106,7 +106,7 @@ for index,(items,height) in mapping.items():
     if index==55:
         # Continue this chapter on one additional page without changing the source template.
         heading=paragraph_after(last,'5、收入与支出记账（续）')
-        heading.style=doc.styles['Heading 2']
+        heading.style=paragraphs[49].style
         heading.paragraph_format.page_break_before=True
         p=paragraph_after(heading._p,'选择分类后直接输入金额，可选填消费必要度、备注和日期；确认后点击“完成”。保存成功后页面显示“已记账”。')
         p.paragraph_format.keep_with_next=True
