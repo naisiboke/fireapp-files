@@ -40,20 +40,23 @@ check('draft handoff stays in the original month',takeLedgerDraft('A','2026-10')
 check('previous inline draft transfers once into the classic editor',takeLedgerDraft('A','2026-11').amount==='99'&&takeLedgerDraft('A','2026-11')===null)
 const cancelled=offerLedgerDraft('A','2026-11',{amount:'1'});cancelLedgerDraft('A',cancelled);check('failed navigation retains no stale in-memory handoff',takeLedgerDraft('A','2026-11')===null)
 const cs={hydrate:async()=>({ok:true}),publicPage:async()=>({items:[],stats:{doing:0,settled:0},nextCursor:null}),favorites:()=>[],netWorth:()=>null,syncState:{message:''}}
-const Community=options('pages/community/index.vue',{state,CS:cs,LoadingSpinner:{},AppFeedback:{},FireOverlay:{},BottomTabs:{},feedbackPageMixin:{},pageEntryMixin:{},COMMUNITY_POST_TAGS:[],COMMUNITY_OFFICIAL:[],isMembershipActive:()=>false})
-const community=vm(Community);community.allUGC=[{id:'existing',journey:'doing'}]
-let waiting=deferred();cs.hydrate=()=>waiting.promise
-const read=community.refreshCommunity();check('refresh immediately shows busy state while retaining visible data',community.publicLoading&&community.allUGC.length===1)
+const createFeedCache=new Function(clean(src('utils/community-feed.js')).split('export const communityFeed')[0].replace('export function','function')+';return createFeedCache')()
+const feedRows=new Map()
+const communityFeed=createFeedCache({owner:()=>uid,read:(tab,id)=>feedRows.get(id+tab),write:(tab,value,id)=>feedRows.set(id+tab,value),fetchPage:(...args)=>cs.publicPage(...args)})
+const Community=options('pages/community/index.vue',{state,CS:cs,accountId:()=>uid,communityFeed,LoadingSpinner:{},AppFeedback:{},FireOverlay:{},BottomTabs:{},feedbackPageMixin:{},pageEntryMixin:{},COMMUNITY_POST_TAGS:[],COMMUNITY_OFFICIAL:[],isMembershipActive:()=>false})
+const community=vm(Community);community.ensureFeedOwner();community.allUGC=[{id:'existing',journey:'doing'}]
+let waiting=deferred();cs.publicPage=()=>waiting.promise
+const read=community.refreshCommunity(true);check('refresh immediately shows busy state while retaining visible data',community.publicLoading&&community.allUGC.length===1)
 waiting.reject(Error('offline'));await read
-check('hydrate failure always stops loading and retains an explicit retry message',!community.publicLoading&&community.communitySyncMessage.includes('重试')&&community.allUGC[0].id==='existing')
-cs.hydrate=async()=>({ok:true});cs.publicPage=async()=>({items:[{id:'new',journey:'doing'}],stats:{doing:1,settled:0},nextCursor:1})
-await community.refreshCommunity();check('successful refresh hides loader and replaces content',!community.publicLoading&&community.allUGC[0].id==='new'&&community.communitySyncMessage==='')
+check('feed failure always stops loading and retains existing posts',!community.publicLoading&&community.communitySyncMessage.includes('未更新')&&community.allUGC[0].id==='existing')
+cs.publicPage=async()=>({items:[{id:'new',journey:'doing'}],stats:{doing:1,settled:0},nextCursor:1})
+await community.refreshCommunity(true);check('successful refresh hides loader and replaces content',!community.publicLoading&&community.allUGC[0].id==='new'&&community.communitySyncMessage==='')
 waiting=deferred();cs.publicPage=()=>waiting.promise;const more=community.loadMore()
 check('pagination uses its own spinner state',community.publicLoading&&community.loadingMore)
-const nextHydrate=deferred();cs.hydrate=()=>nextHydrate.promise;const newer=community.refreshCommunity()
+const nextFeed=deferred();cs.publicPage=()=>nextFeed.promise;const newer=community.refreshCommunity(true)
 waiting.resolve({items:[{id:'stale'}],nextCursor:null});await more
 check('older pagination cannot stop a newer refresh spinner',community.publicLoading&&!community.loadingMore&&community.allUGC[0].id==='new')
-nextHydrate.reject(Error('offline'));await newer;check('newest failure releases the spinner',!community.publicLoading&&!community.loadingMore)
+nextFeed.reject(Error('offline'));await newer;check('newest failure releases the spinner',!community.publicLoading&&!community.loadingMore)
 function loginFixture(){
  let auth=deferred(),restore=deferred(),authCalls=0
  const values=new Map(),local={cloudSync:{status:'synced'},profile:{},finance:{assets:15000}},routes=[],messages=[]

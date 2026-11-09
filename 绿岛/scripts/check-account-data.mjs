@@ -12,6 +12,7 @@ const copy=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value))
 const checks=[]
 function check(name,condition){assert.ok(condition,name);checks.push(name)}
 function moduleOf(code,names,dependencies={}){
+ dependencies={collectNotifications(){},communityFeed:{apply(){}},...dependencies}
  const clean=code.replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'')
   .replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g,'')
  return new Function(...Object.keys(dependencies),clean+'\nreturn {'+names.join(',')+'};')(...Object.values(dependencies))

@@ -1,3 +1,5 @@
+import {createDailyRefresh,openActionRoute} from '../utils/action-navigation.js'
+import {actionDay} from '../utils/action-tasks.js'
 // Run in 绿岛: node scripts/check-v104-features.mjs
 // Real cloud handlers and client modules, isolated authenticated DB/storage/navigation mocks.
 // No production database writes, no APK build, no external AI request.
@@ -9,7 +11,7 @@ const serverSource=path=>readFileSync(new URL('../../cloudfunctions/accountData/
 const checks=[],copy=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)),DAY=86400000
 function check(name,value){assert.ok(value,name);checks.push(name)}
 const clean=code=>code.replace(/^\s*import\s+(?:(?:[\s\S]*?)\s+from\s+)?['"][^'"\n]+['"]\s*;?/gm,'').replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g,'')
-function mod(path,names,deps={}){return new Function(...Object.keys(deps),clean(source(path))+';return {'+names.join(',')+'}')(...Object.values(deps))}
+function mod(path,names,deps={}){deps={collectNotifications(){},...deps};return new Function(...Object.keys(deps),clean(source(path))+';return {'+names.join(',')+'}')(...Object.values(deps))}
 const reactive=v=>v,ref=value=>({value}),computed=get=>({get value(){return get()}})
 let instant=Date.parse('2026-11-03T04:00:00Z')
 class ClockDate extends Date{constructor(...args){super(...(args.length?args:[instant]))}static now(){return instant}}
@@ -194,7 +196,7 @@ detailState.items=[{id:123,name:'旧项目'}];check('late restore resolves numer
 detailState.items=[];check('reactive detail disappears after actual deletion',detail.item.value===null)
 
 // Execute the actual home countdown and goal delete handlers.
-const homeDeps={state:store.state,AppFeedback:{},BottomTabs:{},CountdownSwitch:{},AnimatedNumber:{},SpotlightGuide:{},spotlightHomeMixin:{},feedbackPageMixin:{},pageEntryMixin:{},...engine,
+const homeDeps={createDailyRefresh,openActionRoute,actionDay,accountId:()=>currentUid,collectNotifications(){},inbox:()=>[],notificationState:{revision:0},state:store.state,AppFeedback:{},BottomTabs:{},CountdownSwitch:{},AnimatedNumber:{},SpotlightGuide:{},spotlightHomeMixin:{},feedbackPageMixin:{},pageEntryMixin:{},...engine,
  todayActions:task.todayActions,CS:{ugc:()=>[]},isMembershipActive:()=>false,LocalDay:()=>actions.day(instant),hasValidFinance:()=>true,freedomResult:()=>({progress:20,months:10,date:new Date(instant+100*DAY)}),
  persistNow:()=>true,setInterval:()=>1,clearInterval(){},setTimeout:fn=>fn(),refreshActions:async()=>null,refreshFinance(){},...wish,
  uni:{navigateTo:o=>homeRoutes.push(o.url)}}
