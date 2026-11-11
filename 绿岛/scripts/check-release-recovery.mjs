@@ -26,7 +26,7 @@ for(const page of pages){
  check('page applies the common spacing after responsive rules: '+page.path,code.includes('var(--fire-page-top)')||code.includes('var(--fire-header-height)'))
 }
 const home=source('pages/index/index.vue')
-check('home shows official site rather than a locale date',home.includes('class="masthead-date">fireday.cn</text>')&&!home.includes('{{ todayText }}'))
+check('home uses a quiet purpose line rather than a locale date',home.includes('class="masthead-date">让选择回到自己手中</text>')&&!home.includes('{{ todayText }}'))
 check('empty finance state removes redundant placeholder prose',!home.includes('从了解自己开始')&&!home.includes('自由日：待填写')&&!home.includes('先填写你的财务数据'))
 
 let owner='account-A',page={route:'pages/ledger/edit',options:{id:'entry/中文?&'}},storageFull=false
