@@ -53,7 +53,7 @@ bundles.forEach((x,i)=>routes['/render'+i+'.js']=x.render)
    assert(layout.panel.top<=layout.summary.top&&layout.summary.bottom<=layout.metrics.top&&layout.metrics.bottom<=layout.panel.bottom,'summary and unboxed metrics share one panel')
    assert(layout.panel.bottom<=layout.wish.top&&layout.wish.bottom<=layout.tasks.top,'financial first reading order')
    assert.equal(await page.locator('.wishlist-home-card').evaluate(el=>getComputedStyle(el).borderTopWidth),'0px')
-   if(width===390){assert(layout.tasks.bottom<=844-76,'three actions fit above bottom navigation');await page.screenshot({path:'/tmp/fire-home-compact-390.png',fullPage:true})}
+   if(width===390){assert(layout.tasks.bottom<=844-76,'three actions fit above bottom navigation');console.log('COMPACT_HOME_PREVIEW_BASE64='+(await page.screenshot({path:'/tmp/fire-home-compact-390.png',type:'jpeg',quality:85,fullPage:true})).toString('base64'))}
    await page.locator('.countdown-switch-option').nth(1).click()
    assert.equal(await page.evaluate(()=>window.state.homeCountdown),'goal')
    assert.match(await page.locator('.freedom-label').innerText(),/车子/)

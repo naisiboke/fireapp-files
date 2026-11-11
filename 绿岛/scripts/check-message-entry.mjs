@@ -26,5 +26,5 @@ try{
  check(membershipText({membership:{active:true,expiresAt:0}})==='已开通','unlimited membership has no fabricated expiry')
 }finally{Date.prototype.toLocaleDateString=locale}
 const sfc=file('components/CountdownSwitch.vue')
-check(sfc.includes('height:36px')&&sfc.includes('background:transparent')&&!sfc.includes('color:#fff!important'),'quiet text and underline')
+check(sfc.includes('height:28px')&&sfc.includes('height:2px')&&sfc.includes('background:transparent')&&!sfc.includes('color:#fff!important'),'quiet text and underline')
 console.log('Message entry and locale-independent membership dates: '+checks+' checks passed')

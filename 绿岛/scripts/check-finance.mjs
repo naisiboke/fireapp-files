@@ -156,7 +156,7 @@ check('home has editable finance entry', source('pages/index/index.vue').include
 check('calculator defaults annual return and withdrawal to 4', source('pages/calculator/index.vue').includes("rate:'4',withdrawal:'4'"))
 check('calculator has no passive income field', !source('pages/calculator/index.vue').includes('passive') && !source('utils/finance-plan.js').includes('passive'))
 check('pro diagnosis is gated before rendering', source('pages/calculator/index.vue').includes('showDiagnosis && isProMember') && source('pages/calculator/index.vue').includes('showDiagnosis && !isProMember'))
-check('home displays goals in the main countdown',source('pages/index/index.vue').includes('displayResult.date')&&source('pages/index/index.vue').includes('state.goalPlan.name+\'目标倒计时\''))
+check('home displays selected goal in the main countdown',source('pages/index/index.vue').includes('displayResult.date')&&source('pages/index/index.vue').includes("activeGoal?'距离「'+state.goalPlan.name+'」还有'")&&source('pages/index/index.vue').includes('GoalEngine(state.goalPlan)'))
 
 
 const numberCode = source('components/AnimatedNumber.vue').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .+$/gm,'')
