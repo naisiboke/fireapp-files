@@ -52,5 +52,7 @@
   "绿岛/styles/press-feedback.css",
   "绿岛/scripts/check-press-feedback.mjs",
   "绿岛/scripts/check-quiet-refresh.mjs",
-  "docs/compact-home-press-20261111.md"
+  "docs/compact-home-press-20261111.md",
+  "绿岛/scripts/check-finance.mjs",
+  "绿岛/scripts/check-message-entry.mjs"
 ]
