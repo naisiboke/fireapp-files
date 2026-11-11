@@ -1,0 +1,20 @@
+[
+  "绿岛/utils/community-feed.js",
+  "绿岛/utils/action-navigation.js",
+  "绿岛/utils/notifications.js",
+  "绿岛/components/CountdownSwitch.vue",
+  "绿岛/pages/index/index.vue",
+  "绿岛/store/index.js",
+  "绿岛/utils/app-update.js",
+  "绿岛/utils/community-store.js",
+  "绿岛/pages/messages/index.vue",
+  "绿岛/pages.json",
+  "绿岛/pages/community/index.vue",
+  "绿岛/pages/settings/index.vue",
+  "绿岛/pages/profile/index.vue",
+  "绿岛/utils/message-navigation.js",
+  "绿岛/utils/membership.js",
+  "绿岛/pages/login/login.vue",
+  "绿岛/static/fireday-leaf.png",
+  "docs/logo-update-20261111.md"
+]
