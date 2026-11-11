@@ -32,14 +32,14 @@ const server=http.createServer((req,res)=>{
    const page=await browser.newPage({viewport,deviceScaleFactor:1});
    page.on('pageerror',error=>errors.push(error.message));
    await page.goto(origin,{waitUntil:'networkidle'});
-   await page.locator('.site-header .brand-logo').evaluate(img=>img.decode());
+   await page.locator('.site-header .brand-logo').evaluate(el=>el instanceof HTMLImageElement?el.decode():Promise.resolve());
    check(await page.locator('.site-header .brand-logo').count()===1,'one header logo');
    check(await page.locator('.footer .brand-logo').count()===1,'one footer logo');
    for(const selector of ['.site-header .brand-mark','.footer .brand-mark']){
     check(await page.locator(selector).evaluate(el=>{const style=getComputedStyle(el);return style.backgroundColor==='rgba(0, 0, 0, 0)'&&style.boxShadow==='none'&&parseFloat(style.borderWidth)===0}),'brand mark has no colored plate '+viewport.width);
    }
    check(await page.locator('.site-header .brand').textContent().then(t=>t.trim()==='Fire生活'),'leaf stays beside existing brand text');
-   check(await page.locator('.site-header .brand-logo').evaluate(el=>{const r=el.getBoundingClientRect();return r.width<=36&&r.height<=36&&el.naturalWidth>0}),'logo remains small header icon');
+   check(await page.locator('.site-header .brand-logo').evaluate(el=>{const r=el.getBoundingClientRect();return r.width<=36&&r.height<=36&&el.tagName.toLowerCase()==='svg'&&document.querySelector('#brand-leaf image')?.getAttribute('href')?.startsWith('data:image/png;base64,')}),'logo remains small header icon');
    await page.locator('.footer').scrollIntoViewIfNeeded();await page.waitForTimeout(180);
    check(await page.locator('.footer-bottom a').allTextContents().then(t=>t.join(',')==='了解应用,下载应用,隐私条款'),'footer has requested three links');
    check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no mobile horizontal overflow');

@@ -1,0 +1,57 @@
+name: Website and login leaf brand
+on:
+  push:
+    branches: [fix-leaf-brand-20261111]
+    paths-ignore: ['updates/**']
+permissions:
+  contents: write
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check login and account regressions
+        working-directory: 绿岛
+        run: |
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
+      - name: Install and compile App H5
+        working-directory: 绿岛
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Prepare browser and Chinese fonts
+        run: |
+          npm install --prefix /tmp/fire-browser playwright@1.56.1 pngjs@7.0.0 --no-audit --no-fund
+          /tmp/fire-browser/node_modules/.bin/playwright install chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+      - name: Verify standalone website and compiled login logo
+        env:
+          NODE_PATH: /tmp/fire-browser/node_modules
+        run: node tools/check-leaf-brand.cjs
+      - name: Package replacements
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,zipfile
+          apps=json.loads(pathlib.Path('tools/leaf-update-files.json').read_text())
+          sites=['index.html','download.html','privacy.html','app-update.json','assets/fireday-leaf.png','docs/logo-update-20261111.md']
+          for name,files in [('updates/fire-login-leaf-20261111.zip',apps),('updates/fireday-inline-logo-20261111.zip',sites)]:
+              with zipfile.ZipFile(name,'w',zipfile.ZIP_DEFLATED) as z:
+                  for p in files:z.write(p,p)
+              with zipfile.ZipFile(name) as z:
+                  assert z.testzip() is None
+                  for p in files:assert z.read(p)==pathlib.Path(p).read_bytes()
+              print('LEAF_PACKAGE_VERIFIED',name,pathlib.Path(name).stat().st_size)
+          PY
+      - name: Save verified packages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/fire-login-leaf-20261111.zip updates/fireday-inline-logo-20261111.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Package verified standalone website and login leaf logo"
+            git push origin HEAD:fix-leaf-brand-20261111
+          fi
