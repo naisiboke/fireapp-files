@@ -69,7 +69,7 @@ check(notificationCandidates({posts:[{id:'x',status:'approved',localOnly:true,re
 check(notificationCandidates({items:[{id:'bought',created:1,days:3,status:'bought'}]},clock).length===0,'completed cooling challenge not due')
 
 const switchSource=read('绿岛/components/CountdownSwitch.vue')
-check(!switchSource.includes('countdown-switch-mark')&&switchSource.includes('height:32px'),'light text countdown switch has no dot')
+check(!switchSource.includes('countdown-switch-mark')&&switchSource.includes('height:36px'),'light text countdown switch has no dot')
 const home=read('绿岛/pages/index/index.vue')
 check(home.includes('openActionRoute(t.url,uni')&&home.includes('this.refreshDailyActions(false)'),'home wires real task navigation and midnight check')
 const community=read('绿岛/pages/community/index.vue')

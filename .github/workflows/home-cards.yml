@@ -1,0 +1,56 @@
+name: Home card layout
+on:
+  push:
+    branches: [home-cards-20261111]
+    paths-ignore: ['updates/**']
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify existing account and task behavior
+        working-directory: 绿岛
+        run: |
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
+      - name: Compile App H5
+        working-directory: 绿岛
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Prepare browser
+        run: |
+          npm install --prefix /tmp/fire-browser playwright@1.56.1 --no-audit --no-fund
+          /tmp/fire-browser/node_modules/.bin/playwright install chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+      - name: Verify home cards on small phones
+        env:
+          NODE_PATH: /tmp/fire-browser/node_modules
+        run: node tools/check-home-cards.cjs
+      - name: Package checked source
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,zipfile
+          paths=json.loads(pathlib.Path('tools/home-cards-files.json').read_text())
+          target='updates/fire-home-cards-20261111.zip'
+          with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
+              for p in paths:z.write(p,p)
+          with zipfile.ZipFile(target) as z:
+              assert z.testzip() is None
+              for p in paths:assert z.read(p)==pathlib.Path(p).read_bytes()
+          print('HOME_CARDS_PACKAGE_VERIFIED',pathlib.Path(target).stat().st_size)
+          PY
+      - name: Save checked package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/fire-home-cards-20261111.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Package checked financial home cards"
+            git push origin HEAD:home-cards-20261111
+          fi

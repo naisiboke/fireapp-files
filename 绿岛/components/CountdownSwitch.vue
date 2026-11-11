@@ -10,11 +10,11 @@
 export default{name:'CountdownSwitch',props:{activeGoal:Boolean},emits:['change']}
 </script>
 <style>
-.countdown-switch{position:relative;z-index:4;display:flex;width:180px;height:32px;max-width:100%;padding:0;box-sizing:border-box;background:transparent;margin:12px 0 18px;border:0;box-shadow:none}
-.countdown-switch-indicator{position:absolute;left:calc(25% - 18px);bottom:0;width:36px;height:1.5px;border-radius:1px;background:#7d9181;transition:left .24s cubic-bezier(.22,1,.36,1);pointer-events:none}
-.countdown-switch-indicator.on-goal{left:calc(75% - 18px)}
-.countdown-switch-option{position:relative;flex:1;min-width:0!important;min-height:32px!important;height:32px!important;margin:0!important;padding:0 8px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#718072!important;font-size:13px!important;font-weight:400!important;line-height:1.4!important;box-shadow:none;display:flex;align-items:center;justify-content:center;transition:color .2s ease!important}
-.countdown-switch-option.selected{color:#2c4938!important;font-weight:600!important}
+.countdown-switch{position:relative;z-index:4;display:flex;width:100%;height:36px;padding:3px;box-sizing:border-box;isolation:isolate;border:1px solid #e5eae1;border-radius:13px;background:#f6f8f4;margin:0 0 14px;box-shadow:none}
+.countdown-switch-indicator{position:absolute;left:3px;top:3px;bottom:3px;width:calc((100% - 6px) / 2);border-radius:10px;background:#e0e9dc;transition:transform .24s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.countdown-switch-indicator.on-goal{transform:translateX(100%)}
+.countdown-switch-option{position:relative;z-index:1;flex:1;min-width:0!important;min-height:28px!important;height:28px!important;margin:0!important;padding:0 8px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#879181!important;font-size:13px!important;font-weight:400!important;line-height:1.4!important;box-shadow:none;display:flex;align-items:center;justify-content:center;transition:color .2s ease!important}
+.countdown-switch-option.selected{color:#31563c!important;font-weight:600!important}
 .countdown-switch-option::after{border:0}
 @media(prefers-reduced-motion:reduce){.countdown-switch-indicator,.countdown-switch-option{transition:none!important}}
 </style>
