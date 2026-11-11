@@ -12,12 +12,12 @@
       >{{ word.text }}</text>
     </view>
 
-    <button class="skip-button fire-button-outline fire-button-sm" @tap="skip">跳过引导</button>
+    <button class="skip-button fire-button-outline fire-button-sm" data-fire-press="true" @tap="skip" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">跳过引导</button>
 
     <view class="hope-layer">
       <view class="green-beacon"></view>
       <text class="hope-title">在喧嚣中，抓住你的Fire生活。</text>
-      <button class="enter-button fire-button-primary" @tap="enter">踏上Fire生活</button>
+      <button class="enter-button fire-button-primary" data-fire-press="true" @tap="enter" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">踏上Fire生活</button>
     </view>
 
     <view v-if="revealing" class="reveal-layer" :style="revealStyle"></view>

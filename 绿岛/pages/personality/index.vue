@@ -1,11 +1,11 @@
 <template>
   <view class="personality-page fire-page-personality-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><view class="back" @tap="back">‹</view><text class="title">人格测试</text><view class="close" @tap="close">×</view></view>
+    <view class="head"><view class="back" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</view><text class="title">人格测试</text><view class="close" data-fire-press="true" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</view></view>
     <view v-if="!started && !finished && !manualOpen" class="chooser">
       <text class="hero-title">认识自己的行为方式</text><text class="hero-sub">选择一个测试开始，完成后可在应用内获取结合个人情况的 AI 建议。</text>
-      <view class="test-card" @tap="start('bigfive')"><text class="test-name">大五人格 · 50题</text><text class="test-desc">开放性、尽责性、外向性、宜人性、情绪稳定性</text><text class="arrow">›</text></view>
-      <view class="test-card mbti-card"><text class="test-name">MBTI</text><text class="test-desc">已知类型可直接填写，也可以答题观察偏好</text><view class="mbti-actions"><button class="mbti-manual" @tap="openManual">我知道自己的类型</button><button class="mbti-quiz" @tap="start('mbti')">开始答题 · 100题</button></view></view>
+      <view class="test-card" data-fire-press="true" @tap="start('bigfive')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="test-name">大五人格 · 50题</text><text class="test-desc">开放性、尽责性、外向性、宜人性、情绪稳定性</text><text class="arrow">›</text></view>
+      <view class="test-card mbti-card"><text class="test-name">MBTI</text><text class="test-desc">已知类型可直接填写，也可以答题观察偏好</text><view class="mbti-actions"><button class="mbti-manual" data-fire-press="true" @tap="openManual" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">我知道自己的类型</button><button class="mbti-quiz" data-fire-press="true" @tap="start('mbti')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">开始答题 · 100题</button></view></view>
       <view v-if="savedBigFive || savedMbti" class="my-personality">
         <view class="my-personality-head"><text class="my-personality-title">我的性格</text><text class="my-personality-sub">最近一次测试结果</text></view>
         <view v-if="savedMbti" class="saved-result"><text class="result-source">{{savedMbti.source==='self_reported'?'自行填写':'答题结果'}}</text><text v-if="savedMbti.scoringVersion!==QUESTION_VERSION && savedMbti.source!=='self_reported'" class="legacy-result-note">此结果来自旧版问卷，可重新测试更新。</text><text class="saved-title">{{ savedMbti.title }}</text><text class="saved-summary">{{ savedMbti.summary }}</text><text v-if="savedMbti.detail" class="saved-detail">{{ savedMbti.detail }}</text><view v-for="row in (savedMbti.rows || [])" :key="'m-'+row.name" class="saved-row"><view class="saved-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="saved-bar"><view :style="{width:row.score+'%'}"></view></view><text class="saved-copy">{{ row.copy }}</text></view></view>
@@ -17,14 +17,14 @@
       <text class="hero-title">填写我的 MBTI</text><text class="hero-sub">例如 INFP、ENTJ。只填写类型，不生成测试分数。</text>
       <input class="mbti-input" v-model="manualType" maxlength="8" aria-label="我的 MBTI 类型" placeholder="例如 INFP" :disabled="savingManual"/>
       <text v-if="manualError" class="assessment-error" role="alert">{{manualError}}</text>
-      <button class="manual-save" :disabled="savingManual" @tap="saveManual">保存类型</button>
-      <button class="manual-cancel" @tap="back">返回</button>
+      <button class="manual-save" data-fire-press="true" :disabled="savingManual" @tap="saveManual" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">保存类型</button>
+      <button class="manual-cancel" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回</button>
     </view>
     <view v-else-if="started && !finished" class="quiz">
       <view class="quiz-meta"><text>{{ type==='bigfive'?'大五人格':'MBTI' }}</text><text>{{ index + 1 }} / {{ questions.length }}</text></view>
       <view class="bar"><view :style="{width:((index+1)/questions.length*100)+'%'}"></view></view>
       <view class="question-card"><text class="question">{{ questions[index].text }}</text><text class="question-tip">按最近几个月的通常表现选择，没有好坏之分</text></view>
-      <view class="answers"><view v-for="item in scale" :key="item.value" class="answer" role="button" :class="{selected:answers[index]===item.value}" :aria-disabled="answerLocked" @tap="answer(item.value)"><text>{{ item.label }}</text></view></view>
+      <view class="answers"><view v-for="item in scale" :key="item.value" class="answer" data-fire-press="true" role="button" :class="{selected:answers[index]===item.value}" :aria-disabled="answerLocked" @tap="answer(item.value)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{ item.label }}</text></view></view>
     </view>
     <view v-else class="result"><text v-if="result?.source==='self_reported'" class="result-source">自行填写</text><text v-if="result?.qualityWarning" class="assessment-error">{{result.qualityWarning}}</text>
       <text class="result-kicker">{{ type==='bigfive'?'大五人格结果':'MBTI 结果' }}</text>
@@ -32,7 +32,7 @@
       <text class="result-summary">{{ resultSummary }}</text><text v-if="resultDetail" class="result-detail">{{ resultDetail }}</text>
       <view v-for="row in resultRows" :key="row.name" class="result-row"><view class="result-row-head"><text>{{ row.name }}</text><text>{{ row.score }}%</text></view><view class="result-bar"><view :style="{width:row.score+'%'}"></view></view><text class="result-copy">{{ row.copy }}</text></view>
       <view class="result-note">结果已保存在「我的性格」。你可以在应用内让 AI 结合财务情况和性格结果提供建议。</view>
-      <view class="result-actions"><view class="again" @tap="result?.source==='self_reported'?openManual():start(type)">{{result?.source==='self_reported'?'修改类型':'重新测试'}}</view><view class="done" @tap="close">完成</view></view>
+      <view class="result-actions"><view class="again" data-fire-press="true" @tap="result?.source==='self_reported'?openManual():start(type)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{result?.source==='self_reported'?'修改类型':'重新测试'}}</view><view class="done" data-fire-press="true" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">完成</view></view>
     </view>
   </view>
 </template>

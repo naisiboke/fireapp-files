@@ -1,7 +1,7 @@
 <template>
   <view class="add-page fire-page-wishlist-add" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="add-head"><view class="back" @tap="back">‹</view><text class="title">添加消费计划</text><view class="head-space"></view></view>
+    <view class="add-head"><view class="back" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</view><text class="title">添加消费计划</text><view class="head-space"></view></view>
     <scroll-view class="form-scroll" scroll-y>
       <view class="form-content">
         <text class="label">名称</text>
@@ -9,13 +9,13 @@
         <text class="label">预计金额</text>
         <input class="field-input" v-model="form.amount" type="digit" placeholder="请输入预计金额" placeholder-class="placeholder" />
         <text class="label">分类</text>
-        <view class="choices"><view v-for="cat in categories" :key="cat.id" class="choice" :class="{active:form.category===cat.id}" @tap="form.category=cat.id">{{cat.name}}</view></view>
+        <view class="choices"><view v-for="cat in categories" :key="cat.id" class="choice" data-fire-press="true" :class="{active:form.category===cat.id}" @tap="form.category=cat.id" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{cat.name}}</view></view>
         <text class="label">冷静期</text>
-        <view class="choices"><view v-for="d in [3,7,30]" :key="d" class="choice" :class="{active:form.days===d}" @tap="form.days=d">{{d}} 天</view></view>
+        <view class="choices"><view v-for="d in [3,7,30]" :key="d" class="choice" data-fire-press="true" :class="{active:form.days===d}" @tap="form.days=d" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{d}} 天</view></view>
         <text v-if="error" class="error">{{error}}</text>
       </view>
     </scroll-view>
-    <view class="submit-bar"><button class="submit fire-button-primary fire-button-lg" type="button" @click="handleSubmit" :disabled="saving">{{saving?'保存中…':'完成'}}</button></view>
+    <view class="submit-bar"><button class="submit fire-button-primary fire-button-lg" data-fire-press="true" type="button" @click="handleSubmit" :disabled="saving" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{saving?'保存中…':'完成'}}</button></view>
   </view>
 </template>
 <script setup>

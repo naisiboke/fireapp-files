@@ -10,7 +10,7 @@
     </view>
 
     <!-- 用户卡片 -->
-    <view class="user-card" @tap="goOnboarding">
+    <view class="user-card" data-fire-press="true" @tap="goOnboarding" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       
       <view class="user-copy">
         <text class="user-name">{{ profileName }}</text>
@@ -26,7 +26,7 @@
         <text class="pro-title">{{ isMember ? 'Fire生活通用会员' : '开通通用会员' }}</text>
         <text class="pro-desc">{{ isMember ? membershipStatus : '¥9 / 月 · AI 无限使用 · 社区 · 深度分析' }}</text>
       </view>
-      <view class="pro-btn" @tap="openPro">
+      <view class="pro-btn" data-fire-press="true" @tap="openPro" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <text class="pro-btn-text">{{ isMember ? '查看权益' : '立即开通' }}</text>
       </view>
     </view>
@@ -35,7 +35,7 @@
     <view class="group">
       <text class="group-title">成长养成</text>
       <view class="group-menu">
-        <view class="menu-item" @tap="comingSoon('我的成长')">
+        <view class="menu-item" data-fire-press="true" @tap="comingSoon('我的成长')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           
           <view class="menu-copy">
             <text class="menu-name">我的成长</text>
@@ -43,7 +43,7 @@
           </view>
           <text class="chevron">›</text>
         </view>
-        <view class="menu-item" @tap="goPersonality">
+        <view class="menu-item" data-fire-press="true" @tap="goPersonality" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           
           <view class="menu-copy"><text class="menu-name">人格测试</text><text class="menu-sub">完成大五人格或 MBTI，解锁 AI 个性化建议</text></view>
           <text class="chevron">›</text>
@@ -55,7 +55,7 @@
     <view class="group">
       <text class="group-title">社区</text>
       <view class="group-menu">
-        <view class="menu-item" @tap="goPage('/pages/community/manage')">
+        <view class="menu-item" data-fire-press="true" @tap="goPage('/pages/community/manage')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           
           <view class="menu-copy"><text class="menu-name">我的社区设置</text><text class="menu-sub">管理我发布的经历、编辑或删除内容</text></view>
           <text class="chevron">›</text>
@@ -67,7 +67,7 @@
     <view class="group">
       <text class="group-title">反馈问题</text>
       <view class="group-menu">
-        <view class="menu-item" @tap="copyContact">
+        <view class="menu-item" data-fire-press="true" @tap="copyContact" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           
           <view class="menu-copy"><text class="menu-name">问题反馈与奖励</text><text class="menu-sub">微信：naisiboke520 · 发现并核实真实问题后发放 VIP 兑换码</text></view>
           <text class="chevron">›</text>
@@ -79,7 +79,7 @@
     <view class="group">
       <text class="group-title">系统设置</text>
       <view class="group-menu">
-        <view class="menu-item" @tap="goPage('/pages/settings/index')">
+        <view class="menu-item" data-fire-press="true" @tap="goPage('/pages/settings/index')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           
           <view class="menu-copy"><text class="menu-name">设置</text><text class="menu-sub">数据、提示音与关于本应用</text></view>
           <text class="chevron">›</text>

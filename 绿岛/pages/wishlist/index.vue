@@ -2,28 +2,28 @@
 <template>
  <view class="qe-page qe-page-with-tabs wishlist-page" :style="[pageLayoutStyle, pageStyle]">
   <AppFeedback :owner-id="feedbackOwnerId" />
-  <view class="qe-header"><button class="qe-back" aria-label="返回上一页" @tap="back"><view class="qe-back-chevron"></view></button><text class="qe-header-title">极简拔草</text><view></view></view>
+  <view class="qe-header"><button class="qe-back" data-fire-press="true" aria-label="返回上一页" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="qe-back-chevron"></view></button><text class="qe-header-title">极简拔草</text><view></view></view>
   <view class="qe-wishlist-summary"><view><text>挑战成功，留下</text><text class="qe-wishlist-saved">¥{{money(saved)}}</text></view><text>{{activeCount}} 项进行中</text></view>
-  <view class="qe-wishlist-tabs"><button v-for="t in tabs" :key="t.id" :class="{active:filter===t.id}" :aria-pressed="filter===t.id" @tap="filter=t.id">{{t.name}}</button></view>
+  <view class="qe-wishlist-tabs"><button data-fire-press="true" v-for="t in tabs" :key="t.id" :class="{active:filter===t.id}" :aria-pressed="filter===t.id" @tap="filter=t.id" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{t.name}}</button></view>
   <view class="qe-wishlist-main">
    <QuietEmptyState v-if="showEmpty || entryEmptyLeaving" ref="emptyGuide" kind="wishlist" title="给想买的东西一点时间" description="记下来，过几天再决定。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !showAdd" @ready="refreshEntryArrow" />
    <view v-else-if="!filtered.length" class="qe-empty-filter">这里还没有记录</view>
    <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
-   <view v-for="item in filtered" :id="rowId(item.id)" :key="item.id" class="qe-wish-card" :class="{'qe-record-arriving':entryArrivingId===String(item.id)}" @tap="open(item)">
+   <view v-for="item in filtered" :id="rowId(item.id)" :key="item.id" class="qe-wish-card" data-fire-press="true" :class="{'qe-record-arriving':entryArrivingId===String(item.id)}" @tap="open(item)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
     <view class="qe-wish-top"><view><text class="qe-wish-name">{{item.name}}</text><text class="qe-wish-price">¥{{money(item.amount)}}</text></view><text class="qe-wish-chevron">›</text></view>
-    <view class="qe-wish-bottom"><text class="qe-wish-status">{{statusText(item)}}</text><button class="qe-wish-delete" :disabled="deleting" @tap.stop="removeItem(item)" aria-label="删除此计划"><view class="qe-trash"></view>删除</button></view>
+    <view class="qe-wish-bottom"><text class="qe-wish-status">{{statusText(item)}}</text><button class="qe-wish-delete" data-fire-press="true" :disabled="deleting" @tap.stop="removeItem(item)" aria-label="删除此计划" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="qe-trash"></view>删除</button></view>
    </view>
   </view>
-  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !showAdd}" aria-label="添加消费计划" @tap="openAdd">＋</button>
+  <button id="quiet-entry-fab" class="qe-fab" data-fire-press="true" :class="{'qe-fab-hint':showFirstGuide && !showAdd}" aria-label="添加消费计划" @tap="openAdd" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">＋</button>
   <view v-if="entryFly" class="qe-flight" :style="entryFly.style" aria-hidden="true"><text class="qe-flight-label">{{entryFly.title}}</text><text class="qe-flight-amount">{{entryFly.amount}}</text></view>
   <BottomTabs current="tools" />
   <QuietEntrySheet :visible="entryVisible && showAdd" :owner-id="feedbackOwnerId" title="添加消费计划" :busy="saving" @close="closeEntrySheet" @ready="entryFocus=true">
    <text class="qe-label">想买什么</text><input class="qe-input" type="text" :adjust-position="false" :focus="entryFocus" v-model="form.name" maxlength="80" aria-label="消费计划名称" placeholder="例如：想买的耳机" />
    <text class="qe-label">预计金额（元）</text><input class="qe-input" type="digit" :adjust-position="false" v-model="form.amount" maxlength="12" aria-label="预计金额" placeholder="0.00" />
    <text class="qe-label">分类</text><picker :range="categories" range-key="name" :value="categoryIndex" @change="chooseCategory"><view class="qe-picker-row">{{categories[categoryIndex].name}} <text>⌄</text></view></picker>
-   <text class="qe-label">冷静期</text><view class="qe-cooling-options"><button v-for="d in [3,7,30]" :key="d" :class="{active:form.days===d}" @tap="form.days=d">{{d}} 天</button></view>
+   <text class="qe-label">冷静期</text><view class="qe-cooling-options"><button data-fire-press="true" v-for="d in [3,7,30]" :key="d" :class="{active:form.days===d}" @tap="form.days=d" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{d}} 天</button></view>
    <text class="qe-form-hint">到期后会询问是否购买，再记录挑战结果。</text><text v-if="error" class="qe-error" role="alert">{{error}}</text>
-   <template #footer><button class="qe-primary" :disabled="saving" @tap="submitWish">{{saving?'保存中…':'添加'}}</button></template>
+   <template #footer><button class="qe-primary" data-fire-press="true" :disabled="saving" @tap="submitWish" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{saving?'保存中…':'添加'}}</button></template>
   </QuietEntrySheet>
  </view>
 </template>

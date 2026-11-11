@@ -5,12 +5,12 @@
       <view v-if="dialog" class="fire-dialog">
         <view class="fire-dialog-head">
           <text class="fire-dialog-title">{{ dialog.title }}</text>
-          <button class="fire-dialog-close" aria-label="关闭" @tap="closeDialog(false)"><view class="fire-close-mark"></view></button>
+          <button class="fire-dialog-close" data-fire-press="true" aria-label="关闭" @tap="closeDialog(false)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></button>
         </view>
         <text v-if="dialog.content" class="fire-dialog-content" selectable>{{ dialog.content }}</text>
         <view class="fire-dialog-actions">
-          <button v-if="dialog.showCancel" class="fire-dialog-button fire-dialog-secondary" @tap="closeDialog(false)">{{ dialog.cancelText }}</button>
-          <button class="fire-dialog-button fire-dialog-primary" :class="{ 'fire-dialog-danger': dialog.danger }" @tap="closeDialog(true)">{{ dialog.confirmText }}</button>
+          <button v-if="dialog.showCancel" class="fire-dialog-button fire-dialog-secondary" data-fire-press="true" @tap="closeDialog(false)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ dialog.cancelText }}</button>
+          <button class="fire-dialog-button fire-dialog-primary" data-fire-press="true" :class="{ 'fire-dialog-danger': dialog.danger }" @tap="closeDialog(true)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ dialog.confirmText }}</button>
         </view>
       </view>
     </FireOverlay>

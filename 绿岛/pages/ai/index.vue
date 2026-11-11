@@ -1,8 +1,8 @@
 <template>
   <view class="ai-page fire-page-ai-index" :style="[pageLayoutStyle, pageStyle]" :class="{'keyboard-open':keyboardHeight>0 || inputFocused}">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><text class="back" @tap="back">‹</text><text class="title">问 AI</text><text class="close" @tap="close">×</text></view>
-    <FireOverlay :visible="drawerOpen" :owner-id="feedbackOwnerId" label="历史聊天" wide @close="drawerOpen=false"><view class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><button class="fire-modal-close" aria-label="关闭" @tap="drawerOpen=false"><view class="fire-close-mark"></view></button></view><view class="new-drawer" @tap="newChat">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view></FireOverlay>
+    <view class="head"><text class="back" data-fire-press="true" @tap="back">‹</text><text class="title">问 AI</text><text class="close" data-fire-press="true" @tap="close">×</text></view>
+    <FireOverlay :visible="drawerOpen" :owner-id="feedbackOwnerId" label="历史聊天" wide @close="drawerOpen=false"><view class="chat-drawer"><view class="drawer-head"><text>历史聊天</text><button class="fire-modal-close" data-fire-press="true" aria-label="关闭" @tap="drawerOpen=false" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></button></view><view class="new-drawer" data-fire-press="true" @tap="newChat" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">＋ 新建聊天</view><scroll-view scroll-y class="chat-list"><view v-for="chat in chats" :key="chat.id" class="chat-item" data-fire-press="true" :class="{active:chat.id===currentChatId}" @tap="selectChat(chat.id)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{ chat.title || '新对话' }}</text><text>{{ formatChatDate(chat.updatedAt) }}</text></view><text v-if="!chats.length" class="chat-empty">还没有历史聊天</text></scroll-view></view></FireOverlay>
     <view v-if="!ready" class="setup-card">
       <view class="setup-mark">⌁</view>
       <text class="setup-title">让 AI 更了解你</text>
@@ -11,21 +11,21 @@
         <view class="requirement-copy"><text class="requirement-title">① FIRE 资产报告</text><text class="requirement-sub">{{ financeReady ? '已完成，可以继续使用' : '填写资产、每月存入和退休后消费' }}</text></view>
         <text class="requirement-state">{{ financeReady ? '✓ 已完成' : '未完成' }}</text>
       </view>
-      <button v-if="!financeReady" class="setup-button" @tap="goCalculator">补充资产报告</button>
+      <button v-if="!financeReady" class="setup-button" data-fire-press="true" @tap="goCalculator" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">补充资产报告</button>
       <view class="requirement choice-requirement" :class="{ complete: personalityReady }">
         <view class="requirement-copy"><text class="requirement-title">② 人格测试（二选一）</text><text class="requirement-sub">{{ personalityReady ? '已完成，大五人格或 MBTI 均可' : '完成其中一个即可解锁 AI' }}</text></view>
         <text class="requirement-state">{{ personalityReady ? '✓ 已完成' : '任选一个' }}</text>
       </view>
-      <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" @tap="goPersonality('bigfive')">了解自己 · 大五人格 50题</button><button class="setup-button secondary-setup" @tap="goPersonality('mbti')">了解自己 · MBTI 100题</button></view>
+      <view v-if="!personalityReady" class="choice-buttons"><button class="setup-button secondary-setup" data-fire-press="true" @tap="goPersonality('bigfive')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">了解自己 · 大五人格 50题</button><button class="setup-button secondary-setup" data-fire-press="true" @tap="goPersonality('mbti')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">了解自己 · MBTI 100题</button></view>
 
       <view v-if="financeReady && personalityReady" class="unlock-note">资料已完成，正在进入对话…</view>
     </view>
     <view v-else class="chat-shell">
       <view class="chat-meta">
-        <button class="meta-link" @tap="goPersonality('')">我的性格 ›</button>
+        <button class="meta-link" data-fire-press="true" @tap="goPersonality('')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">我的性格 ›</button>
         <text class="meta-note">简短回答</text>
-        <button class="meta-link quota-link" @tap="goMembership">{{ quotaText() }} ›</button>
-        <button class="meta-link" @tap="drawerOpen=true">历史</button>
+        <button class="meta-link quota-link" data-fire-press="true" @tap="goMembership" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ quotaText() }} ›</button>
+        <button class="meta-link" data-fire-press="true" @tap="drawerOpen=true" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">历史</button>
       </view>
       <scroll-view class="messages" scroll-y :show-scrollbar="false" :scroll-into-view="lastMessageId">
         <view class="message-list">
@@ -36,9 +36,9 @@
       </scroll-view>
       <view class="composer">
         <view class="input-row">
-          <button class="profile-button" aria-label="结合我的情况给建议" :disabled="loading" @tap="sendProfile">建议</button>
+          <button class="profile-button" data-fire-press="true" aria-label="结合我的情况给建议" :disabled="loading" @tap="sendProfile" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">建议</button>
           <input v-model="question" maxlength="2000" class="question" confirm-type="send" :adjust-position="false" placeholder="聊聊你的想法…" placeholder-class="placeholder" @focus="focusComposer" @blur="inputFocused=false" @confirm="send" />
-          <button class="send" :disabled="loading" @tap="send">发送</button>
+          <button class="send" data-fire-press="true" :disabled="loading" @tap="send" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">发送</button>
         </view>
       </view>
     </view>

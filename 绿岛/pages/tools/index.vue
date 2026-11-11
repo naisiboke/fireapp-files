@@ -11,13 +11,13 @@
     <view class="tool-controls">
       <view class="tool-search"><text class="search-icon">⌕</text><input v-model="query" placeholder="搜索工具" placeholder-class="search-placeholder" confirm-type="search" /></view>
       <view class="category-list" aria-label="工具分类">
-        <view v-for="category in categories" :key="category" class="category-chip" :class="{ active: activeCategory === category }" @tap="activeCategory = category">{{ category }}</view>
+        <view v-for="category in categories" :key="category" class="category-chip" data-fire-press="true" :class="{ active: activeCategory === category }" @tap="activeCategory = category" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ category }}</view>
       </view>
     </view>
 
     <text v-if="commonTools.length" class="group-title">常用功能</text>
     <view v-if="commonTools.length" class="tool-grid">
-      <view v-for="t in commonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
+      <view v-for="t in commonTools" :key="t.route" class="tool-card" data-fire-press="true" @tap="goTool(t)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <view class="tool-icon" :style="{ background: t.bg }">
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>
@@ -31,7 +31,7 @@
 
     <text v-if="uncommonTools.length" class="group-title second">更多工具</text>
     <view v-if="uncommonTools.length" class="tool-grid">
-      <view v-for="t in uncommonTools" :key="t.route" class="tool-card" @tap="goTool(t)">
+      <view v-for="t in uncommonTools" :key="t.route" class="tool-card" data-fire-press="true" @tap="goTool(t)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <view class="tool-icon" :style="{ background: t.bg }">
           <text v-if="t.icon === 'ai'" class="tool-text-icon">AI</text><text v-else-if="t.icon === 'music'" class="tool-text-icon music-text-icon">♪</text><image v-else class="tool-icon-img" :src="iconUri(t.icon, t.color)" mode="aspectFit" />
         </view>

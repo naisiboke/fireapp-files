@@ -2,15 +2,15 @@
   <view class="calculator-page fire-page-calculator-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="page-head">
-      <button class="back" aria-label="返回" @click="back">‹</button>
+      <button class="back" data-fire-press="true" aria-label="返回" @click="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</button>
       <text class="page-title">躺平倒计时</text>
-      <button v-if="mode==='goal' && state.goalPlan" class="delete-goal" :disabled="saving" @tap="removeGoal">删除目标</button><view v-else class="head-space"></view>
+      <button v-if="mode==='goal' && state.goalPlan" class="delete-goal" data-fire-press="true" :disabled="saving" @tap="removeGoal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除目标</button><view v-else class="head-space"></view>
     </view>
     <text class="intro-title">{{ mode === 'fire' ? '计算你的自由日' : '为目标安排资金与时间' }}</text>
     <text class="intro-sub">按你填写的数据测算，修改后可重新计算。</text>
     <view class="mode-tabs" role="tablist">
-      <button role="tab" :aria-selected="mode === 'fire'" :class="{ active: mode === 'fire' }" @click="switchMode('fire')">FIRE 退休模式</button>
-      <button role="tab" :aria-selected="mode === 'goal'" :class="{ active: mode === 'goal' }" @click="switchMode('goal')">目标储蓄模式</button>
+      <button data-fire-press="true" role="tab" :aria-selected="mode === 'fire'" :class="{ active: mode === 'fire' }" @click="switchMode('fire')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">FIRE 退休模式</button>
+      <button data-fire-press="true" role="tab" :aria-selected="mode === 'goal'" :class="{ active: mode === 'goal' }" @click="switchMode('goal')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">目标储蓄模式</button>
     </view>
     <text v-if="!configured && mode === 'fire'" class="empty-hint">先填写你的财务数据。没有数据时，不展示自由日或倒计时。</text>
 
@@ -38,7 +38,7 @@
     </view>
 
     <view v-if="errors.length" class="error-panel" role="alert" aria-live="polite"><text v-for="message in errors" :key="message">{{ message }}</text></view>
-    <button class="primary" :disabled="saving" @click="calculate">{{ saving ? '保存中…' : mode === 'fire' ? '计算并保存自由日' : '计算目标日' }}</button>
+    <button class="primary" data-fire-press="true" :disabled="saving" @click="calculate" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ saving ? '保存中…' : mode === 'fire' ? '计算并保存自由日' : '计算目标日' }}</button>
 
     <view v-if="saving" class="calculation-loading" role="status" aria-live="polite">
       <view class="loading-spinner"></view>
@@ -67,24 +67,24 @@
         <view class="result-row"><text>按期达成需要存入</text><text>{{ money(Math.ceil(result.requiredMonthly * 100) / 100) }} 元/月</text></view>
         <view class="result-row"><text>期望日期预计资金</text><text>{{ money(result.projectedAtExpected) }} 元</text></view>
         <text class="result-sub">{{ result.onTime ? '按当前计划可在期望时间内达到' : '当前计划未达到期望时间，请调整存入金额或时间' }}</text>
-        <button class="primary" :disabled="saving" @click="publishGoal">更新目标到首页</button>
+        <button class="primary" data-fire-press="true" :disabled="saving" @click="publishGoal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">更新目标到首页</button>
         <text class="formula">仅计算会保存目标草稿；确认更新后，首页才展示这项目标。</text>
       </template>
       <template v-else>
-        <button class="secondary" @click="toggleDiagnosis">{{ showDiagnosis ? '收起 AI 解析' : '查看' }} PRO 深度诊断</button>
+        <button class="secondary" data-fire-press="true" @click="toggleDiagnosis" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ showDiagnosis ? '收起 AI 解析' : '查看' }} PRO 深度诊断</button>
         <view v-if="showDiagnosis && !isProMember" class="pro-lock-card">
           <text class="pro-lock-title">VIP AI 解析</text>
           <text class="pro-lock-copy">根据你的 FIRE 数据生成约 500 字的重点解析</text>
           <text class="pro-lock-badge">会员专属功能</text>
-          <button class="secondary pro-open" @click="showProPrompt">开通 Pro 会员</button>
+          <button class="secondary pro-open" data-fire-press="true" @click="showProPrompt" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">开通 Pro 会员</button>
         </view>
         <view v-if="proNotice" class="pro-notice" role="status" aria-live="polite">
           <text>VIP AI 解析需要会员权限，开通后即可查看。</text>
-          <button class="secondary" @click="proNotice = false">知道了</button>
+          <button class="secondary" data-fire-press="true" @click="proNotice = false" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">知道了</button>
         </view>
         <view v-if="showDiagnosis && isProMember" class="diagnosis"><view v-if="aiDiagnosis" class="ai-diagnosis">{{ aiDiagnosis }}</view><view v-else class="ai-diagnosis loading">正在生成 AI 解析…</view></view>
       </template>
-      <button class="secondary" @click="goHome">返回首页</button>
+      <button class="secondary" data-fire-press="true" @click="goHome" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回首页</button>
       <text class="formula">固定收益和存入假设，不计税费与通胀。</text>
     </view>
   </view>

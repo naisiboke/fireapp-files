@@ -3,7 +3,7 @@
  <view v-if="visible" class="qe-sheet-mask" :style="viewportStyle" @tap="requestClose" @touchmove.stop.prevent @wheel.stop.prevent>
   <view class="qe-sheet-panel" role="dialog" aria-modal="true" :aria-label="title" @tap.stop @touchmove.stop @wheel.stop>
    <view class="qe-sheet-handle"></view>
-   <view class="qe-sheet-head"><text class="qe-sheet-title">{{title}}</text><button class="qe-sheet-close" aria-label="关闭输入面板" :disabled="busy" @tap="requestClose">×</button></view>
+   <view class="qe-sheet-head"><text class="qe-sheet-title">{{title}}</text><button class="qe-sheet-close" data-fire-press="true" aria-label="关闭输入面板" :disabled="busy" @tap="requestClose" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</button></view>
    <view class="qe-sheet-scroll"><view class="qe-sheet-content"><slot /></view></view>
    <view class="qe-sheet-footer"><slot name="footer" /></view>
   </view>

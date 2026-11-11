@@ -1,0 +1,33 @@
+name: Compact home and press feedback
+on:
+  push:
+    branches: [main]
+    paths: ['绿岛/**', 'tools/check-compact-home.cjs', 'tools/compact-home-preview-client.js', '.github/workflows/compact-home.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check existing behavior and press coverage
+        working-directory: 绿岛
+        run: |
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
+      - name: Compile App H5
+        working-directory: 绿岛
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          UNI_INPUT_DIR="$PWD" npm run build:h5
+      - name: Prepare browser
+        run: |
+          npm install --prefix /tmp/fire-browser playwright@1.56.1 --no-audit --no-fund
+          /tmp/fire-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check compact layout, press and original navigation
+        env:
+          NODE_PATH: /tmp/fire-browser/node_modules
+        run: node tools/check-compact-home.cjs

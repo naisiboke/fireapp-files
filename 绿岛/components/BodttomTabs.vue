@@ -3,9 +3,9 @@
     <view
       v-for="t in tabs"
       :key="t.path"
-      class="tab-item"
+      class="tab-item" data-fire-press="true"
       @click="switchTab(t.path)"
-    >
+     hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <image class="tab-icon" :src="iconUri(t.key, t.key === current)" mode="aspectFit" />
     </view>
   </view>

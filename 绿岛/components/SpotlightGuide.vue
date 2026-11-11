@@ -1,7 +1,7 @@
 <template>
   <view v-if="shown && layout" class="fire-spotlight" :class="{ 'fire-spotlight-closing': closing }" :style="rootStyle" role="dialog" aria-modal="true" aria-labelledby="fire-spotlight-title" aria-describedby="fire-spotlight-description" @tap.stop @touchmove.stop.prevent @wheel.stop.prevent>
     <view class="fire-spotlight-hole" :style="holeStyle"><view class="fire-spotlight-outline"></view></view>
-    <button class="fire-spotlight-skip" :style="{top:layout.skipTop+'px'}" @tap.stop="$emit('skip')">跳过</button>
+    <button class="fire-spotlight-skip" data-fire-press="true" :style="{top:layout.skipTop+'px'}" @tap.stop="$emit('skip')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">跳过</button>
     <view class="fire-spotlight-anchor" :style="bubbleStyle">
       <view :key="step" class="fire-spotlight-tooltip" :class="layout.bubble.placement" :style="{maxHeight:layout.bubble.maxHeight+'px'}">
         <view class="fire-spotlight-arrow" :style="{left:(layout.bubble.arrow-6)+'px'}"></view>
@@ -11,7 +11,7 @@
         </view>
         <view class="fire-spotlight-footer">
           <text class="fire-spotlight-counter" :aria-label="'第'+(step+1)+'步，共'+total+'步'">{{ step+1 }}/{{ total }}</text>
-          <button class="fire-spotlight-next" :disabled="busy || closing" :aria-disabled="busy || closing" @tap.stop="advance">{{ step===total-1 ? '知道了' : '下一步' }}</button>
+          <button class="fire-spotlight-next" data-fire-press="true" :disabled="busy || closing" :aria-disabled="busy || closing" @tap.stop="advance" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ step===total-1 ? '知道了' : '下一步' }}</button>
         </view>
       </view>
     </view>

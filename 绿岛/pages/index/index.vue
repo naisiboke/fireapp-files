@@ -6,18 +6,19 @@
     <view class="masthead-title">
      <text class="masthead-h1">我的自由计划</text>
      <text class="masthead-date">让选择回到自己手中</text>
-     <button class="message-entry" aria-label="消息提醒" @tap.stop="openMessages"><image class="message-bell" :src="messageBell" mode="aspectFit" aria-hidden="true"/><view v-if="unreadMessages" class="message-dot"/></button>
+     <button class="message-entry" data-fire-press="true" aria-label="消息提醒" @tap.stop="openMessages" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><image class="message-bell" :src="messageBell" mode="aspectFit" aria-hidden="true"/><view v-if="unreadMessages" class="message-dot"/></button>
     </view>
     <CountdownSwitch v-if="state.goalPlan && state.goalPlan.name" :active-goal="activeGoal" @change="selectCountdown"/>
+    <view class="financial-panel">
     <view v-if="!displayConfigured" class="home-unconfigured">
      <text class="unconfigured-title">从今天，开始你的自由计划</text>
      <text class="unconfigured-sub">填写资料，看看离自由还有多远。</text>
-     <view id="fire-guide-finance" class="btn-primary" @tap="goCalculator"><text class="btn-primary-text">填写资料</text></view>
+     <view id="fire-guide-finance" class="btn-primary" data-fire-press="true" @tap="goCalculator" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="btn-primary-text">填写资料</text></view>
     </view>
-    <view v-else class="freedom-summary" @tap="goResult">
+    <view v-else class="freedom-summary" data-fire-press="true" @tap="goResult" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
      <view class="freedom-head">
       <text class="freedom-label">{{activeGoal?'距离「'+state.goalPlan.name+'」还有':'距离自由还有'}}</text>
-      <text id="fire-guide-finance" class="plan-link" @tap.stop="goResult">查看计划 ›</text>
+      <text id="fire-guide-finance" class="plan-link" data-fire-press="true" @tap.stop="goResult">查看计划 ›</text>
      </view>
      <view v-if="displayResult.date" class="day-countdown">
       <view class="calendar-unit"><AnimatedNumber class="calendar-num" :value="years"/><text class="calendar-label">年</text></view>
@@ -25,23 +26,25 @@
       <view class="calendar-unit"><AnimatedNumber class="calendar-num" :value="days"/><text class="calendar-label">天</text></view>
      </view>
      <text class="countdown-target">{{targetText}}</text>
-     <view class="progress-line"><view class="progress"><view class="progress-fill" :style="{width:displayResult.progress+'%'}"/></view><text class="progress-caption">{{displayResult.progress.toFixed(1)}}%</text></view>
      <view class="freedom-foot">
       <view class="summary-stat"><text class="summary-stat-label">{{activeGoal?'已准备':'当前资产'}}</text><text class="summary-stat-value">¥{{formatMoney(activeGoal?state.goalPlan.assets:state.finance.assets)}}</text></view>
-      <view class="summary-stat"><text class="summary-stat-label">{{activeGoal?'目标金额':'自由进度'}}</text><text class="summary-stat-value">{{activeGoal?'¥'+formatMoney(state.goalPlan.amount):displayResult.progress.toFixed(1)+'%'}}</text></view>
+      <view v-if="activeGoal" class="summary-stat goal-target"><text class="summary-stat-label">目标金额</text><text class="summary-stat-value">¥{{formatMoney(state.goalPlan.amount)}}</text></view>
+      <text class="progress-caption">{{displayResult.progress.toFixed(1)}}%</text>
      </view>
+     <view class="progress-line"><view class="progress"><view class="progress-fill" :style="{width:displayResult.progress+'%'}"/></view></view>
+    </view>
+    <view class="home-metrics">
+     <view class="metric" data-fire-press="true" @tap="goLedger" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="metric-label">本月消费 ›</text><text class="metric-value metric-expense" :class="{'metric-over-budget':expenseOverBudget}">{{ hasExpenseRecords ? '¥ ' + formatCompactAmount(expenseTotal / 100) : '待填写' }}</text><text v-if="expenseOverBudget" class="metric-status">已超额</text></view>
+     <view class="metric" data-fire-press="true" @tap="goLedger" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="metric-label">本月收入 ›</text><text class="metric-value metric-income">{{ hasIncomeRecords ? '¥ ' + formatCompactAmount(incomeTotal / 100) : '待填写' }}</text></view>
+     <view class="metric" data-fire-press="true" @tap="goWishlist" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="metric-label">拔草已省下 ›</text><text class="metric-value">¥ {{formatCompactAmount(wishlistSaved)}}</text></view>
+    </view>
     </view>
    </view>
    <view class="home-content">
-    <view v-if="state.cloudSync && ['error','restoring','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" @tap="retryAccountSync"><text>{{state.cloudSync.message||'数据暂未同步，请稍后重试'}}</text><text>{{state.cloudSync.status==='conflict'?'选择版本 ›':state.cloudSync.status==='restoring'?'恢复中…':'重试 ›'}}</text></view>
-    <view class="home-metrics">
-     <view class="metric" @tap="goLedger"><text class="metric-label">本月消费 ›</text><text class="metric-value metric-expense" :class="{'metric-over-budget':expenseOverBudget}">{{ hasExpenseRecords ? '¥ ' + formatCompactAmount(expenseTotal / 100) : '待填写' }}</text><text v-if="expenseOverBudget" class="metric-status">已超额</text></view>
-     <view class="metric" @tap="goLedger"><text class="metric-label">本月收入 ›</text><text class="metric-value metric-income">{{ hasIncomeRecords ? '¥ ' + formatCompactAmount(incomeTotal / 100) : '待填写' }}</text></view>
-     <view class="metric" @tap="goWishlist"><text class="metric-label">拔草已省下 ›</text><text class="metric-value">¥ {{formatCompactAmount(wishlistSaved)}}</text></view>
-    </view>
+    <view v-if="state.cloudSync && ['error','restoring','auth-required','conflict'].includes(state.cloudSync.status)" class="account-sync-banner" data-fire-press="true" @tap="retryAccountSync" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{state.cloudSync.message||'数据暂未同步，请稍后重试'}}</text><text>{{state.cloudSync.status==='conflict'?'选择版本 ›':state.cloudSync.status==='restoring'?'恢复中…':'重试 ›'}}</text></view>
     <view v-if="wishlistCount" class="wishlist-home-card">
-     <view class="wishlist-home-head" @tap="goWishlist"><text class="section-title">我的拔草</text><text class="wishlist-home-count">{{wishlistCount}} 项进行中 ›</text></view>
-     <view v-for="item in wishlistPreview" :key="item.id" class="wishlist-home-row" @tap="goWishlist">
+     <view class="wishlist-home-head" data-fire-press="true" @tap="goWishlist" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="section-title">我的拔草</text><text class="wishlist-home-count">{{wishlistCount}} 项进行中 ›</text></view>
+     <view v-for="item in wishlistPreview" :key="item.id" class="wishlist-home-row" data-fire-press="true" @tap="goWishlist" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <view class="wishlist-home-icon"><image class="wishlist-home-bag" :src="wishlistBag" mode="aspectFit" aria-hidden="true"/></view>
       <view class="wishlist-home-copy"><text class="wishlist-home-name">{{item.name}}</text><text class="wishlist-home-sub">¥{{formatMoney(item.amount)}} · {{wishlistStatus(item)}}</text></view>
       <text class="wishlist-home-arrow">›</text>
@@ -49,8 +52,8 @@
     </view>
     <view class="section tasks-card">
      <view class="section-head"><text class="section-title">今日行动</text><text class="section-count">{{todayCount}} / {{todayTasks.length}}</text></view>
-     <view v-if="state.actionSync && state.actionSync.status==='error'" class="action-sync failed" @tap="retryActions"><text>{{state.actionSync.message}}</text><text>重试 ›</text></view>
-     <view v-for="t in todayTasks" :key="t.id" class="task-row" :class="{'task-row-done':taskDone(t.id)}" @tap="goTask(t)">
+     <view v-if="state.actionSync && state.actionSync.status==='error'" class="action-sync failed" data-fire-press="true" @tap="retryActions" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{state.actionSync.message}}</text><text>重试 ›</text></view>
+     <view v-for="t in todayTasks" :key="t.id" class="task-row" data-fire-press="true" :class="{'task-row-done':taskDone(t.id)}" @tap="goTask(t)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <view class="task-icon"><image class="task-icon-img" :src="taskIcon(t.id)" mode="aspectFit"/></view>
       <view class="task-text"><text class="task-title">{{t.title}}</text><text class="task-sub">{{taskDone(t.id)?'今天已完成':t.desc}}</text></view>
       <text class="task-reward" :class="{done:taskDone(t.id)}">{{taskDone(t.id)?'✓ +'+t.xp+' EXP':'+'+t.xp+' EXP ›'}}</text>
@@ -368,66 +371,69 @@ export default {
 </script>
 <style>
 @import '../../utils/tab-content.css';
-.home-view{min-height:100vh;box-sizing:border-box;background:#fff;color:#203d2c;padding-bottom:calc(94px + env(safe-area-inset-bottom));overflow-anchor:none}
-.home-masthead{padding:calc(var(--fire-page-top) + 8px) 16px 0}
-.masthead-title{position:relative;padding-right:48px;margin-bottom:20px;min-height:56px}
-.masthead-h1{display:block;color:#173e2c;font-size:24px;font-weight:750;line-height:1.35;letter-spacing:.2px}
-.masthead-date{display:block;color:#7b877d;font-size:12px;line-height:1.5;margin-top:5px}
-.message-entry{position:absolute;z-index:6;right:-4px;top:-3px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;pointer-events:auto}
-.message-entry::after{border:0;box-shadow:none}.message-bell{width:22px;height:22px;pointer-events:none}
-.message-dot{position:absolute;right:8px;top:8px;width:5px;height:5px;border-radius:50%;background:#da7b61;pointer-events:none}
-.freedom-summary,.home-unconfigured{padding:18px;border-radius:20px;background:#f0f5ee;border:1px solid #e1e8dd;box-sizing:border-box}
-.freedom-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.freedom-label{font-size:15px;font-weight:650;line-height:1.5;color:#224633;flex:1;min-width:0;overflow-wrap:anywhere}
-.plan-link{font-size:12px;line-height:1.6;color:#5f7c66;white-space:nowrap}
-.day-countdown{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin-top:10px}
-.calendar-unit{display:inline-flex;align-items:baseline;gap:4px}
-.calendar-num{font-size:44px;line-height:1.15;font-weight:750;color:#173c2b;font-variant-numeric:tabular-nums;letter-spacing:-1px}
-.calendar-label{font-size:14px;color:#355d43}
-.countdown-target{display:block;font-size:12px;color:#7a867b;line-height:1.7;margin-top:8px}
-.progress-line{display:flex;align-items:center;gap:12px;margin-top:16px}
-.progress{flex:1;height:7px;border-radius:5px;overflow:hidden;background:#dce5d7}
-.progress-fill{height:100%;border-radius:5px;background:#5c7d61;transition:width .3s ease}
-.progress-caption{font-size:11px;color:#42664c;white-space:nowrap;font-variant-numeric:tabular-nums}
-.freedom-foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-top:17px;padding-top:14px;border-top:1px solid #dce5d6;gap:16px}
-.summary-stat{min-width:0}.summary-stat+ .summary-stat{padding-left:16px;border-left:1px solid #dce5d6}
-.summary-stat-label{display:block;color:#748072;font-size:11px;line-height:1.5}
-.summary-stat-value{display:block;margin-top:3px;color:#244a34;font-size:21px;font-weight:650;line-height:1.3;overflow-wrap:anywhere}
+.home-view{min-height:100vh;box-sizing:border-box;background:#fff;color:#203d2c;padding-bottom:calc(88px + env(safe-area-inset-bottom));overflow-anchor:none}
+.home-masthead{padding:calc(var(--fire-page-top) + 6px) 16px 0}
+.masthead-title{position:relative;padding-right:44px;margin-bottom:16px;min-height:46px}
+.masthead-h1{display:block;color:#173e2c;font-size:19px;font-weight:700;line-height:1.4;letter-spacing:.2px}
+.masthead-date{display:block;color:#7b877d;font-size:11px;line-height:1.5;margin-top:3px}
+.message-entry{position:absolute;z-index:6;right:-6px;top:-5px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;pointer-events:auto}
+.message-entry::after{border:0;box-shadow:none}.message-bell{width:19px;height:19px;pointer-events:none}
+.message-dot{position:absolute;right:10px;top:9px;width:4px;height:4px;border-radius:50%;background:#da7b61;pointer-events:none}
+.financial-panel{padding:14px 15px 12px;border-radius:16px;background:#f0f5ef;box-sizing:border-box}
+.freedom-summary,.home-unconfigured{padding:0;min-width:0}
+.freedom-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.freedom-label{font-size:13px;font-weight:600;line-height:1.5;color:#224633;flex:1;min-width:0;overflow-wrap:anywhere}
+.plan-link{font-size:11px;line-height:1.8;color:#5f7c66;white-space:nowrap}
+.day-countdown{display:flex;align-items:baseline;flex-wrap:wrap;gap:9px;margin-top:10px}
+.calendar-unit{display:inline-flex;align-items:baseline;gap:3px}
+.calendar-num{font-size:30px;line-height:1.2;font-weight:700;color:#173c2b;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.calendar-label{font-size:11px;color:#355d43}
+.countdown-target{display:block;font-size:10px;color:#7a867b;line-height:1.6;margin-top:5px}
+.freedom-foot{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-top:13px}
+.summary-stat{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;min-width:0}
+.summary-stat-label{color:#748072;font-size:10px;line-height:1.5}
+.summary-stat-value{color:#244a34;font-size:16px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.goal-target .summary-stat-value{font-size:12px;font-weight:500}
+.progress-caption{font-size:10px;color:#607963;white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums}
+.progress-line{display:flex;align-items:center;margin-top:7px}
+.progress{flex:1;height:4px;border-radius:4px;overflow:hidden;background:#dce5d7}
+.progress-fill{height:100%;border-radius:4px;background:#5c7d61;transition:width .3s ease}
 .home-content{padding:0 16px}
-.home-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-.metric{box-sizing:border-box;min-width:0;min-height:92px;padding:12px 10px;background:#f4f7f1;border:1px solid #e6ece2;border-radius:16px}
-.metric-label{display:block;font-size:11px;line-height:1.5;color:#6c7d6e}
-.metric-value{display:block;font-size:clamp(15px,4.8vw,20px);font-weight:650;line-height:1.3;color:#284536;margin-top:7px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.home-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:13px;padding-top:11px;border-top:1px solid #dce5d9}
+.metric{box-sizing:border-box;min-width:0;padding:0 2px;min-height:56px}
+.metric-label{display:block;font-size:10px;line-height:1.5;color:#6c7d6e}
+.metric-value{display:block;font-size:16px;font-weight:600;line-height:1.4;color:#284536;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .metric-income{color:#36764e}.metric-value.metric-over-budget{color:#ae6956}
-.metric-status{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:10px;background:#f5e9e1;color:#ae6956;font-size:10px;line-height:1.4}
-.wishlist-home-card,.tasks-card{margin-top:14px;background:#fbfcf9;border:1px solid #e3e9de;border-radius:19px;padding:15px 16px}
-.wishlist-home-head,.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.section-title{font-size:17px;font-weight:650;line-height:1.5;color:#204a33}
-.wishlist-home-count,.section-count{font-size:11px;color:#738d77;white-space:nowrap}
-.wishlist-home-row{display:flex;align-items:center;gap:11px;padding:13px 0 0}
-.wishlist-home-row+ .wishlist-home-row{margin-top:12px;padding-top:12px;border-top:1px solid #e5ebe0}
-.wishlist-home-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:#eaf1e3;flex-shrink:0}
+.metric-status{display:block;margin-top:2px;color:#ae6956;font-size:9px;line-height:1.4}
+.wishlist-home-card,.tasks-card{margin-top:17px;padding:0 2px;background:transparent;border:0;border-radius:0}
+.wishlist-home-head,.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.section-title{font-size:14px;font-weight:600;line-height:1.5;color:#204a33}
+.wishlist-home-count,.section-count{font-size:10px;color:#738d77;white-space:nowrap}
+.wishlist-home-row{display:flex;align-items:center;gap:10px;padding:11px 0 1px;min-height:34px}
+.wishlist-home-row+ .wishlist-home-row{margin-top:8px;padding-top:9px;border-top:1px solid #edf0e9}
+.wishlist-home-icon{display:flex;align-items:center;justify-content:center;width:26px;height:28px;flex-shrink:0}
 .wishlist-home-bag{width:22px;height:22px}
-.wishlist-home-copy{flex:1;min-width:0}.wishlist-home-name{display:block;font-size:14px;color:#2d4934;line-height:1.45;overflow-wrap:anywhere}
-.wishlist-home-sub{display:block;font-size:11px;color:#81907e;line-height:1.5;margin-top:4px;overflow-wrap:anywhere}
-.wishlist-home-arrow{font-size:22px;color:#84957d;flex-shrink:0}
-.tasks-card{padding-bottom:5px}
-.task-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #e5ebe0}
+.wishlist-home-copy{flex:1;min-width:0}.wishlist-home-name{display:block;font-size:12px;color:#2d4934;line-height:1.4;overflow-wrap:anywhere}
+.wishlist-home-sub{display:block;font-size:10px;color:#81907e;line-height:1.5;margin-top:2px;overflow-wrap:anywhere}
+.wishlist-home-arrow{font-size:19px;color:#84957d;flex-shrink:0}
+.tasks-card{border-top:1px solid #e8ede5;padding-top:14px}
+.section-head{margin-bottom:3px}
+.task-row{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #edf0e9}
 .task-row:last-child{border-bottom:0}.task-row-done{opacity:.68}
-.task-icon{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:#edf3e7;flex-shrink:0}
+.task-icon{display:flex;align-items:center;justify-content:center;width:25px;height:26px;flex-shrink:0}
 .task-icon-img{width:18px;height:18px}
 .task-text{flex:1;min-width:0}
-.task-title{display:block;font-size:13px;line-height:1.5;color:#35503b}
-.task-sub{display:block;font-size:10px;line-height:1.5;color:#8a9785;margin-top:3px;overflow-wrap:anywhere}
-.task-reward{font-size:10px;line-height:1.5;color:#849b82;white-space:nowrap;flex-shrink:0}
+.task-title{display:block;font-size:12px;line-height:1.5;color:#35503b}
+.task-sub{display:block;font-size:10px;line-height:1.5;color:#8a9785;margin-top:2px;overflow-wrap:anywhere}
+.task-reward{font-size:9px;line-height:1.5;color:#849b82;white-space:nowrap;flex-shrink:0}
 .task-reward.done{color:#708b6e}
-.tasks-empty{display:block;font-size:12px;color:#85917f;line-height:1.7;padding:18px 0}
-.unconfigured-title{display:block;font-size:19px;font-weight:650;line-height:1.5;color:#244a34}
-.unconfigured-sub{display:block;font-size:12px;line-height:1.8;color:#7a8975;margin-top:7px}
-.btn-primary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 15px;border-radius:12px;background:#315c40;margin-top:18px}
-.btn-primary-text{font-size:14px;color:#fff}
+.tasks-empty{display:block;font-size:11px;color:#85917f;line-height:1.7;padding:14px 0}
+.unconfigured-title{display:block;font-size:15px;font-weight:600;line-height:1.5;color:#244a34}
+.unconfigured-sub{display:block;font-size:11px;line-height:1.8;color:#7a8975;margin-top:5px}
+.btn-primary{display:flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;border-radius:10px;background:#315c40;margin-top:12px}
+.btn-primary-text{font-size:12px;color:#fff}
 .account-sync-banner,.action-sync{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-top:14px;background:#f8f0e7;border:1px solid #eddfcc;border-radius:12px;color:#8f6b43;font-size:11px;line-height:1.6}
 .account-sync-banner text:last-child,.action-sync text:last-child{white-space:nowrap;flex-shrink:0}
-@media(max-width:360px){.home-masthead{padding-left:12px;padding-right:12px}.home-content{padding-left:12px;padding-right:12px}.masthead-h1{font-size:22px}.freedom-summary{padding:16px}.calendar-num{font-size:39px}.calendar-label{font-size:12px}.day-countdown{gap:8px}.home-metrics{gap:7px}.metric{padding:11px 8px}.metric-label{font-size:10px}.metric-value{font-size:16px}.wishlist-home-card,.tasks-card{padding-left:13px;padding-right:13px}.task-reward{font-size:9px}.summary-stat-value{font-size:19px}}
+@media(max-width:360px){.home-masthead,.home-content{padding-left:14px;padding-right:14px}.financial-panel{padding-left:13px;padding-right:13px}.home-metrics{gap:7px}.metric-value{font-size:15px}.task-title{font-size:11px}.task-reward{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.progress-fill{transition:none}}
 </style>

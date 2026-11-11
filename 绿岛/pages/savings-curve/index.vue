@@ -3,33 +3,33 @@
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="topbar">
       <view><text class="eyebrow">FIRE 工具</text><text class="title">普通人一生存款曲线</text></view>
-      <text class="close" @tap="close">×</text>
+      <text class="close" data-fire-press="true" @tap="close">×</text>
     </view>
 
     <view class="intro-card" v-if="!started && !draftPanel && !historyPanel">
       <text class="intro-title">普通人一生存款曲线</text>
       <text class="intro-copy">用选择题整理你的收入、支出和人生计划。</text>
-      <button class="primary entry-main" @tap="start">开始新的计算</button>
-      <button class="entry-button" @tap="openDraftPanel">查看我的草稿</button>
-      <button class="entry-button" @tap="openHistoryPanel">查看我的历史结果</button>
+      <button class="primary entry-main" data-fire-press="true" @tap="start" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">开始新的计算</button>
+      <button class="entry-button" data-fire-press="true" @tap="openDraftPanel" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">查看我的草稿</button>
+      <button class="entry-button" data-fire-press="true" @tap="openHistoryPanel" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">查看我的历史结果</button>
     </view>
     <view v-else-if="draftPanel" class="intro-card list-panel">
       <text class="intro-title">我的草稿</text>
-      <view v-if="draftData" class="saved-row"><text>已完成 {{ draftData.completedCount || 0 }} 题 · 上次第 {{ Number(draftData.questionIndex || 0) + 1 }} 题</text><text>{{ draftTime }}</text><button class="primary small" @tap="loadDraft">继续答题</button><button class="entry-button" @tap="deleteDraft">删除草稿</button></view>
+      <view v-if="draftData" class="saved-row"><text>已完成 {{ draftData.completedCount || 0 }} 题 · 上次第 {{ Number(draftData.questionIndex || 0) + 1 }} 题</text><text>{{ draftTime }}</text><button class="primary small" data-fire-press="true" @tap="loadDraft" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">继续答题</button><button class="entry-button" data-fire-press="true" @tap="deleteDraft" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除草稿</button></view>
       <text v-else class="empty-copy">暂无草稿</text>
-      <button class="entry-button" @tap="closePanels">返回</button>
+      <button class="entry-button" data-fire-press="true" @tap="closePanels" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回</button>
     </view>
     <view v-else-if="historyPanel" class="intro-card list-panel">
       <text class="intro-title">历史结果</text>
-      <view v-if="historyItems.length" v-for="(item, index) in historyItems" :key="index" class="saved-row"><text>第 {{ index + 1 }} 次测算 · {{ item.age }} 岁</text><text>{{ formatDate(item.updatedAt) }}</text><button class="entry-button" @tap="viewHistory(item)">查看详情</button><button class="entry-button" @tap="deleteHistory(index)">删除</button></view>
+      <view v-if="historyItems.length" v-for="(item, index) in historyItems" :key="index" class="saved-row"><text>第 {{ index + 1 }} 次测算 · {{ item.age }} 岁</text><text>{{ formatDate(item.updatedAt) }}</text><button class="entry-button" data-fire-press="true" @tap="viewHistory(item)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">查看详情</button><button class="entry-button" data-fire-press="true" @tap="deleteHistory(index)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除</button></view>
       <text v-else class="empty-copy">暂无历史结果</text>
-      <button class="entry-button" @tap="closePanels">返回</button>
+      <button class="entry-button" data-fire-press="true" @tap="closePanels" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回</button>
     </view>
     <view v-else-if="started && profileStep" class="intro-card profile-step">
       <text class="intro-title">先告诉我两个数字</text>
       <view class="field-row"><text>当前年龄</text><input v-model="age" type="number" placeholder="请输入你的当前年龄" class="age-input" /><text>岁</text></view>
       <view class="field-row"><text>预计寿命</text><input v-model="lifeExpectancy" type="number" placeholder="请输入你的预计寿命" class="age-input" /><text>岁</text></view>
-      <button class="primary" @tap="beginQuestions">进入第 1 题</button>
+      <button class="primary" data-fire-press="true" @tap="beginQuestions" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">进入第 1 题</button>
     </view>
 
     <FireOverlay :visible="generating" :owner-id="feedbackOwnerId" :dismissible="false" label="正在整理你的人生计划"><view class="fire-loading-content">
@@ -46,25 +46,25 @@
         <text class="question-tag">{{ stageLabel(currentQuestion.stage || currentQuestion.category) }}</text>
         <text class="question-title">{{ currentQuestion.text }}</text>
         <view class="options">
-          <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" :class="{ selected: answers[currentQuestion.id] === option.value && customAnswers[currentQuestion.id] === undefined }" @tap="choose(option.value)">
+          <view v-for="(option, i) in currentQuestion.options" :key="i" class="option" data-fire-press="true" :class="{ selected: answers[currentQuestion.id] === option.value && customAnswers[currentQuestion.id] === undefined }" @tap="choose(option.value)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
             <text class="option-dot">{{ String.fromCharCode(65 + i) }}</text><text>{{ option.label }}</text>
           </view>
-          <view class="option custom-option" :class="{ selected: customAnswers[currentQuestion.id] !== undefined }" @tap="beginCustom">
+          <view class="option custom-option" data-fire-press="true" :class="{ selected: customAnswers[currentQuestion.id] !== undefined }" @tap="beginCustom" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
             <text class="option-dot">F</text><text>自定义</text>
           </view>
           <view v-if="customEditing === currentQuestion.id" class="custom-input-row">
             <input class="custom-input" v-model="customDraft" type="number" placeholder="请输入数值" />
             <text class="custom-unit">{{ unitLabel(currentQuestion) }}</text>
-            <button class="custom-confirm" @tap="confirmCustom">确定</button>
+            <button class="custom-confirm" data-fire-press="true" @tap="confirmCustom" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">确定</button>
           </view>
         </view>
       </view>
-      <view class="nav-row"><button class="secondary" :disabled="questionIndex === 0" @tap="previous">上一题</button><button class="secondary draft-action" @tap="saveDraft">保存到我的草稿</button><button class="primary small" @tap="next">{{ questionIndex === visibleQuestions.length - 1 ? '查看曲线' : '下一题' }}</button></view>
+      <view class="nav-row"><button class="secondary" data-fire-press="true" :disabled="questionIndex === 0" @tap="previous" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">上一题</button><button class="secondary draft-action" data-fire-press="true" @tap="saveDraft" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">保存到我的草稿</button><button class="primary small" data-fire-press="true" @tap="next" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ questionIndex === visibleQuestions.length - 1 ? '查看曲线' : '下一题' }}</button></view>
 
       </view>
 
       <view v-if="showResult" class="result-area">
-        <view class="section-head"><view><text class="section-title">你的存款曲线</text><text class="section-sub">从 {{ age }} 岁推算到 {{ lifeExpectancy }} 岁</text></view><text class="theme-toggle" @tap="darkMode = !darkMode">{{ darkMode ? '浅色' : '深色' }}</text></view>
+        <view class="section-head"><view><text class="section-title">你的存款曲线</text><text class="section-sub">从 {{ age }} 岁推算到 {{ lifeExpectancy }} 岁</text></view><text class="theme-toggle" data-fire-press="true" @tap="darkMode = !darkMode">{{ darkMode ? '浅色' : '深色' }}</text></view>
         <view v-if="answerSummary.length" class="answer-summary"><text class="section-title">本次答案摘要</text><view v-for="item in answerSummary" :key="item.id"><text>{{ item.text }}</text><strong>{{ item.label }}</strong></view></view>
         <view class="chart-card result-chart" v-if="curve.length">
           <view class="chart-header"><view><text class="chart-total">¥{{ formatCompact(retirementBalance) }}</text><text class="chart-age">{{ lifeExpectancy }} 岁</text></view><text class="chart-caption">存款 · 人生曲线</text></view>
@@ -90,15 +90,15 @@
             <input v-model.number="event.age" type="number" placeholder="年龄" />
             <input v-model.number="event.amount" type="number" placeholder="金额" />
             <input v-model.number="event.duration" type="number" placeholder="年限" />
-            <text @tap="removeEvent(i)">×</text>
+            <text data-fire-press="true" @tap="removeEvent(i)">×</text>
           </view>
-          <button v-if="customEvents.length < 5" class="event-add" @tap="addEvent">＋ 添加事件</button>
+          <button v-if="customEvents.length < 5" class="event-add" data-fire-press="true" @tap="addEvent" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">＋ 添加事件</button>
           <text class="hint">正数表示收入，负数表示支出。</text>
         </view>
 
-        <view class="actions"><button class="secondary" @tap="save">保存草稿并同步</button><button class="primary" @tap="recalculate">重新计算</button></view>
+        <view class="actions"><button class="secondary" data-fire-press="true" @tap="save" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">保存草稿并同步</button><button class="primary" data-fire-press="true" @tap="recalculate" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">重新计算</button></view>
         <view class="result-note"><text>结果说明</text><text>本结果根据你选择的范围估算，不代表确定结果。</text></view>
-        <view class="ai-card"><view class="section-head"><view><text class="section-title">AI 解析</text><text class="section-sub">只给重点建议，内容不超过 300 字</text></view></view><text v-if="aiAnalysis" class="ai-copy">{{ aiAnalysis }}</text><button class="secondary full" @tap="runAIAnalysis">{{ analysisLoading ? '分析中…' : '获取 AI 解析' }}</button></view><text class="privacy">数据会保存在本机，并按当前登录账号尝试同步云端。</text>
+        <view class="ai-card"><view class="section-head"><view><text class="section-title">AI 解析</text><text class="section-sub">只给重点建议，内容不超过 300 字</text></view></view><text v-if="aiAnalysis" class="ai-copy">{{ aiAnalysis }}</text><button class="secondary full" data-fire-press="true" @tap="runAIAnalysis" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ analysisLoading ? '分析中…' : '获取 AI 解析' }}</button></view><text class="privacy">数据会保存在本机，并按当前登录账号尝试同步云端。</text>
       </view>
     </view>
     <BottomTabs current="tools" />

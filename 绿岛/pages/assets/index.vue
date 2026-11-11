@@ -1,9 +1,9 @@
 <template>
   <view class="asset-page fire-page-assets-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><view class="back" @tap="back">‹</view><text class="title">记录本月资产</text><view class="close" @tap="close">×</view></view>
+    <view class="head"><view class="back" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</view><text class="title">记录本月资产</text><view class="close" data-fire-press="true" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</view></view>
     <view class="hero"><text class="label">本月资产</text><text class="amount">¥ {{ amount || '0' }}</text><text class="hint">记录当前可投资资产，帮助自由日保持准确</text></view>
-    <view class="card"><text class="field-label">资产金额（元）</text><input v-model="amount" class="input" type="digit" placeholder="例如 100000" /><text class="field-label">记录日期</text><picker mode="date" :value="date" :end="today" @change="date=$event.detail.value"><view class="date">{{ date }}</view></picker><view class="save" @tap="save"><text>保存并返回首页</text></view></view>
+    <view class="card"><text class="field-label">资产金额（元）</text><input v-model="amount" class="input" type="digit" placeholder="例如 100000" /><text class="field-label">记录日期</text><picker mode="date" :value="date" :end="today" @change="date=$event.detail.value"><view class="date">{{ date }}</view></picker><view class="save" data-fire-press="true" @tap="save" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>保存并返回首页</text></view></view>
     <view class="records"><text class="section-title">最近记录</text><view v-for="item in history" :key="item.id" class="record"><text>{{ item.date }}</text><text>¥ {{ Number(item.amount||0).toLocaleString('zh-CN') }}</text></view></view>
   </view>
 </template>

@@ -1,7 +1,7 @@
 <template>
  <view class="legal-page fire-page-terms-index" :style="pageLayoutStyle">
   <AppFeedback :owner-id="feedbackOwnerId"/>
-  <view class="legal-head"><view class="legal-back" role="button" aria-label="返回登录或上一页" @tap="close">‹</view><text class="legal-title">用户协议</text><view class="legal-head-space"/></view>
+  <view class="legal-head"><view class="legal-back" data-fire-press="true" role="button" aria-label="返回登录或上一页" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</view><text class="legal-title">用户协议</text><view class="legal-head-space"/></view>
   <view class="legal-content"><text class="legal-name">Fire生活用户协议</text><text class="legal-date">版本／更新时间：{{version}}</text>
    <view v-for="section in sections" :key="section.title" class="legal-section"><text class="legal-section-title">{{section.title}}</text><text class="legal-text">{{section.text}}</text></view>
   </view>

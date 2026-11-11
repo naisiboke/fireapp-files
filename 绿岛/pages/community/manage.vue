@@ -1,7 +1,7 @@
 <template>
   <view class="manage-page fire-page-community-manage" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><view class="back" @tap="back">‹</view><text class="title">我的社区设置</text><view class="close" @tap="close">×</view></view>
+    <view class="head"><view class="back" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</view><text class="title">我的社区设置</text><view class="close" data-fire-press="true" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</view></view>
     <view v-if="posts.length" class="list">
       <view v-for="post in posts" :key="post.id" class="card">
         <view v-if="editingId !== post.id">
@@ -9,16 +9,16 @@
           <text class="post-title">{{ post.title }}</text>
           <text class="post-content">{{ post.content || post.summary }}</text>
           <text v-if="post.reviewReason" class="review-reason">{{ post.reviewReason }}</text>
-          <view class="actions"><view class="edit" @tap="startEdit(post)">编辑</view><view v-if="post.status === 'pending' || post.status === 'review_failed'" class="retry" @tap="retryReview(post)">重试审核</view><view class="delete" @tap="removePost(post)">删除</view></view>
+          <view class="actions"><view class="edit" data-fire-press="true" @tap="startEdit(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">编辑</view><view v-if="post.status === 'pending' || post.status === 'review_failed'" class="retry" data-fire-press="true" @tap="retryReview(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">重试审核</view><view class="delete" data-fire-press="true" @tap="removePost(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除</view></view>
         </view>
         <view v-else>
           <text class="label">主题</text><input v-model="draft.title" class="input" maxlength="80" />
           <text class="label">内容</text><textarea v-model="draft.content" class="area" maxlength="300"></textarea>
-          <view class="actions"><view class="edit" @tap="saveEdit(post)">保存</view><view class="delete" @tap="cancelEdit">取消</view></view>
+          <view class="actions"><view class="edit" data-fire-press="true" @tap="saveEdit(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">保存</view><view class="delete" data-fire-press="true" @tap="cancelEdit" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">取消</view></view>
         </view>
       </view>
     </view>
-    <view v-else class="empty"><text>你还没有发布经历</text><view class="publish" @tap="openShare">分享我的经历</view></view>
+    <view v-else class="empty"><text>你还没有发布经历</text><view class="publish" data-fire-press="true" @tap="openShare" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">分享我的经历</view></view>
   </view>
 </template>
 <script setup>

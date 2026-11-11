@@ -2,12 +2,12 @@
   <view class="reading-page fire-page-reading-library-index" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
     <view class="reading-head">
-      <text class="back" @tap="back">‹</text>
+      <text class="back" data-fire-press="true" @tap="back">‹</text>
       <view><text class="title">认知数据库</text><text class="sub">把读过的内容，变成自己的理解</text></view>
     </view>
     <view class="tabs">
-      <view class="tab" :class="{ active: tab === 'shelf' }" @tap="tab = 'shelf'"><text>书架</text></view>
-      <view class="tab" :class="{ active: tab === 'history' }" @tap="tab = 'history'"><text>历史阅读记录</text></view>
+      <view class="tab" data-fire-press="true" :class="{ active: tab === 'shelf' }" @tap="tab = 'shelf'" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>书架</text></view>
+      <view class="tab" data-fire-press="true" :class="{ active: tab === 'history' }" @tap="tab = 'history'" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>历史阅读记录</text></view>
     </view>
     <view v-if="tab === 'shelf'" class="content">
       <view class="empty-card"><text class="empty-icon">▱</text><text class="empty-title">你的书架还是空的</text><text class="empty-sub">收藏一本书，开始建立自己的认知地图。</text><view class="primary"><text>浏览推荐书籍</text></view></view>

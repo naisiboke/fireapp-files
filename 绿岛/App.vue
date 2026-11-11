@@ -55,6 +55,7 @@ export default {
 
 <style>
 @import './styles/feedback.scss';
+@import './styles/press-feedback.css';
 .app-shell { min-height: 100vh; }
 
 button {
@@ -76,7 +77,7 @@ button {
   transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
 }
 button::after { border: 0 !important; }
-button:active { transform: scale(var(--button-pressed)); }
+button:not([disabled]):not(:disabled):active { transform: scale(var(--button-pressed)); }
 button:focus-visible { outline: 0; box-shadow: var(--button-focus); }
 .fire-button-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--button-primary); color: #fff; box-shadow: var(--button-shadow); }
 .fire-button-secondary { background: var(--button-secondary); color: #173d35; }

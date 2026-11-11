@@ -1,5 +1,5 @@
 <template><view class="register-page fire-page-register-register" :style="pageLayoutStyle">
-    <AppFeedback :owner-id="feedbackOwnerId" /><text class="back" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">目前仅支持邮箱验证码注册和登录。返回登录页，输入邮箱并获取验证码即可。</text><view class="button" @tap="back">返回登录</view></view></template>
+    <AppFeedback :owner-id="feedbackOwnerId" /><text class="back" data-fire-press="true" @tap="back">‹</text><text class="title">注册Fire生活账号</text><text class="sub">目前仅支持邮箱验证码注册和登录。返回登录页，输入邮箱并获取验证码即可。</text><view class="button" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回登录</view></view></template>
 <script setup>
 import { pageLayoutStyle } from '@/utils/page-layout.js'
 import AppFeedback from '@/components/AppFeedback.vue'

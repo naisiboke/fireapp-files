@@ -1,7 +1,7 @@
 <template>
   <view class="sync-conflict-page" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="sync-head"><text class="sync-title">选择同步版本</text><button class="sync-close" :disabled="busy" @tap="leave">×</button></view>
+    <view class="sync-head"><text class="sync-title">选择同步版本</text><button class="sync-close" data-fire-press="true" :disabled="busy" @tap="leave" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</button></view>
     <text class="sync-intro">你已登录。本机和云端的记录版本不同，可以先继续使用，稍后再处理同步。</text>
     <template v-if="summary">
       <view class="sync-versions">
@@ -12,16 +12,16 @@
           <text class="version-counts">{{ summary[choice.id].ledgerCount }} 笔记账 · {{ summary[choice.id].assetCount }} 条资产记录</text>
           <text class="version-counts">{{ summary[choice.id].wishlistCount }} 项消费计划</text>
           <text class="version-counts">{{ summary[choice.id].chatCount }} 段 AI 对话 · {{ summary[choice.id].testCount }} 份性格报告</text>
-          <button class="version-pick" :disabled="busy" @tap="choose(choice.id)">采用{{ choice.name }}</button>
+          <button class="version-pick" data-fire-press="true" :disabled="busy" @tap="choose(choice.id)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">采用{{ choice.name }}</button>
         </view>
       </view>
       <text class="sync-backup">{{ summary.backupReady ? '两份资料已在本机单独备份。切换前还会再次备份，不会自动合并或覆盖。' : '本机记录仍保留。切换前需成功备份两份资料，保存失败时不会切换。' }}</text>
-      <button v-if="summary.backupReady" class="backup-copy" :disabled="busy" @tap="copyBackup">复制两份备份 JSON</button>
+      <button v-if="summary.backupReady" class="backup-copy" data-fire-press="true" :disabled="busy" @tap="copyBackup" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">复制两份备份 JSON</button>
     </template>
     <text v-else class="sync-backup">当前没有待选择的版本。可以重新检查云端同步。</text>
     <text v-if="message" class="sync-message">{{ message }}</text>
-    <button class="sync-primary" :disabled="busy" @tap="leave">{{ busy ? '正在处理…' : '先进入 App，稍后处理' }}</button>
-    <button class="sync-refresh" :disabled="busy" @tap="refresh">重新检查同步</button>
+    <button class="sync-primary" data-fire-press="true" :disabled="busy" @tap="leave" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ busy ? '正在处理…' : '先进入 App，稍后处理' }}</button>
+    <button class="sync-refresh" data-fire-press="true" :disabled="busy" @tap="refresh" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">重新检查同步</button>
   </view>
 </template>
 <script setup>

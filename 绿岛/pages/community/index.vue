@@ -9,29 +9,29 @@
         <text class="head-h1">FIRE 人生样本</text>
         <text class="head-sub">看别人怎么走过来的，也分享你自己的路</text>
       </view>
-      <view class="fav-entry" @tap="openFavorites">
+      <view class="fav-entry" data-fire-press="true" @tap="openFavorites" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <text class="fav-entry-text">我的收藏{{ favorites.length ? ' · ' + favorites.length : '' }}</text>
       </view>
     </view>
 
     <!-- Tab -->
     <view class="tabs">
-      <view class="tab" :class="{ active: tab === 'settled' }" @tap="setTab('settled')">
+      <view class="tab" data-fire-press="true" :class="{ active: tab === 'settled' }" @tap="setTab('settled')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <text class="tab-text" :class="{ active: tab === 'settled' }">已上岸 {{ settledCount }}</text>
       </view>
-      <view class="tab" :class="{ active: tab === 'doing' }" @tap="setTab('doing')">
+      <view class="tab" data-fire-press="true" :class="{ active: tab === 'doing' }" @tap="setTab('doing')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <text class="tab-text" :class="{ active: tab === 'doing' }">在路上 {{ publicCounts.doing }}</text>
       </view>
     </view>
 
     <view v-if="publicLoading && !loadingMore && !feedLoaded && !visiblePosts.length" class="community-loading-state community-loading-initial" aria-busy="true"><LoadingSpinner :size="20" label="社区内容加载中" /></view>
     <!-- 列表 -->
-    <view v-if="syncNotice" class="community-sync-note" @tap="refreshCommunity(true)"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
+    <view v-if="syncNotice" class="community-sync-note" data-fire-press="true" @tap="refreshCommunity(true)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{ syncNotice }}</text><text>重试 ›</text></view>
     <view class="list">
       <view v-if="visiblePosts.length === 0 && !publicLoading && !syncNotice" class="empty">
         <text class="empty-h2">还没有人在路上分享</text>
         <text class="empty-p">成为第一个写下自己故事的人吧</text>
-        <view class="empty-btn" @tap="openPost">
+        <view class="empty-btn" data-fire-press="true" @tap="openPost" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           <text class="empty-btn-text">分享我的经历</text>
         </view>
       </view>
@@ -39,12 +39,12 @@
       <view v-for="(post, i) in visiblePosts" :key="post.id" class="card" :style="{ animationDelay: (Math.min(i, 5) * 40) + 'ms' }">
         <view class="card-head">
           <view class="tag-wrap"><text class="tag">{{ post.category }}</text><text v-if="!isOfficial(post)" class="journey-tag">{{ post.journey === 'settled' ? '已上岸' : '在路上' }}</text></view>
-          <view class="heart" @tap="toggleFavorite(post)">
+          <view class="heart" data-fire-press="true" @tap="toggleFavorite(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
             <text class="heart-icon" :class="{ saved: isFav(post.id) }">{{ isFav(post.id) ? '♥' : '♡' }}</text>
           </view>
         </view>
 
-        <view class="card-main" @tap="toggleExpand(post.id)">
+        <view class="card-main" data-fire-press="true" @tap="toggleExpand(post.id)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           <text class="card-title">{{ post.title }}</text>
           <text class="card-summary">{{ post.summary }}</text>
           <text v-if="post.sub" class="card-sub">{{ post.sub }}</text>
@@ -97,7 +97,7 @@
                 </view>
               </view>
 
-              <view class="apply-btn" @tap="openApply(post)">
+              <view class="apply-btn" data-fire-press="true" @tap="openApply(post)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
                 <text class="apply-btn-text">套用他的资产配置 ›</text>
               </view>
             </view>
@@ -122,7 +122,7 @@
                 </view>
               </view>
               <view class="locked-mask">
-                <view class="lock-btn" @tap="openUpgrade">
+                <view class="lock-btn" data-fire-press="true" @tap="openUpgrade" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
                   <text class="lock-btn-text">升级会员，查看他的关键转折与资产配置</text>
                   <text class="lock-btn-sub">会员专享</text>
                 </view>
@@ -135,7 +135,7 @@
           </view>
         </view>
 
-        <view class="card-foot" @tap="toggleExpand(post.id)">
+        <view class="card-foot" data-fire-press="true" @tap="toggleExpand(post.id)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           <text class="foot-text">
             {{ isOfficial(post)
               ? (expanded[post.id] ? '收起他的 FIRE 历程' : '查看他的 FIRE 历程')
@@ -145,7 +145,7 @@
         </view>
       </view>
 
-      <view v-if="visiblePosts.length < allPosts.length || publicCursor !== null" class="load-more" @tap="loadMore">
+      <view v-if="visiblePosts.length < allPosts.length || publicCursor !== null" class="load-more" data-fire-press="true" @tap="loadMore" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <LoadingSpinner v-if="loadingMore" :size="18" label="更多社区内容加载中" /><text v-else class="load-more-text">加载更多</text>
       </view>
       <text v-else-if="visiblePosts.length > 0 && allPosts.length > 0" class="no-more">没有更多了</text>
@@ -153,7 +153,7 @@
 
     </view>
     <!-- FAB -->
-    <view class="fab" @tap="openPost">
+    <view class="fab" data-fire-press="true" @tap="openPost" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <view class="fab-cross" aria-hidden="true"></view>
     </view>
 
@@ -162,10 +162,10 @@
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">升级会员</text>
-          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
+          <view class="modal-close" data-fire-press="true" @tap="closeModal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></view>
         </view>
         <text class="modal-p">完整查看关键转折、资产配比，并套用适合你的配置。</text>
-        <view class="btn" @tap="closeModal"><text class="btn-text">知道了</text></view>
+        <view class="btn" data-fire-press="true" @tap="closeModal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="btn-text">知道了</text></view>
       </view>
     </FireOverlay>
 
@@ -174,7 +174,7 @@
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">我的收藏</text>
-          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
+          <view class="modal-close" data-fire-press="true" @tap="closeModal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></view>
         </view>
 
         <view v-if="favorites.length === 0" class="empty-fav">
@@ -184,11 +184,11 @@
         <view v-else class="fav-list">
           <view v-for="f in favorites" :key="f.postId" class="fav-item">
             <view class="fav-row">
-              <view class="fav-main" @tap="toggleFavExpand(f.postId)">
+              <view class="fav-main" data-fire-press="true" @tap="toggleFavExpand(f.postId)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
                 <text class="fav-title">{{ f.snapshot.title }}</text>
                 <text class="fav-sub">{{ f.snapshot.summary }}</text>
               </view>
-              <view class="fav-remove" @tap="removeFavorite(f.postId)">
+              <view class="fav-remove" data-fire-press="true" @tap="removeFavorite(f.postId)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
                 <text class="fav-remove-icon">×</text>
               </view>
             </view>
@@ -216,7 +216,7 @@
       <view class="modal" @tap.stop>
         <view class="modal-head">
           <text class="modal-h2">他的资产配置</text>
-          <view class="modal-close" @tap="closeModal"><view class="fire-close-mark"></view></view>
+          <view class="modal-close" data-fire-press="true" @tap="closeModal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></view>
         </view>
 
         <template v-if="applyPost">
@@ -235,7 +235,7 @@
               <text class="apply-line">预计每年收益：¥ {{ formatNumber(applyResult.annual) }}</text>
               <text class="apply-saved">已保存为你的第 {{ applyResult.index }} 套配置</text>
             </view>
-            <view class="btn light" @tap="undoApply"><text class="btn-text">撤销本次应用</text></view>
+            <view class="btn light" data-fire-press="true" @tap="undoApply" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="btn-text">撤销本次应用</text></view>
           </template>
 
           <template v-else-if="netWorth !== null">
@@ -268,7 +268,7 @@
               </view>
             </view>
 
-            <view class="btn" @tap="confirmApply"><text class="btn-text">应用到我的资产</text></view>
+            <view class="btn" data-fire-press="true" @tap="confirmApply" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="btn-text">应用到我的资产</text></view>
           </template>
 
           <template v-else>
@@ -277,10 +277,10 @@
               <text class="form-label">当前净资产（元）</text>
               <input class="form-input" type="number" v-model="netWorthInput" placeholder="例如 500000" />
             </view>
-            <view class="btn" @tap="submitNetWorth"><text class="btn-text">继续</text></view>
+            <view class="btn" data-fire-press="true" @tap="submitNetWorth" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="btn-text">继续</text></view>
           </template>
 
-          <view class="btn light" style="margin-top: 10px;" @tap="closeModal">
+          <view class="btn light" data-fire-press="true" style="margin-top: 10px;" @tap="closeModal" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
             <text class="btn-text">取消</text>
           </view>
         </template>
@@ -292,14 +292,14 @@
       <view class="post-modal">
         <view class="post-head">
           <text class="post-h2">分享我的经历</text>
-          <view class="post-close" @tap="closePost"><view class="fire-close-mark"></view></view>
+          <view class="post-close" data-fire-press="true" @tap="closePost" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></view>
         </view>
 
         <scroll-view scroll-y class="post-scroll">
           <view class="post-block">
             <text class="post-label">选几个标签</text>
             <view class="post-tags">
-              <view v-for="tag in POST_TAGS" :key="tag" class="post-tag" :class="{ active: postDraft.tags.includes(tag) }" @tap="togglePostTag(tag)">
+              <view v-for="tag in POST_TAGS" :key="tag" class="post-tag" data-fire-press="true" :class="{ active: postDraft.tags.includes(tag) }" @tap="togglePostTag(tag)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
                 <text class="post-tag-text" :class="{ active: postDraft.tags.includes(tag) }">{{ tag }}</text>
               </view>
             </view>
@@ -323,9 +323,9 @@
             <view v-for="(row, i) in postDraft.timeline" :key="i" class="post-tl-row">
               <input class="pt-year" v-model="row.year" type="number" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="4" placeholder="年份" />
               <input class="pt-title" v-model="row.title" type="text" :disabled="false" :readonly="false" :adjust-position="true" :cursor-spacing="24" maxlength="60" placeholder="事件描述" />
-              <view class="pt-remove" @tap="removeTimelineRow(i)"><text class="pt-remove-icon">×</text></view>
+              <view class="pt-remove" data-fire-press="true" @tap="removeTimelineRow(i)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="pt-remove-icon">×</text></view>
             </view>
-            <view class="post-add" @tap="addTimelineRow"><text class="post-add-text">＋ 添加时间点</text></view>
+            <view class="post-add" data-fire-press="true" @tap="addTimelineRow" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="post-add-text">＋ 添加时间点</text></view>
           </view>
 
           <view v-if="postReady" class="post-preview">
@@ -349,10 +349,10 @@
 
         <view class="post-foot">
           <view class="post-actions">
-            <view class="post-draft-btn" @tap="saveDraft">
+            <view class="post-draft-btn" data-fire-press="true" @tap="saveDraft" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
               <text class="post-draft-text">保存草稿</text>
             </view>
-            <view class="post-submit" :class="{ disabled: !postReady || publishing }" @tap="submitPost">
+            <view class="post-submit" data-fire-press="true" :class="{ disabled: !postReady || publishing }" @tap="submitPost" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
               <text class="post-submit-text">{{ publishing ? '审核中…' : '提交审核' }}</text>
             </view>
           </view>

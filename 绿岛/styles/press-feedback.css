@@ -1,0 +1,15 @@
+/* Shared visual feedback only: event handlers and navigation remain on their original elements. */
+[data-fire-press]{
+  transition:transform 180ms cubic-bezier(.2,.8,.2,1),opacity 180ms ease,background-color 180ms ease,border-color 180ms ease,color 180ms ease,box-shadow 180ms ease;
+  transform-origin:center;
+}
+text[data-fire-press],uni-text[data-fire-press]{display:inline-block}
+[data-fire-press].fire-pressed:not([disabled]):not(.disabled),
+[data-fire-press]:not([disabled]):not(:disabled):not(.disabled):active{
+  transform:var(--fire-press-transform,translateZ(0)) scale(.975)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  [data-fire-press]{transition:none!important}
+  [data-fire-press].fire-pressed:not([disabled]):not(.disabled),
+  [data-fire-press]:not([disabled]):not(:disabled):not(.disabled):active{transform:var(--fire-press-transform,none)!important}
+}

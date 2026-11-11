@@ -1,7 +1,7 @@
 <template>
   <view class="member-page fire-page-profile-membership" :style="pageLayoutStyle">
     <AppFeedback :owner-id="feedbackOwnerId" />
-    <view class="head"><text class="back" @tap="back">‹</text><text class="title">通用会员</text><text class="close" @tap="close">×</text></view>
+    <view class="head"><text class="back" data-fire-press="true" @tap="back">‹</text><text class="title">通用会员</text><text class="close" data-fire-press="true" @tap="close">×</text></view>
 
     <view class="hero">
       <text class="kicker">FIRE Fire生活</text>
@@ -13,7 +13,7 @@
       <view class="pro-head"><text class="pro-name">FIRE PRO</text><text class="pro-badge">¥9 / 月</text></view>
       <text class="pro-desc">为认真规划自由生活的人准备</text><text class="member-status">{{ membershipStatus }}</text><view class="price"><text class="price-num">¥9</text><text class="price-unit"> / 月</text></view>
       <view class="benefit" v-for="item in benefits" :key="item"><text class="check">✓</text><text>{{ item }}</text></view>
-      <button class="notify" @tap="upgrade" @click="upgrade">立即升级</button>
+      <button class="notify" data-fire-press="true" @tap="upgrade" @click="upgrade" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">立即升级</button>
     </view>
 
     <view class="free-card">
@@ -28,10 +28,10 @@
     <FireOverlay :visible="showUpgradeModal" :owner-id="feedbackOwnerId" label="开通通用会员" @close="closeUpgrade">
       <view class="upgrade-modal" @tap.stop>
         <text class="modal-kicker">FIRE PRO</text>
-        <view class="fire-modal-heading"><text class="modal-title">开通通用会员</text><button class="fire-modal-close" aria-label="关闭" @tap="closeUpgrade"><view class="fire-close-mark"></view></button></view>
+        <view class="fire-modal-heading"><text class="modal-title">开通通用会员</text><button class="fire-modal-close" data-fire-press="true" aria-label="关闭" @tap="closeUpgrade" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></button></view>
         <text class="modal-price">¥9 <text class="modal-unit">/ 月</text></text>
         <text class="modal-copy">支付功能正在接入，开放后可完成订阅。</text>
-        <button class="fire-modal-action" @tap="closeUpgrade">知道了</button>
+        <button class="fire-modal-action" data-fire-press="true" @tap="closeUpgrade" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">知道了</button>
       </view>
     </FireOverlay>
   </view>

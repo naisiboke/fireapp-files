@@ -4,21 +4,21 @@
     <text class="brand">Fire生活</text><image class="login-brand-logo" src="/static/fireday-leaf.png" mode="aspectFit" aria-label="Fire生活 Logo" />
     <view class="intro"><text class="title">欢迎回到Fire生活</text><text class="subtitle">记录你的自由计划，继续向理想生活前进</text></view>
     <view v-if="sessionExpired" class="expired-note">登录已过期，本机记录已保留。登录原邮箱即可恢复同步。</view>
-    <button v-if="canResume && !(loading && loginAction==='login')" class="resume-button" :disabled="loading" :aria-busy="loading && loginAction==='resume'" @tap="resumeLogin"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='resume'" :size="18" label="正在恢复登录"/><text>{{loading && loginAction==='resume'?'恢复中':'已验证邮箱，继续进入'}}</text></view></button>
+    <button v-if="canResume && !(loading && loginAction==='login')" class="resume-button" data-fire-press="true" :disabled="loading" :aria-busy="loading && loginAction==='resume'" @tap="resumeLogin" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='resume'" :size="18" label="正在恢复登录"/><text>{{loading && loginAction==='resume'?'恢复中':'已验证邮箱，继续进入'}}</text></view></button>
     <view class="email-heading">邮箱验证码登录</view>
     <view class="form" aria-live="polite">
       <view class="field"><input v-model="email" :disabled="loading || sending" class="input" type="text" maxlength="80" aria-label="邮箱" placeholder="请输入邮箱" placeholder-class="placeholder"/></view>
-      <view class="code-row"><view class="field code-field"><input :value="code" @input="code=String($event.detail?.value ?? $event.target?.value ?? '').slice(0,6)" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" :disabled="sending || countdown > 0" @tap="sendCode">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
-      <view class="form-meta"><text class="forgot" @tap="toast('验证码登录不需要密码')">登录帮助</text></view>
+      <view class="code-row"><view class="field code-field"><input :value="code" @input="code=String($event.detail?.value ?? $event.target?.value ?? '').slice(0,6)" class="input" type="number" maxlength="6" aria-label="验证码" placeholder="请输入验证码" placeholder-class="placeholder"/></view><button class="send-code" data-fire-press="true" :disabled="sending || countdown > 0" @tap="sendCode" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{ countdown > 0 ? countdown + '秒' : '获取验证码' }}</button></view>
+      <view class="form-meta"><text class="forgot" data-fire-press="true" @tap="toast('验证码登录不需要密码')">登录帮助</text></view>
       <view class="consent-row" :class="{'consent-error':consentError}">
-        <view class="consent-check" role="checkbox" :aria-checked="consentAccepted" aria-label="同意用户协议和隐私政策" tabindex="0" @tap.stop="toggleConsent" @keydown.space.prevent="toggleConsent" @keydown.enter.prevent="toggleConsent"><text aria-hidden="true">{{consentAccepted?'✓':''}}</text></view>
-        <view class="consent-copy"><text @tap="toggleConsent">我已阅读并同意</text><text class="consent-link" role="link" @tap.stop="openLegal('terms')">《用户协议》</text><text>和</text><text class="consent-link" role="link" @tap.stop="openLegal('privacy')">《隐私政策》</text></view>
+        <view class="consent-check" data-fire-press="true" role="checkbox" :aria-checked="consentAccepted" aria-label="同意用户协议和隐私政策" tabindex="0" @tap.stop="toggleConsent" @keydown.space.prevent="toggleConsent" @keydown.enter.prevent="toggleConsent" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text aria-hidden="true">{{consentAccepted?'✓':''}}</text></view>
+        <view class="consent-copy"><text data-fire-press="true" @tap="toggleConsent">我已阅读并同意</text><text class="consent-link" data-fire-press="true" role="link" @tap.stop="openLegal('terms')">《用户协议》</text><text>和</text><text class="consent-link" data-fire-press="true" role="link" @tap.stop="openLegal('privacy')">《隐私政策》</text></view>
       </view>
       <text v-if="consentError" class="consent-message" role="alert">{{CONSENT_MESSAGE}}</text>
-      <button class="login-button fire-button-primary fire-button-lg" :disabled="loading" :aria-busy="loading && loginAction==='login'" @tap="login"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='login'" :size="18" light label="正在登录"/><text>{{loading && loginAction==='login'?'登录中':'登录'}}</text></view></button>
+      <button class="login-button fire-button-primary fire-button-lg" data-fire-press="true" :disabled="loading" :aria-busy="loading && loginAction==='login'" @tap="login" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="login-button-content"><LoadingSpinner v-if="loading && loginAction==='login'" :size="18" light label="正在登录"/><text>{{loading && loginAction==='login'?'登录中':'登录'}}</text></view></button>
     </view>
     <view class="register-entry"><text>首次使用？输入邮箱获取验证码即可注册</text></view>
-    <view class="required-note">登录后才能进入Fire生活，数据会安全同步到你的账号</view><button v-if="isDev" class="test-login" @tap="fillAdmin">测试管理员邮箱</button><text class="sr-status" aria-live="polite">{{notice}}</text>
+    <view class="required-note">登录后才能进入Fire生活，数据会安全同步到你的账号</view><button v-if="isDev" class="test-login" data-fire-press="true" @tap="fillAdmin" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">测试管理员邮箱</button><text class="sr-status" aria-live="polite">{{notice}}</text>
   </view></view>
 </template>
 <script setup>

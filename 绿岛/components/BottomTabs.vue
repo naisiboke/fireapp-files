@@ -3,15 +3,15 @@
     <view class="tab-flow-clip" aria-hidden="true"><view :key="flowKey" class="tab-flow" :class="{ moving: flowMoving }" :style="flowStyle" /></view>
     <view v-if="expanded && !guideActive" class="menu-mask" @tap="toggleMenu"></view>
     <view class="quick-menu" :class="{ open: expanded }">
-      <view id="fire-guide-ledger" class="quick-item quick-ledger" aria-label="记账" @tap.stop="openQuick('/pages/ledger/index')"><view class="quick-icon">¥</view></view>
-      <view class="quick-item quick-ai" aria-label="问 AI" @tap.stop="openQuick('/pages/ai/index')"><view class="quick-icon">AI</view></view>
-      <view class="quick-item quick-music" aria-label="音乐" @tap.stop="openQuick('/pages/music/index')"><view class="quick-icon">♪</view></view>
+      <view id="fire-guide-ledger" class="quick-item quick-ledger" data-fire-press="true" aria-label="记账" @tap.stop="openQuick('/pages/ledger/index')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="quick-icon">¥</view></view>
+      <view class="quick-item quick-ai" data-fire-press="true" aria-label="问 AI" @tap.stop="openQuick('/pages/ai/index')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="quick-icon">AI</view></view>
+      <view class="quick-item quick-music" data-fire-press="true" aria-label="音乐" @tap.stop="openQuick('/pages/music/index')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="quick-icon">♪</view></view>
     </view>
-    <view v-for="t in tabs.slice(0, 2)" :key="t.path" :id="t.key==='tools'?'fire-guide-tools':undefined" class="tab-item" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)">
+    <view v-for="t in tabs.slice(0, 2)" :key="t.path" :id="t.key==='tools'?'fire-guide-tools':undefined" class="tab-item" data-fire-press="true" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <view class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="t.key===selectedKey?pulseStyle:{}"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
     </view>
-    <view class="center-action" :class="{ expanded }" @tap="toggleMenu"><text>{{ expanded ? '×' : '+' }}</text></view>
-    <view v-for="t in tabs.slice(2)" :key="t.path" class="tab-item" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)">
+    <view class="center-action" data-fire-press="true" :class="{ expanded }" @tap="toggleMenu" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>{{ expanded ? '×' : '+' }}</text></view>
+    <view v-for="t in tabs.slice(2)" :key="t.path" class="tab-item" data-fire-press="true" :class="{ active: t.key === selectedKey }" :aria-label="t.label" :aria-current="t.key === selectedKey ? 'page' : undefined" @tap="switchTab(t.path)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
       <view class="tab-icon-wrap" :class="{ 'tab-icon-pulse': flowMoving && t.key === selectedKey }" :style="t.key===selectedKey?pulseStyle:{}"><image class="tab-icon" :src="iconUri(t.key, false)" mode="aspectFit" /><image class="tab-icon tab-icon-selected" :class="{ shown: t.key === selectedKey }" :src="iconUri(t.key, true)" mode="aspectFit" /></view>
     </view>
   </view>

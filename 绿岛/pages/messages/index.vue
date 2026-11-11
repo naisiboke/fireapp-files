@@ -1,10 +1,10 @@
 <template>
  <view class="messages-page" :style="pageLayoutStyle">
   <AppFeedback :owner-id="feedbackOwnerId"/>
-  <view class="messages-head"><button class="back" aria-label="返回" @tap="back">‹</button><text>消息提醒</text><button class="read-all" :disabled="!unread" @tap="markAll">全部已读</button></view>
+  <view class="messages-head"><button class="back" data-fire-press="true" aria-label="返回" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</button><text>消息提醒</text><button class="read-all" data-fire-press="true" :disabled="!unread" @tap="markAll" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">全部已读</button></view>
   <view v-if="loading&&!messages.length" class="messages-empty"><LoadingSpinner :size="22" label="读取消息"/></view>
   <view v-else-if="!messages.length" class="messages-empty"><text class="empty-title">暂无消息提醒</text><text>到期提醒、审核结果和经验到账会出现在这里</text></view>
-  <view v-for="item in messages" :key="item.id" class="message-row" :class="{'is-unread':!item.read}" @tap="open(item)">
+  <view v-for="item in messages" :key="item.id" class="message-row" data-fire-press="true" :class="{'is-unread':!item.read}" @tap="open(item)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
    <view class="message-line"><text class="message-title">{{item.title}}</text><view v-if="!item.read" class="unread-dot"/></view>
    <text class="message-body">{{item.body}}</text><text class="message-time">{{time(item.at)}}</text>
   </view>

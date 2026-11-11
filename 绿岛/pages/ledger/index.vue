@@ -2,15 +2,15 @@
 <template>
  <view class="qe-page fire-page-ledger-index" :style="[pageLayoutStyle, pageStyle]">
   <AppFeedback :owner-id="feedbackOwnerId" />
-  <view class="qe-header"><button class="qe-back" aria-label="返回上一页" @tap="back"><view class="qe-back-chevron"></view></button><text class="qe-header-title">记账</text><button class="qe-header-action" @tap="toggleBudget">预算设置</button></view>
-  <view class="qe-month"><button class="qe-month-step" aria-label="上个月" @tap="prevMonth">‹</button><picker mode="date" fields="month" :value="month" start="1900-01" :end="maxMonth" @change="onMonthChange"><view class="qe-month-value">{{monthText}} <text>⌄</text></view></picker><button class="qe-month-step" aria-label="下个月" :disabled="month>=maxMonth" @tap="nextMonth">›</button></view>
+  <view class="qe-header"><button class="qe-back" data-fire-press="true" aria-label="返回上一页" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="qe-back-chevron"></view></button><text class="qe-header-title">记账</text><button class="qe-header-action" data-fire-press="true" @tap="toggleBudget" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">预算设置</button></view>
+  <view class="qe-month"><button class="qe-month-step" data-fire-press="true" aria-label="上个月" @tap="prevMonth" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</button><picker mode="date" fields="month" :value="month" start="1900-01" :end="maxMonth" @change="onMonthChange"><view class="qe-month-value">{{monthText}} <text>⌄</text></view></picker><button class="qe-month-step" data-fire-press="true" aria-label="下个月" :disabled="month>=maxMonth" @tap="nextMonth" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">›</button></view>
   <view class="qe-plan">
    <view class="qe-plan-top"><text>本月支出</text><text>{{expenseCount}} 笔</text></view>
    <text class="qe-plan-total">¥{{money(expenseTotal/100)}}</text>
    <view class="qe-plan-meta"><text>支出预算 {{budgetAmount===null?'待设置':'¥'+money(budgetAmount/100)}}</text><text :class="{'qe-over':budgetRemaining<0}">{{budgetRemaining<0?'超出预算':'剩余预算'}} {{budgetAmount===null?'待设置':'¥'+money(Math.abs(budgetRemaining)/100)}}</text></view>
    <view class="qe-budget-progress"><view class="qe-budget-track"><view class="qe-budget-fill" :style="{width:budgetProgress+'%'}"></view></view><text class="qe-budget-percent">{{budgetAmount===null?'—':shareOf(expenseTotal,budgetAmount)}}</text></view>
    <text class="qe-plan-income">本月收入 ¥{{money(incomeTotal/100)}} / 目标 {{incomeTarget===null?'待设置':'¥'+money(incomeTarget/100)}}</text>
-   <button v-if="!targetsReady" class="qe-plan-setup" @tap="toggleBudget"><text>先设置本月支出预算和收入目标</text><text>›</text></button>
+   <button v-if="!targetsReady" class="qe-plan-setup" data-fire-press="true" @tap="toggleBudget" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text>先设置本月支出预算和收入目标</text><text>›</text></button>
    <text v-if="monthlyStatus.expense.status" class="qe-list-note qe-over">{{monthlyStatus.expense.status}}</text>
   </view>
   <view v-if="distribution.length" class="qe-distribution">
@@ -22,9 +22,9 @@
    <QuietEmptyState v-if="!records.length || entryEmptyLeaving" ref="emptyGuide" title="记下你的第一笔" description="从一笔收支开始，慢慢理清生活。" :leaving="entryEmptyLeaving" :pointing="(showFirstGuide || entryEmptyLeaving) && !budgetExpanded" @ready="refreshEntryArrow" />
    <view v-if="records.length" id="ledger-records" class="qe-list-section">
     <view v-if="entryTip" class="qe-tip" role="status" aria-live="polite">✓ {{entryTip}}</view>
-    <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id">{{f.name}}</button></view></view>
+    <view class="qe-section-head"><text class="qe-section-title">收支明细</text><view class="qe-filters"><button v-for="f in filters" :key="f.id" class="qe-filter" data-fire-press="true" :class="{active:recordFilter===f.id}" :aria-pressed="recordFilter===f.id" @tap="recordFilter=f.id" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{f.name}}</button></view></view>
     <view class="qe-table-head"><text>{{recordFilter==='income'?'收入内容':recordFilter==='all'?'收支内容':'消费内容'}}</text><text>金额</text><text>{{recordFilter==='income'?'收入占比':'占比'}}</text></view>
-    <view v-for="x in filteredRecords" :id="rowId(x.id)" :key="x.id" class="qe-record-row" :class="{'qe-record-arriving':entryArrivingId===String(x.id)}" role="button" tabindex="0" :aria-label="'修改或删除'+(x.note||catLabel(x))" @tap="editRecord(x)" @keydown.enter="editRecord(x)">
+    <view v-for="x in filteredRecords" :id="rowId(x.id)" :key="x.id" class="qe-record-row" data-fire-press="true" :class="{'qe-record-arriving':entryArrivingId===String(x.id)}" role="button" tabindex="0" :aria-label="'修改或删除'+(x.note||catLabel(x))" @tap="editRecord(x)" @keydown.enter="editRecord(x)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
      <view class="qe-record-copy"><text class="qe-record-title">{{x.note||catLabel(x)}}</text><text class="qe-record-meta">{{catLabel(x)}} · {{x.date.slice(5)}}</text></view>
      <text class="qe-record-amount" :class="{income:x.type==='income'}">{{x.type==='income'?'+':'−'}}¥{{money(x.cents/100)}}</text><text class="qe-record-share">{{recordShare(x)}}</text>
     </view>
@@ -32,13 +32,13 @@
     <text class="qe-list-note">{{recordFilter==='income'?'占比按本月实际收入计算':'占比按本月实际支出计算，收入单独统计'}} · 点按记录可修改或删除</text>
    </view>
   </view>
-  <button id="quiet-entry-fab" class="qe-fab" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded}" aria-label="记一笔" @tap="goAdd">＋</button>
+  <button id="quiet-entry-fab" class="qe-fab" data-fire-press="true" :class="{'qe-fab-hint':showFirstGuide && !budgetExpanded}" aria-label="记一笔" @tap="goAdd" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">＋</button>
   <view v-if="entryFly" class="qe-flight" :style="entryFly.style" aria-hidden="true"><text class="qe-flight-label">{{entryFly.title}}</text><text class="qe-flight-amount">{{entryFly.amount}}</text></view>
   <QuietEntrySheet :visible="entryVisible && budgetExpanded" :owner-id="feedbackOwnerId" title="本月预算" :busy="saving" @close="closeEntrySheet" @ready="entryFocus=true">
    <text class="qe-label">本月支出预算（元）</text><input class="qe-input" type="digit" aria-label="本月支出预算" :adjust-position="false" :focus="entryFocus" v-model="budgetInput" maxlength="12" placeholder="例如 3000" />
    <text class="qe-label">本月收入目标（元）</text><input class="qe-input" type="digit" aria-label="本月收入目标" :adjust-position="false" v-model="incomeInput" maxlength="12" placeholder="例如 8000" />
    <text class="qe-form-hint">这是本月计划，真实收支请另外记一笔。</text><text v-if="errorText" class="qe-error" role="alert">{{errorText}}</text>
-   <template #footer><button class="qe-primary" :disabled="saving" @tap="saveTargets">{{saving?'保存中…':'保存本月计划'}}</button></template>
+   <template #footer><button class="qe-primary" data-fire-press="true" :disabled="saving" @tap="saveTargets" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{saving?'保存中…':'保存本月计划'}}</button></template>
   </QuietEntrySheet>
  </view>
 </template>

@@ -1,46 +1,46 @@
 <template>
  <view class="settings-page fire-page-settings-index" :style="pageLayoutStyle">
   <AppFeedback :owner-id="feedbackOwnerId"/>
-  <view class="head"><text class="title">{{panel==='data'?'数据管理':panel==='help'?'引导与帮助':'设置'}}</text><button class="close" aria-label="关闭" @tap="close">×</button></view>
+  <view class="head"><text class="title">{{panel==='data'?'数据管理':panel==='help'?'引导与帮助':'设置'}}</text><button class="close" data-fire-press="true" aria-label="关闭" @tap="close" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">×</button></view>
   <template v-if="panel==='main'">
-   <view class="account-card" @tap="openProfile"><view class="account-copy"><text class="account-name">{{profileName}}</text><text class="account-sub">{{membershipStatus}} · Fire生活账号</text></view><text class="chevron">›</text></view>
-   <view class="member-card" @tap="openMembership"><view><text class="member-title">Fire生活通用会员</text><text class="member-sub">{{isMember?'查看会员权益':'¥9 / 月 · AI、社区与深度分析'}}</text></view><text class="member-action">查看 ›</text></view>
-   <view class="redeem-card"><text class="redeem-title">会员兑换码</text><view class="redeem-row"><input v-model="redeemCode" class="redeem-input" maxlength="64" :disabled="redeeming" placeholder="输入完整兑换码"/><button class="redeem-button" :disabled="redeeming" @tap="redeemMembership">{{redeeming?'验证中…':'兑换'}}</button></view></view>
+   <view class="account-card" data-fire-press="true" @tap="openProfile" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="account-copy"><text class="account-name">{{profileName}}</text><text class="account-sub">{{membershipStatus}} · Fire生活账号</text></view><text class="chevron">›</text></view>
+   <view class="member-card" data-fire-press="true" @tap="openMembership" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view><text class="member-title">Fire生活通用会员</text><text class="member-sub">{{isMember?'查看会员权益':'¥9 / 月 · AI、社区与深度分析'}}</text></view><text class="member-action">查看 ›</text></view>
+   <view class="redeem-card"><text class="redeem-title">会员兑换码</text><view class="redeem-row"><input v-model="redeemCode" class="redeem-input" maxlength="64" :disabled="redeeming" placeholder="输入完整兑换码"/><button class="redeem-button" data-fire-press="true" :disabled="redeeming" @tap="redeemMembership" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{redeeming?'验证中…':'兑换'}}</button></view></view>
    <text class="section-title">通用</text>
    <view class="group">
-    <view class="row" @tap="toggleSound"><view class="row-copy"><text class="row-title">操作提示音</text><text class="row-sub">记账和拔草完成时提醒</text></view><view class="switch" :class="{on:state.soundEnabled}" role="switch" :aria-checked="state.soundEnabled"><view class="thumb"/></view></view>
-    <view class="row" @tap="openPrivacy"><view class="row-copy"><text class="row-title">隐私与权限</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="checkUpdate"><view class="row-copy"><text class="row-title">检查更新</text><text class="row-sub">当前版本 {{versionLabel}}</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="toggleSound" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">操作提示音</text><text class="row-sub">记账和拔草完成时提醒</text></view><view class="switch" :class="{on:state.soundEnabled}" role="switch" :aria-checked="state.soundEnabled"><view class="thumb"/></view></view>
+    <view class="row" data-fire-press="true" @tap="openPrivacy" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">隐私与权限</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="checkUpdate" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">检查更新</text><text class="row-sub">当前版本 {{versionLabel}}</text></view><text class="chevron">›</text></view>
    </view>
    <text class="section-title">帮助与反馈</text>
    <view class="group">
-    <view class="row" @tap="openPanel('help')"><view class="row-copy"><text class="row-title">引导与帮助</text><text class="row-sub">启动说明、功能操作与计算说明</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="copyContact"><view class="row-copy"><text class="row-title">问题反馈与奖励</text><text class="row-sub">微信 naisiboke520 · 点击复制</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="openAbout"><view class="row-copy"><text class="row-title">关于 Fire生活</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="openPanel('help')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">引导与帮助</text><text class="row-sub">启动说明、功能操作与计算说明</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="copyContact" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">问题反馈与奖励</text><text class="row-sub">微信 naisiboke520 · 点击复制</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="openAbout" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">关于 Fire生活</text></view><text class="chevron">›</text></view>
    </view>
    <text class="section-title">数据管理</text>
-   <view class="group"><view class="row" @tap="openPanel('data')"><view class="row-copy"><text class="row-title">同步、导出与本机数据</text><text class="row-sub">{{syncText}}</text></view><text class="chevron">›</text></view></view>
+   <view class="group"><view class="row" data-fire-press="true" @tap="openPanel('data')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">同步、导出与本机数据</text><text class="row-sub">{{syncText}}</text></view><text class="chevron">›</text></view></view>
    <text class="section-title">账号与安全</text>
    <view class="group">
-    <view class="row" @tap="openProfile"><view class="row-copy"><text class="row-title">个人资料</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="requestDeletion"><view class="row-copy"><text class="row-title danger-text">账号注销</text><text class="row-sub">提交注销申请，按流程处理云端资料</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="openProfile" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">个人资料</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="requestDeletion" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title danger-text">账号注销</text><text class="row-sub">提交注销申请，按流程处理云端资料</text></view><text class="chevron">›</text></view>
    </view>
-   <button class="button logout" @tap="logout">退出账号</button>
+   <button class="button logout" data-fire-press="true" @tap="logout" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">退出账号</button>
    <text class="version">Fire生活 {{versionLabel}} · fireday.cn</text>
   </template>
   <template v-else-if="panel==='data'">
    <text class="panel-description">管理当前账号的数据。清除本机数据不会删除云端存档。</text>
    <view class="group">
-    <view class="row" @tap="retrySync"><view class="row-copy"><text class="row-title">云端同步</text><text class="row-sub">{{syncText}}</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="exportData"><view class="row-copy"><text class="row-title">导出我的数据</text><text class="row-sub">下载账户资料、记录和社区内容</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="retrySync" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">云端同步</text><text class="row-sub">{{syncText}}</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="exportData" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">导出我的数据</text><text class="row-sub">下载账户资料、记录和社区内容</text></view><text class="chevron">›</text></view>
    </view>
    <text class="section-title">本机数据</text>
-   <view class="group"><view class="row" @tap="confirmReset"><view class="row-copy"><text class="row-title danger-text">清除当前账号的本机数据</text><text class="row-sub">未同步的记录会丢失，操作前请先确认同步完成</text></view><text class="chevron">›</text></view></view>
+   <view class="group"><view class="row" data-fire-press="true" @tap="confirmReset" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title danger-text">清除当前账号的本机数据</text><text class="row-sub">未同步的记录会丢失，操作前请先确认同步完成</text></view><text class="chevron">›</text></view></view>
   </template>
   <template v-else>
    <view class="group">
-    <view class="row" @tap="replayGuide"><view class="row-copy"><text class="row-title">查看功能引导</text><text class="row-sub">重新认识首页、记账和工具入口</text></view><text class="chevron">›</text></view>
-    <view class="row" @tap="replayOnboarding"><view class="row-copy"><text class="row-title">查看启动说明</text><text class="row-sub">了解应用和初次使用流程</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="replayGuide" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">查看功能引导</text><text class="row-sub">重新认识首页、记账和工具入口</text></view><text class="chevron">›</text></view>
+    <view class="row" data-fire-press="true" @tap="replayOnboarding" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="row-copy"><text class="row-title">查看启动说明</text><text class="row-sub">了解应用和初次使用流程</text></view><text class="chevron">›</text></view>
    </view>
    <text class="section-title">关于计算</text><view class="info-card"><text>固定收益按月复利，每月按填写金额在月末存入。自由模式按退休后消费与提取率计算，目标模式按目标金额计算。结果用于生活规划，不构成投资建议。</text></view>
   </template>

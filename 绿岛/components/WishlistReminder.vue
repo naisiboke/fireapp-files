@@ -1,12 +1,12 @@
 <template>
  <FireOverlay :visible="visible" :owner-id="ownerId" label="确认消费决定" @close="closeWishlistReminder">
   <view v-if="item" class="reminder">
-   <view class="heading"><text>{{item.status==='failed'?'确认这项消费决定':'冷静期结束了'}}</text><button class="close" aria-label="稍后再说" @tap="closeWishlistReminder"><view class="fire-close-mark"></view></button></view>
+   <view class="heading"><text>{{item.status==='failed'?'确认这项消费决定':'冷静期结束了'}}</text><button class="close" data-fire-press="true" aria-label="稍后再说" @tap="closeWishlistReminder" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><view class="fire-close-mark"></view></button></view>
    <text class="name">{{item.name}}</text><text class="amount">¥ {{Number(item.amount||0).toLocaleString('zh-CN')}}</text>
    <text class="hint">这件东西，你最后买了吗？</text>
-   <button class="primary" :disabled="reminder.busy" @tap="answerWishlistReminder(false)">没买，挑战成功</button>
-   <button class="secondary" :disabled="reminder.busy" @tap="answerWishlistReminder(true)">买了，记录购买</button>
-   <button class="later" :disabled="reminder.busy" @tap="closeWishlistReminder">稍后再说</button>
+   <button class="primary" data-fire-press="true" :disabled="reminder.busy" @tap="answerWishlistReminder(false)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">没买，挑战成功</button>
+   <button class="secondary" data-fire-press="true" :disabled="reminder.busy" @tap="answerWishlistReminder(true)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">买了，记录购买</button>
+   <button class="later" data-fire-press="true" :disabled="reminder.busy" @tap="closeWishlistReminder" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">稍后再说</button>
    <text v-if="reminder.remaining>1" class="count">还有 {{reminder.remaining-1}} 项待确认</text>
   </view>
  </FireOverlay>

@@ -4,24 +4,24 @@
 
     <!-- 顶部 -->
     <view class="edit-top">
-      <view class="back-btn" @click="back"><text class="back-icon">‹</text></view>
+      <view class="back-btn" data-fire-press="true" @click="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true"><text class="back-icon">‹</text></view>
       <view class="top-copy">
         <text class="top-title">{{ editing ? '修改记录' : '记一笔' }}</text>
         <text class="top-sub">{{ draft.type === 'income' ? '记录一笔收入' : '记录一笔支出' }}</text>
       </view>
-      <button v-if="editing" class="record-delete" :disabled="saving" @tap="confirmDelete">删除</button><view v-else class="spacer"></view>
+      <button v-if="editing" class="record-delete" data-fire-press="true" :disabled="saving" @tap="confirmDelete" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除</button><view v-else class="spacer"></view>
     </view>
 
     <!-- 类型选择 -->
     <view class="type-row">
-      <view class="type-card" :class="{ active: draft.type === 'expense' }" @click="setType('expense')">
+      <view class="type-card" data-fire-press="true" :class="{ active: draft.type === 'expense' }" @click="setType('expense')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <view class="type-mark expense">−</view>
         <view class="type-copy">
           <text class="type-name">支出</text>
           <text class="type-hint">记录一笔花费</text>
         </view>
       </view>
-      <view class="type-card" :class="{ active: draft.type === 'income' }" @click="setType('income')">
+      <view class="type-card" data-fire-press="true" :class="{ active: draft.type === 'income' }" @click="setType('income')" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <view class="type-mark income">＋</view>
         <view class="type-copy">
           <text class="type-name">收入</text>
@@ -37,10 +37,10 @@
       <view
         v-for="c in categories"
         :key="c.id"
-        class="cat-item"
+        class="cat-item" data-fire-press="true"
         :class="{ active: draft.category === c.id }"
         @click="selectCategory(c.id)"
-      >
+       hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <view class="cat-icon">
           <image class="cat-icon-img" :src="iconUri(c)" mode="aspectFit" />
         </view>
@@ -60,7 +60,7 @@
           <input class="amount-input" type="digit" :inputmode="keyboardCollapsed ? 'decimal' : 'none'" :show-soft-input-on-focus="keyboardCollapsed" v-model="draft.amount" placeholder="0.00" />
           <text class="amount-unit">元</text>
         </view>
-        <view class="keyboard-toggle" @click="keyboardCollapsed = !keyboardCollapsed">
+        <view class="keyboard-toggle" data-fire-press="true" @click="keyboardCollapsed = !keyboardCollapsed" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           <text class="toggle-text">{{ keyboardCollapsed ? '展开键盘⌄' : '收起键盘⌃' }}</text>
         </view>
       </view>
@@ -71,10 +71,10 @@
           <view
             v-for="(label, key) in necessityLabels"
             :key="key"
-            class="necessity-btn"
+            class="necessity-btn" data-fire-press="true"
             :class="{ active: draft.necessity === key }"
             @click="toggleNecessity(key)"
-          >
+           hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
             <text class="necessity-btn-text" :class="{ active: draft.necessity === key }">{{ label }}</text>
           </view>
         </view>
@@ -90,12 +90,12 @@
       <text v-if="errorText" class="error-text">{{ errorText }}</text>
 
       <view v-if="!keyboardCollapsed" class="keypad">
-        <view v-for="k in keys" :key="k.value" class="key" :class="k.cls" @click="pressKey(k.value)">
+        <view v-for="k in keys" :key="k.value" class="key" data-fire-press="true" :class="k.cls" @click="pressKey(k.value)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
           <text class="key-text" :class="k.textCls">{{ k.label }}</text>
         </view>
       </view>
 
-      <view v-if="keyboardCollapsed" class="save-btn fire-button-primary fire-button-lg" @click="submit">
+      <view v-if="keyboardCollapsed" class="save-btn fire-button-primary fire-button-lg" data-fire-press="true" @click="submit" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">
         <text class="save-btn-text">{{ editing ? '保存修改' : '完成' }}</text>
       </view>
     </view>

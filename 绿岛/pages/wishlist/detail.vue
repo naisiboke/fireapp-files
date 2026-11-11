@@ -1,14 +1,14 @@
 <template>
  <view class="detail-page" :style="pageLayoutStyle">
   <AppFeedback :owner-id="feedbackOwnerId" />
-  <view class="head"><button class="back" @tap="back">‹</button><text>消费计划</text><button v-if="item" class="delete" :disabled="busy" @tap="removeItem">删除</button></view>
+  <view class="head"><button class="back" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">‹</button><text>消费计划</text><button v-if="item" class="delete" data-fire-press="true" :disabled="busy" @tap="removeItem" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">删除</button></view>
   <view v-if="item">
    <view class="card hero"><text class="name">{{item.name}}</text><text class="amount">¥ {{money(item.amount)}}</text><text class="status">{{statusLabel}}</text></view>
    <view class="card"><view class="line"><text>冷静期</text><text>{{item.days||7}} 天</text></view><view class="line"><text>创建于</text><text>{{createdText}}</text></view><text class="countdown">{{bucket==='active'?(due?'等待你的决定':countdownText):statusLabel}}</text><view class="track"><view :style="{width:progress+'%'}"></view></view><text class="tip">{{bucket==='active'?'到期后由你确认，不会自动算作成功。':bucket==='success'?'这笔钱，留给更重要的事。':'如实记录，也是了解自己的开始。'}}</text></view>
-   <view v-if="bucket==='active'" class="actions"><button class="primary" :disabled="busy" @tap="finish(false)">{{due?'没买，挑战成功':'提前结束，决定不买'}}</button><button class="secondary" :disabled="busy" @tap="finish(true)">已购买，挑战失败</button></view>
-   <button v-else class="secondary full" @tap="back">返回列表</button>
+   <view v-if="bucket==='active'" class="actions"><button class="primary" data-fire-press="true" :disabled="busy" @tap="finish(false)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">{{due?'没买，挑战成功':'提前结束，决定不买'}}</button><button class="secondary" data-fire-press="true" :disabled="busy" @tap="finish(true)" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">已购买，挑战失败</button></view>
+   <button v-else class="secondary full" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回列表</button>
   </view>
-  <view v-else class="missing"><text>{{missingText}}</text><button v-if="state.cloudSync.status==='error'" class="secondary" @tap="retry">重试恢复</button><button class="secondary" @tap="back">返回列表</button></view>
+  <view v-else class="missing"><text>{{missingText}}</text><button v-if="state.cloudSync.status==='error'" class="secondary" data-fire-press="true" @tap="retry" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">重试恢复</button><button class="secondary" data-fire-press="true" @tap="back" hover-class="fire-pressed" :hover-start-time="0" :hover-stay-time="90" :hover-stop-propagation="true">返回列表</button></view>
  </view>
 </template>
 <script setup>
