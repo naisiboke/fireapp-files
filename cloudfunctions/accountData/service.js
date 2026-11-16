@@ -1,4 +1,4 @@
-const SERVICE_BUILD='2026-11-08-accountData-diagnostics-1'
+const SERVICE_BUILD='2026-11-16-ai-quota-release-1'
 function safeLabel(value,fallback='unknown'){
  const text=String(value||'')
  return /^[A-Za-z0-9_.:-]{1,80}$/.test(text)?text:fallback
@@ -304,7 +304,8 @@ async function settleAI(db,uid,reservation,success){
   const id=idFor('state',uid),row=await read(tx,'user_states',id),quota=row?.aiQuota
   if(quota?.date!==reservation.date||quota?.pending?.id!==reservation.id)fail('AI_REQUEST_EXPIRED','本次请求已过期，请重新发送')
   const count=quota.count+(success&&reservation.charge?1:0)
-  await tx.collection('user_states').doc(id).update({aiQuota:{date:quota.date,count}})
+  // CloudBase merges nested update fields; omission does not remove the previous reservation.
+  await tx.collection('user_states').doc(id).update({aiQuota:{date:quota.date,count,pending:null}})
   return count
  })
 }

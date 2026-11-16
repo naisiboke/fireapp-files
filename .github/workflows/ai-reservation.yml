@@ -1,0 +1,40 @@
+name: AI reservation release
+on:
+  push:
+    branches: [main]
+    paths: ['cloudfunctions/accountData/**', '绿岛/scripts/check-ai-reservation.mjs', '.github/workflows/ai-reservation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify cloud entrypoint syntax
+        run: |
+          for script in cloudfunctions/accountData/*.js; do node --check "$script"; done
+      - name: Run existing business and CloudBase merge regressions
+        working-directory: 绿岛
+        run: |
+          status=0
+          for script in scripts/check-*.mjs; do node "$script" || status=1; done
+          exit "$status"
+      - name: Verify deployable cloud package
+        run: |
+          python3 - <<'PY'
+          import pathlib,zipfile
+          files=[str(p) for p in pathlib.Path('cloudfunctions/accountData').iterdir() if p.is_file()]
+          mapping={p:p for p in files}
+          mapping['使用说明.txt']='docs/ai-busy-fix-20261116.md'
+          mapping['绿岛/scripts/check-ai-reservation.mjs']='绿岛/scripts/check-ai-reservation.mjs'
+          with zipfile.ZipFile('updates/fire-ai-busy-fix-20261116.zip') as z:
+              assert z.testzip() is None
+              assert set(z.namelist())==set(mapping)
+              for name,source in mapping.items():
+                  assert z.read(name)==pathlib.Path(source).read_bytes(),name
+          print('AI busy fix ZIP: CRC and complete cloud source verified')
+          PY
